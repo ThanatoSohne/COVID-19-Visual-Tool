@@ -1,0 +1,222 @@
+<style>
+body
+{
+  margin:0;
+  padding:0;
+}
+div.LeftRight
+{
+  float:left;
+  height:100%;
+  position:absolute;
+  margin: 5px 5px 5px 5px
+  overflow: auto;
+}
+div.Splitter
+{
+  width:2px;
+  background-color:#808080;
+  float:left;
+  height:100%;
+  position:absolute;
+  cursor:ew-resize;
+}
+div.tabsheader2  {
+  border-bottom: 2px solid;
+  padding-bottom: 0px;
+  border-color: #808080;
+}
+
+button.tabsheader2 {
+  display: inline;
+  border: 2px solid;
+  border-color: #808080;
+  border-top-left-radius:5px;
+  border-top-right-radius:5px;
+  background-color:#808080;
+  color: white;
+  border-bottom-width: 0;
+  margin: 2px;
+  margin-bottom: 0px;
+  padding: 5px;
+  cursor: pointer;
+  font-family: sans-serif;
+  z-index: 2;
+  outline: none;
+}
+
+button.tabsheader2[selected=true] {
+  background-color:white;
+  color: #808080;
+  margin-bottom: -5px;
+  border: 2px solid;
+  border-bottom-color: white;
+}
+
+div.tabscontent2 {
+  background-color:white;
+  font-family: sans-serif;
+  padding: 5px;
+  overflow: auto;
+  height: 100%;
+}
+
+a.icm {
+  color: #006400;
+  font-weight: bold;
+}
+
+</style>
+<script src="http://molsoft.com/lib/acticm.js"></script>
+<script>
+  var ACT = (function() {
+  var splitter,cont1,cont2;
+  var last_x = 0;
+
+  function initTabs()
+  {
+    splitter=document.getElementById("splitter");
+    cont1=document.getElementById("div1");
+    cont2=document.getElementById("div2");
+    cont1.style.display = splitter.style.display = cont2.style.display = "block";
+    //console.log( "cont1.clientWidth" , cont1.clientWidth  );
+    if (document.getElementById("tabh1")) {
+      last_x = cont1.clientWidth;
+      resetPosition( cont1.clientWidth );
+      selectTab(document.getElementById("tabh1"));
+      splitter.addEventListener("mousedown",spMouseDown);
+    } else {
+      cont1.style.display = splitter.style.display = "none";
+      resetPosition( 0 );
+    }
+  }
+
+  function spMouseDown(e)
+  {
+    splitter.removeEventListener("mousedown",spMouseDown);
+    window.addEventListener("mousemove",spMouseMove);
+    window.addEventListener("mouseup",spMouseUp);
+    last_x=e.clientX;
+  }
+
+  function spMouseUp(e)
+  {
+    window.removeEventListener("mousemove",spMouseMove);
+    window.removeEventListener("mouseup",spMouseUp);
+    splitter.addEventListener("mousedown",spMouseDown);
+    resetPosition(last_x);
+  }
+
+  function spMouseMove(e)
+  {
+    resetPosition(e.clientX);
+    last_x=e.clientX;
+  }
+
+  function resetPosition(nowX)
+  {
+    var ww=window.innerWidth;
+    var wh=window.innerHeight;
+    var dx=nowX-last_x;
+    if (cont1.style.display == "block") {
+      dx+=cont1.clientWidth;
+      cont1.style.width=dx+"px";
+      cont1.style.height=wh+"px";
+      splitter.style.marginLeft=dx+"px";
+      dx+=splitter.clientWidth;
+    }
+    cont2.style.marginLeft=dx+"px";
+    dx=ww-dx;
+    cont2.style.width=dx+"px";
+    if (document.act) document.act.updateLayout(true);
+  }
+
+  function selectTab(th)
+  {
+    var tabs = document.getElementById("tabh").childNodes;
+    var tab,j=1,t=-1;
+    for (var i=0; i<tabs.length; i++) {
+      if (tabs[i].className != "tabsheader2") continue;
+      if (tabs[i] == th) t = j;
+      tab  = document.getElementById("tab" + j );
+      tab.style.display = "none";
+      tabs[i].removeAttribute("selected");
+      j++;
+    }
+    if (t != -1) {
+      tab  = document.getElementById("tab" + t );
+      tab.style.display = "block";
+      th.setAttribute("selected",true);
+    }
+  }
+
+  return {
+    init      : function () { initTabs(); },
+    selectTab : function (th) { selectTab(th); },
+    updateLayout: function () { resetPosition( cont1.style.display == "block" ? cont1.clientWidth : 0 ); },
+  }
+
+})();
+
+function onLoadActiveIcm()
+{
+  document.getElementById('pdbloader').style.display='none';
+  //
+  ACT.init();
+  //
+  var act = new ActiveIcmJS("div2");
+  act.sequenceViewVisibleAuto = act.tableViewVisibleAuto = false;
+  act.sequenceViewVisible = act.searchBarVisible = false;
+  act.titleBarVisible = false;
+  act.tableViewVisibleAuto = true;
+  act.OpenProject("index_bin.icb",
+    {
+      onload: function (x) { js_icmstartup(); js_updatecheckboxes(); }
+    }
+  );
+  document.act = act;
+  //
+  window.onresize = function () { ACT.updateLayout(); }
+
+}
+
+function js_icmstartup() {
+}
+function js_updatecheckboxes() {
+}
+
+
+
+function js_slide_2_1() { 
+document.act.RunCommands( 'display slide=slideshow.slides index=1 smooth' );
+}
+
+
+</script>
+<body>
+  <img id="pdbloader" src="http://molsoft.com/lib/icons/ajax-loader.gif" style="position:absolute; left:50%; top:50%; display:block;" />
+  <div id="div1" class="LeftRight" style="width:40%;display:none;">
+    <div id="tabh" class="tabsheader2">
+        <body id="page2" >
+<body id="page1" >
+<button id="tabh1" class="tabsheader2" onclick="ACT.selectTab(this);">doc1</button>
+<button id="tabh2" class="tabsheader2" onclick="ACT.selectTab(this);">Slides</button>
+
+    </div>
+    <div id="tab1" class="tabscontent2" style="display:none">
+<head><title>
+doc1
+</title><style type="text/css">a.icm:link{ color:lightseagreen; font-weight:bold } a.icm:visited{ color:darkolivegreen; font-weight:bold } a.icm:hover{ text-decoration:none }</style></head>
+<body text="black" bgcolor="white" style="word-wrap: break-word; -webkit-nbsp-mode: space; -webkit-line-break: after-white-space; "><!--StartFragment--><h4 style="box-sizing: border-box; font-weight: 500; line-height: 1.1; color: rgb(51, 51, 51); margin-top: 10px; margin-bottom: 10px; font-style: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); "><span id="structureTitle" style="box-sizing: border-box; "><font class="Apple-style-span" face="'Book Antiqua'" size="7"><p>Structure of the SARS-CoV-2 spike glycoprotein (closed state)</p></font></span></h4><!--EndFragment--></body>
+</div>
+<div id="tab2" class="tabscontent2" style="display:none">
+
+<a class="icm" href="javascript:js_slide_2_1();">Slide 1</a><br>
+</div>
+
+  </div>
+  <div id="splitter" class="Splitter" style="display:none;"> </div>
+  <div id="div2" class="LeftRight" style="width:60%;display:none;">
+  </div>
+</body>
+
