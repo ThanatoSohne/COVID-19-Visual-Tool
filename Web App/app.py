@@ -86,18 +86,18 @@ with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-c
 # ---------------------------WORLD SCATTER GEO MAP----------------------------#
 def mundiScatter():
     df = pd.read_csv(
-        'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_worldMeters.csv',
+        'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/COVID-19_cases_worldMeters.csv',
         encoding='Latin-1')
 
-    country = df['Country'].tolist()
-    tCases = df['Total Cases'].tolist()
-    nCases = df['New Cases'].tolist()
-    tDeaths = df['Total Deaths'].tolist()
-    nDeaths = df['New Deaths'].tolist()
-    hope = df['Total Recovered'].tolist()
-    active = df['Active Cases'].tolist()
-    serious = df['Serious/Critical'].tolist()
-    tested = df['Total Tested'].tolist()
+    # country = df['Country'].tolist()
+    # tCases = df['Total Cases'].tolist()
+    # nCases = df['New Cases'].tolist()
+    # tDeaths = df['Total Deaths'].tolist()
+    # nDeaths = df['New Deaths'].tolist()
+    # hope = df['Total Recovered'].tolist()
+    # active = df['Active Cases'].tolist()
+    # serious = df['Serious/Critical'].tolist()
+    # tested = df['Total Tested'].tolist()
 
     geofig = px.scatter_geo(df, locations="Country", locationmode="country names", color="Total Cases",
                             hover_data=["Total Cases", "New Cases", "Total Deaths", "New Deaths", "Serious/Critical",
@@ -144,16 +144,12 @@ def aniGlobe():
 
 # -------------------------ALASKA CHOROPLETH & SUBPLOT MAPS------------------------------#
 akDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_akWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_akWiki.csv',
     dtype={'fips': str})
 cleanAK = akDF.fillna(0)
 
 
 def akmap():
-    # akDF = pd.read_csv(
-    #     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_akWiki.csv',
-    #     dtype={'fips': str})
-    # cleanAK = akDF.fillna(0)
     # Used to round up to a proper max for the range_color function
     maxAK = (math.ceil(cleanAK['Confirmed Cases'].max() / 50.0) * 50.0) + 150
 
@@ -259,7 +255,7 @@ def aksub():
 
 # -------------------------ALABAMA CHOROPLETH MAP------------------------------#
 alDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_aldoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_aldoh.csv',
     dtype={'fips': str})
 cleanAL = alDF.fillna(0)
 
@@ -366,7 +362,7 @@ def alsub():
 
 # -------------------------ARKANSAS CHOROPLETH MAP------------------------------#
 arDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_arWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_arWiki.csv',
     dtype={'fips': str})
 cleanAR = arDF.fillna(0)
 
@@ -475,7 +471,7 @@ def arsub():
 
 # -------------------------ARIZONA CHOROPLETH MAP------------------------------#
 azDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_azWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_azWiki.csv',
     dtype={'fips': str})
 cleanAZ = azDF.fillna(0)
 
@@ -573,7 +569,7 @@ def azsub():
 
 # -------------------------CALIFORNIA CHOROPLETH MAP------------------------------#
 caDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_caWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_caWiki.csv',
     dtype={'fips': str})
 cleanCA = caDF.fillna(0)
 
@@ -673,7 +669,7 @@ def casub():
 
 # -------------------------COLORADO CHOROPLETH MAP------------------------------#
 coDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_coDOH.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_coDOH.csv',
     dtype={'fips': str})
 cleanCO = coDF.fillna(0)
 
@@ -770,7 +766,7 @@ def cosub():
 
 # -------------------------CONNECTICUT CHOROPLETH MAP------------------------------#
 ctDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_ctDOH.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ctDOH.csv',
     dtype={'fips': str})
 cleanCT = ctDF.fillna(0)
 
@@ -781,7 +777,7 @@ def ctmap():
 
     ctFig = px.choropleth_mapbox(cleanCT, geojson=counties, locations='fips', color='Confirmed Cases',
                                  color_continuous_scale='curl_r', range_color=(0, maxCT),
-                                 hover_data=['County', 'Confirmed Cases'],
+                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Hospitalized'],
                                  zoom=6.5, center={"lat": 41.647811, "lon": -72.641075},
                                  opacity=0.6, labels={"County": "County"})
 
@@ -813,6 +809,29 @@ def ctsub():
         )
     ),
         row=2, col=1
+    )
+    ctFIG.add_trace(go.Bar(
+        y=cleanCT['County'],
+        x=cleanCT['Deaths'],
+        name='Deaths',
+        orientation='h',
+        marker=dict(
+            color='rgba(3, 252, 248, 0.6)',
+            line=dict(color='rgba(3, 252, 248, 1.0)', width=3)
+        )
+    )
+    )
+    ctFIG.add_trace(go.Bar(
+        y=cleanCT['County'],
+        x=cleanCT['Hospitalized'],
+        name='Hospitalized',
+        orientation='h',
+        marker=dict(
+            color='rgba(28, 3, 252, 0.6)',
+            line=dict(color='rgba(28, 3, 252, 1.0)', width=3)
+        )
+    )
+
     )
     ctFIG.add_trace(
         go.Densitymapbox(lat=cleanCT.Latitude, lon=cleanCT.Longitude,
@@ -856,7 +875,7 @@ def ctsub():
 
 # -------------------------DELAWARE CHOROPLETH MAP------------------------------#
 deDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_deWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_deWiki.csv',
     dtype={'fips': str})
 cleanDE = deDF.fillna(0)
 
@@ -963,7 +982,7 @@ def desub():
 
 # -------------------------FLORIDA CHOROPLETH MAP------------------------------#
 flDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_flWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_flWiki.csv',
     dtype={'fips': str})
 cleanFL = flDF.fillna(0)
 
@@ -1071,7 +1090,7 @@ def flsub():
 
 # -------------------------GEORGIA CHOROPLETH MAP------------------------------#
 gaDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_gadoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_gadoh.csv',
     dtype={'fips': str})
 cleanGA = gaDF.fillna(0)
 
@@ -1185,7 +1204,7 @@ def gasub():
 # gmFig.show()
 # -------------------------HAWAI'I CHOROPLETH MAP------------------------------#
 hiDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_hidoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_hidoh.csv',
     dtype={'fips': str})
 cleanHI = hiDF.fillna(0)
 
@@ -1224,8 +1243,8 @@ def hisub():
         name='Total Cases',
         orientation='h',
         marker=dict(
-            color='rgba(59, 82, 105, 0.6)',
-            line=dict(color='rgba(59, 82, 105, 1.0)', width=3)
+            color='rgba(255, 128, 168, 0.6)',
+            line=dict(color='rgba(255, 128, 168, 1.0)', width=3)
         )
     ),
         row=2, col=1
@@ -1256,8 +1275,8 @@ def hisub():
         name='Required Hospitalization',
         orientation='h',
         marker=dict(
-            color='rgba(95, 107, 106, 0.6)',
-            line=dict(color='rgba(95, 107, 106, 1.0)', width=3)
+            color='rgba(208, 217, 50, 0.6)',
+            line=dict(color='rgba(208, 217, 50, 1.0)', width=3)
         )
     ))
     hiFIG.add_trace(
@@ -1305,7 +1324,7 @@ def hisub():
 
 # ---------------------------IDAHO CHOROPLETH MAP------------------------------#
 idDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_idWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_idWiki.csv',
     dtype={'fips': str})
 cleanID = idDF.fillna(0)
 
@@ -1413,7 +1432,7 @@ def idsub():
 
 # ---------------------------ILLINOIS CHOROPLETH MAP------------------------------#
 ilDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_ilWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ilWiki.csv',
     dtype={'fips': str})
 cleanIL = ilDF.fillna(0)
 
@@ -1521,7 +1540,7 @@ def ilsub():
 
 # ---------------------------INDIANA CHOROPLETH MAP------------------------------#
 inDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_inWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_inWiki.csv',
     dtype={'fips': str})
 cleanIN = inDF.fillna(0)
 
@@ -1619,7 +1638,7 @@ def insub():
 
 # ---------------------------IOWA CHOROPLETH MAP------------------------------#
 ioDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_ioWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ioWiki.csv',
     dtype={'fips': str})
 cleanIO = ioDF.fillna(0)
 
@@ -1727,7 +1746,7 @@ def iosub():
 
 # ---------------------------KANSAS CHOROPLETH MAP------------------------------#
 kaDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_kaWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_kaWiki.csv',
     dtype={'fips': str})
 cleanKA = kaDF.fillna(0)
 
@@ -1738,7 +1757,7 @@ def kamap():
 
     kaFig = px.choropleth_mapbox(cleanKA, geojson=counties, locations='fips', color='Confirmed Cases',
                                  color_continuous_scale='darkmint', range_color=(0, maxKA),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
+                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
                                  zoom=5.4, center={"lat": 38.541749, "lon": -98.428791},
                                  opacity=0.6, labels={"County": "County"})
 
@@ -1835,7 +1854,7 @@ def kasub():
 
 # ---------------------------KENTUCKY CHOROPLETH MAP------------------------------#
 kyDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_kyNews.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_kyNews.csv',
     dtype={'fips': str})
 cleanKY = kyDF.fillna(0)
 
@@ -1847,7 +1866,7 @@ def kymap():
     kyFig = px.choropleth_mapbox(cleanKY, geojson=counties, locations='fips', color='Confirmed Cases',
                                  color_continuous_scale='twilight', range_color=(0, maxKY),
                                  color_continuous_midpoint=maxKY / 2,
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
                                  zoom=5.5, center={"lat": 37.526671, "lon": -85.290470},
                                  opacity=0.6, labels={"County": "County"})
 
@@ -1888,16 +1907,6 @@ def kysub():
         marker=dict(
             color='rgba(160, 184, 152, 0.6)',
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
-        )
-    ))
-    kyFIG.add_trace(go.Bar(
-        y=cleanKY['County'],
-        x=cleanKY['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(102, 25, 105, 0.6)',
-            line=dict(color='rgba(102, 25, 105, 1.0)', width=3)
         )
     ))
     kyFIG.add_trace(
@@ -1944,7 +1953,7 @@ def kysub():
 
 # ---------------------------LOUISIANA CHOROPLETH MAP------------------------------#
 laDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_laWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_laWiki.csv',
     dtype={'fips': str})
 cleanLA = laDF.fillna(0)
 
@@ -1955,7 +1964,7 @@ def lamap():
 
     laFig = px.choropleth_mapbox(cleanLA, geojson=counties, locations='fips', color='Confirmed Cases',
                                  color_continuous_scale='bluyl', range_color=(0, maxLA),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
+                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
                                  zoom=5.6, center={"lat": 31.220691, "lon": -92.381019},
                                  opacity=0.6, labels={"County": "Parish"})
 
@@ -1996,6 +2005,16 @@ def lasub():
         marker=dict(
             color='rgba(160, 184, 152, 0.6)',
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
+        )
+    ))
+    laFIG.add_trace(go.Bar(
+        y=cleanLA['County'],
+        x=cleanLA['Recoveries'],
+        name='Recoveries',
+        orientation='h',
+        marker=dict(
+            color='rgba(206,42,55, 0.6)',
+            line=dict(color='rgba(206,42,55, 1.0)', width=3)
         )
     ))
     laFIG.add_trace(
@@ -2042,7 +2061,7 @@ def lasub():
 
 # ---------------------------MASSACHUSETTS CHOROPLETH MAP------------------------------#
 maDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_maNews.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_maNews.csv',
     dtype={'fips': str})
 cleanMA = maDF.fillna(0)
 
@@ -2129,7 +2148,7 @@ def masub():
 
 # ---------------------------MARYLAND CHOROPLETH MAP------------------------------#
 mdDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_mdWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_mdWiki.csv',
     dtype={'fips': str})
 cleanMD = mdDF.fillna(0)
 
@@ -2140,7 +2159,7 @@ def mdmap():
 
     mdFig = px.choropleth_mapbox(cleanMD, geojson=counties, locations='fips', color='Confirmed Cases',
                                  color_continuous_scale='purpor', range_color=(0, maxMD),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
                                  zoom=6.4, center={"lat": 39.026261, "lon": -76.808917},
                                  opacity=0.6, labels={"County": "County"})
 
@@ -2181,16 +2200,6 @@ def mdsub():
         marker=dict(
             color='rgba(160, 184, 152, 0.6)',
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
-        )
-    ))
-    mdFIG.add_trace(go.Bar(
-        y=cleanMD['County'],
-        x=cleanMD['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(102, 25, 105, 0.6)',
-            line=dict(color='rgba(102, 25, 105, 1.0)', width=3)
         )
     ))
     mdFIG.add_trace(
@@ -2237,7 +2246,7 @@ def mdsub():
 
 # ---------------------------MAINE CHOROPLETH MAP------------------------------#
 meDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_meDDS.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_meDDS.csv',
     dtype={'fips': str})
 cleanME = meDF.fillna(0)
 neuME = cleanME[
@@ -2357,7 +2366,7 @@ def mesub():
 
 # ---------------------------MICHIGAN CHOROPLETH MAP------------------------------#
 miDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_midoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_midoh.csv',
     dtype={'fips': str})
 cleanMI = miDF.fillna(0)
 
@@ -2455,7 +2464,7 @@ def misub():
 
 # ---------------------------MINNESOTA CHOROPLETH MAP------------------------------#
 mnDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_mndoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_mndoh.csv',
     dtype={'fips': str})
 cleanMN = mnDF.fillna(0)
 
@@ -2553,7 +2562,7 @@ def mnsub():
 
 # ---------------------------MISSOURI CHOROPLETH MAP------------------------------#
 moDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_modoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_modoh.csv',
     dtype={'fips': str})
 cleanMO = moDF.fillna(0)
 
@@ -2651,7 +2660,7 @@ def mosub():
 
 # ---------------------------MISSISSIPPI CHOROPLETH MAP------------------------------#
 msDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_msdoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_msdoh.csv',
     dtype={'fips': str})
 cleanMS = msDF.fillna(0)
 
@@ -2749,7 +2758,7 @@ def mssub():
 
 # ---------------------------MONTANA CHOROPLETH MAP------------------------------#
 mtDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_mtdoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_mtdoh.csv',
     dtype={'fips': str})
 cleanMT = mtDF.fillna(0)
 
@@ -2847,7 +2856,7 @@ def mtsub():
 
 # ---------------------------NORTH CAROLINA CHOROPLETH MAP------------------------------#
 ncDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_ncdoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ncdoh.csv',
     dtype={'fips': str})
 cleanNC = ncDF.fillna(0)
 
@@ -2945,7 +2954,7 @@ def ncsub():
 
 # ---------------------------NORTH DAKOTA CHOROPLETH MAP------------------------------#
 ndDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_ndWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ndWiki.csv',
     dtype={'fips': str})
 cleanND = ndDF.fillna(0)
 
@@ -2956,7 +2965,7 @@ def ndmap():
 
     ndFig = px.choropleth_mapbox(cleanND, geojson=counties, locations='fips', color='Confirmed Cases',
                                  color_continuous_scale='tealrose', range_color=(0, maxND),
-                                 hover_data=['County', 'Confirmed Cases'],
+                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
                                  zoom=5.7, center={"lat": 47.528438, "lon": -100.445038},
                                  opacity=0.6, labels={"County": "County"})
 
@@ -2989,6 +2998,26 @@ def ndsub():
     ),
         row=2, col=1
     )
+    ndFIG.add_trace(go.Bar(
+        y=cleanND['County'],
+        x=cleanND['Deaths'],
+        name='Deaths',
+        orientation='h',
+        marker=dict(
+            color='rgba(194, 255, 210, 0.6)',
+            line=dict(color='rgba(194, 255, 210, 1.0)', width=3)
+        )
+    ))
+    ndFIG.add_trace(go.Bar(
+        y=cleanND['County'],
+        x=cleanND['Recoveries'],
+        name='Recoveries',
+        orientation='h',
+        marker=dict(
+            color='rgba(224, 13, 13, 0.6)',
+            line=dict(color='rgba(224, 13, 13, 1.0)', width=3)
+        )
+    ))
     ndFIG.add_trace(
         go.Densitymapbox(lat=cleanND.Latitude, lon=cleanND.Longitude,
                          z=cleanND['Confirmed Cases'], radius=25,
@@ -3033,7 +3062,7 @@ def ndsub():
 
 # ---------------------------NEBRASKA CHOROPLETH MAP------------------------------#
 neDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_neWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_neWiki.csv',
     dtype={'fips': str})
 cleanNE = neDF.fillna(0)
 
@@ -3131,7 +3160,7 @@ def nesub():
 
 # ---------------------------NEW HAMPSHIRE CHOROPLETH MAP-----------------------------#
 nhDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_nhNews.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nhNews.csv',
     dtype={'fips': str})
 cleanNH = nhDF.fillna(0)
 
@@ -3219,7 +3248,7 @@ def nhsub():
 
 # ---------------------------NEW JERSEY CHOROPLETH MAP-----------------------------#
 njDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_njWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_njWiki.csv',
     dtype={'fips': str})
 cleanNJ = njDF.fillna(0)
 
@@ -3327,7 +3356,7 @@ def njsub():
 
 # ---------------------------NEW MEXICO CHOROPLETH MAP-----------------------------#
 nmDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_nmdoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nmdoh.csv',
     dtype={'fips': str})
 cleanNM = nmDF.fillna(0)
 
@@ -3426,7 +3455,7 @@ def nmsub():
 
 # ---------------------------NEVADA CHOROPLETH MAP-----------------------------#
 nvDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_nvNews.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nvNews.csv',
     dtype={'fips': str})
 cleanNV = nvDF.fillna(0)
 
@@ -3514,7 +3543,7 @@ def nvsub():
 
 # ---------------------------NEW YORK CHOROPLETH MAP-----------------------------#
 nyDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_nydoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nydoh.csv',
     dtype={'fips': str})
 cleanNY = nyDF.fillna(0)
 
@@ -3622,7 +3651,7 @@ def nysub():
 
 # ---------------------------OHIO CHOROPLETH MAP-----------------------------#
 ohDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_ohWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ohWiki.csv',
     dtype={'fips': str})
 cleanOH = ohDF.fillna(0)
 
@@ -3720,7 +3749,7 @@ def ohsub():
 
 # ---------------------------OKLAHOMA CHOROPLETH MAP-----------------------------#
 okDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_okdoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_okdoh.csv',
     dtype={'fips': str})
 cleanOK = okDF.fillna(0)
 
@@ -3828,7 +3857,7 @@ def oksub():
 
 # ---------------------------OREGON CHOROPLETH MAP-----------------------------#
 orDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_ordoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ordoh.csv',
     dtype={'fips': str})
 cleanOR = orDF.fillna(0)
 
@@ -3926,7 +3955,7 @@ def orsub():
 
 # ---------------------------PENNSYLVANIA CHOROPLETH MAP-----------------------------#
 paDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_padoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_padoh.csv',
     dtype={'fips': str})
 cleanPA = paDF.fillna(0)
 
@@ -4040,7 +4069,7 @@ def pasub():
 
 # -----------------------RHODE ISLAND CHOROPLETH MAP----------------------------#
 riDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_riNews.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_riNews.csv',
     dtype={'fips': str})
 cleanRI = riDF.fillna(0)
 
@@ -4138,7 +4167,7 @@ def risub():
 
 # -----------------------SOUTH CAROLINA CHOROPLETH MAP----------------------------#
 scDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_scWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_scWiki.csv',
     dtype={'fips': str})
 cleanSC = scDF.fillna(0)
 
@@ -4236,7 +4265,7 @@ def scsub():
 
 # -----------------------SOUTH DAKOTA CHOROPLETH MAP----------------------------#
 sdDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_sdWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_sdWiki.csv',
     dtype={'fips': str})
 cleanSD = sdDF.fillna(0)
 
@@ -4344,7 +4373,7 @@ def sdsub():
 
 # -----------------------TENNESSEE CHOROPLETH MAP----------------------------#
 tnDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_tnWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_tnWiki.csv',
     dtype={'fips': str})
 cleanTN = tnDF.fillna(0)
 
@@ -4452,7 +4481,7 @@ def tnsub():
 
 # -----------------------TEXAS CHOROPLETH MAP----------------------------#
 txDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_txgit.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_txgit.csv',
     dtype={'fips': str})
 cleanTX = txDF.fillna(0)
 
@@ -4560,7 +4589,7 @@ def txsub():
 
 # -----------------------UTAH CHOROPLETH MAP----------------------------#
 utDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_utNews.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_utNews.csv',
     dtype={'fips': str})
 cleanUT = utDF.fillna(0)
 cleanUT = cleanUT[
@@ -4680,7 +4709,7 @@ def utsub():
 
 # -----------------------VIRGINIA CHOROPLETH MAP----------------------------#
 vaDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_vaWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_vaWiki.csv',
     dtype={'fips': str})
 cleanVA = vaDF.fillna(0)
 
@@ -4691,7 +4720,7 @@ def vamap():
 
     vaFig = px.choropleth_mapbox(cleanVA, geojson=counties, locations='fips', color='Confirmed Cases',
                                  color_continuous_scale='matter', range_color=(0, maxVA),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
+                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Hospitalizations'],
                                  zoom=5.3, center={"lat": 37.510857, "lon": -78.666367},
                                  opacity=0.6, labels={"County": "County"})
 
@@ -4788,7 +4817,7 @@ def vasub():
 
 # -----------------------VERMONT CHOROPLETH MAP----------------------------#
 vtDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_vtWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_vtWiki.csv',
     dtype={'fips': str})
 cleanVT = vtDF.fillna(0)
 
@@ -4896,7 +4925,7 @@ def vtsub():
 
 # -----------------------WASHINGTON CHOROPLETH MAP----------------------------#
 waDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_waWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_waWiki.csv',
     dtype={'fips': str})
 cleanWA = waDF.fillna(0)
 
@@ -4994,7 +5023,7 @@ def wasub():
 
 # -----------------------WISCONSIN CHOROPLETH MAP----------------------------#
 wiDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_widoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_widoh.csv',
     dtype={'fips': str})
 cleanWI = wiDF.fillna(0)
 
@@ -5092,7 +5121,7 @@ def wisub():
 
 # -----------------------WEST VIRGINIA CHOROPLETH MAP----------------------------#
 wvDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_wvWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_wvWiki.csv',
     dtype={'fips': str})
 cleanWV = wvDF.fillna(0)
 
@@ -5190,18 +5219,18 @@ def wvsub():
 
 # -----------------------WYOMING CHOROPLETH MAP----------------------------#
 wyDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_wyWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_wyWiki.csv',
     dtype={'fips': str})
 cleanWY = wyDF.fillna(0)
 
 
 def wymap():
     # Used to round up to a proper max for the range_color function
-    maxWY = (math.ceil(cleanWY['Total Cases'].max() / 50.0) * 50.0) + 150
+    maxWY = (math.ceil(cleanWY['Confirmed Cases'].max() / 50.0) * 50.0) + 150
 
-    wyFig = px.choropleth_mapbox(cleanWY, geojson=counties, locations='fips', color='Total Cases',
+    wyFig = px.choropleth_mapbox(cleanWY, geojson=counties, locations='fips', color='Confirmed Cases',
                                  color_continuous_scale='mygbm', range_color=(0, maxWY),
-                                 hover_data=['County', 'Total Cases', 'Deaths', 'Recoveries'],
+                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
                                  zoom=5.2, center={"lat": 42.999627, "lon": -107.551451},
                                  opacity=0.6, labels={"County": "County"})
 
@@ -5224,8 +5253,8 @@ def wysub():
 
     wyFIG.add_trace(go.Bar(
         y=cleanWY['County'],
-        x=cleanWY['Total Cases'],
-        name='Total Cases',
+        x=cleanWY['Confirmed Cases'],
+        name='Confirmed Cases',
         orientation='h',
         marker=dict(
             color='rgba(59, 82, 105, 0.6)',
@@ -5256,7 +5285,7 @@ def wysub():
     ))
     wyFIG.add_trace(
         go.Densitymapbox(lat=cleanWY.Latitude, lon=cleanWY.Longitude,
-                         z=cleanWY['Total Cases'], radius=25,
+                         z=cleanWY['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -5264,7 +5293,7 @@ def wysub():
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Total Cases",
+                        "Latitude", "Longitude", "Confirmed Cases",
                         "Deaths", "Recoveries"],
                 line_color='darkslategray',
                 fill_color='grey',
@@ -5297,7 +5326,7 @@ def wysub():
 
 
 # ----Prediction Model Graphs---------------------------------------------------------------------------------
-
+# Confirmed/death prediction model for the US
 def mortModel():
     mortAct = 'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Death_Actual.csv'
     mortPre = 'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Death_Predict.csv'
@@ -5323,6 +5352,8 @@ def mortModel():
                       )
     return plt
 
+
+# Confirmed/Recovery prediction model for the US
 
 def recModel():
     recAct = 'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Recovered_Actual.csv'
@@ -5528,7 +5559,8 @@ navbar = dbc.Navbar(
                         dbc.Col(
                             dbc.NavbarBrand(
                                 "COVID-19 OUTBREAK VISUALIZATION TOOL",
-                                className="m1-2"
+                                className="m1-2",
+                                href="https://covid19-outbreak-vis.herokuapp.com",
                             )
                         ),
                         dbc.Col(
@@ -5551,6 +5583,7 @@ navbar = dbc.Navbar(
                     [dropdown],
                     pills=True,
                     className="m1-auto",
+                    justified=True,
                     navbar=True,
                 ),
                 id="navbar-collapse",
@@ -5759,23 +5792,23 @@ mason = dbc.CardColumns(
     ]
 )
 
-popover = html.Div(
+slow = html.Div(
     [
         dbc.Button(
-            "Click me, please!", id="popover-target", color="danger"
+            "Click here, please!",
+            id="auto-toast-toggle",
+            color="warning",
+            className="mb-3",
         ),
-        dbc.Popover(
-            [
-                dbc.PopoverHeader("We apologize"),
-                dbc.PopoverBody("The maps may be a little slow rendering"),
-            ],
-            id="popover",
-            is_open=False,
-            target="popover-target",
+        dbc.Toast(
+            [html.P("The maps may be a little slow in rendering", className="mb-0")],
+            id="auto-toast",
+            header="We apologize and thank you for your patience",
+            icon="primary",
+            duration=4000,
         ),
     ]
 )
-
 
 us_map = html.Div(
     [
@@ -5798,14 +5831,22 @@ us_map = html.Div(
                                         have a few counties missing due to either those counties not having cases or because their
                                         numbers have yet to be reported. All data scraped in order to build these sites come from a 
                                         range of sources that had the most reliable and most current of information.""",
-                                    style={'border-style': 'inset'})],
+                                    style={'border': '4mm ridge rgba(28, 106, 128,.6)',
+                                           'outline': '0.5rem rgba(222, 109, 89,.7)',
+                                           'font-family': 'Goudy Old Style, Garamond, Big Caslon, Times New Roman, serif',
+                                           'font-size': '14px',
+                                           'font-style': 'normal',
+                                           'font-variant': 'small-caps',
+                                           'font-weight': '700',
+                                           'line-height': '20px',
+                                           'padding': '1rem'})],
                             md=4,
                             width="auto"
                         ),
                         dbc.Col(
                             [
                                 html.H3("US Maps on a State by State Basis"),
-                                popover,
+                                slow,
                                 dcc.Dropdown(
                                     id="map_menu",
                                     options=states,
@@ -5864,7 +5905,15 @@ mundiMap = html.Div(
                                 of data and graphs that go into further detail about COVID-19. Please do 
                                 take the time to visit their site! 
                                 """,
-                                       style={'border-style': 'inset'}
+                                       style={'border': '4mm ridge rgba(116, 163, 114,.6)',
+                                              'outline': '0.5rem rgba(222, 109, 89,.7)',
+                                              'font-family': 'Goudy Old Style, Garamond, Big Caslon, Times New Roman, serif',
+                                              'font-size': '14px',
+                                              'font-style': 'normal',
+                                              'font-variant': 'small-caps',
+                                              'font-weight': '700',
+                                              'line-height': '20px',
+                                              'padding': '1rem'}
                                        )
                             ],
                             md=4,
@@ -5957,7 +6006,7 @@ oracle = html.Div(
             [
                 dbc.Row(
                     [
-                        html.Header("Oracle of Rona",
+                        html.Header("A Peek into the Future of COVID-19 in Our Lives",
                                     style={
                                         "font-family": "Bookman Old Style",
                                         "font-variant": "small-caps",
@@ -6009,8 +6058,30 @@ oracle = html.Div(
                                         "font-size": "150%",
                                         "margin-left": "auto",
                                         "margin-right": "auto",
-                                        }
+                                    }
                                     ),
+                        html.P("""\
+                                Our prediction models on this page use machine learning to train the United States 
+                                time series data for confirmed cases against the data for recoveries and deaths 
+                                in two separate data frames.  
+                                The prediction line, shown and demarcated in the legend, gives a 
+                                representation for the most probable ratio of deaths and recoveries 
+                                (in the model for recoveries) for any number of confirmed cases and 
+                                it is shown against the line representing a sample of the actual cases 
+                                from the dataset that we used. The models to below takes the data from the what
+                                is observed in the model above, particularly those dealing with confirmed cases over
+                                deaths in the US and extends the outlook to a particular country from every continent.
+                                """,
+                                   style={'border': '4mm ridge rgba(144, 96, 181,.6)',
+                                          'outline': '0.5rem rgba(237, 245, 122,.7)',
+                                          'font-family': 'Goudy Old Style, Garamond, Big Caslon, Times New Roman, serif',
+                                          'font-size': '18px',
+                                          'font-style': 'normal',
+                                          'font-variant': 'small-caps',
+                                          'font-weight': '700',
+                                          'line-height': '20px',
+                                          'padding': '1rem'}
+                                ),
                         dbc.Col(
                             [
                                 dcc.Dropdown(
@@ -6087,15 +6158,13 @@ def render_page_content(pathname):
         ]
     )
 
+
 @app.callback(
-    Output("popover", "is_open"),
-    [Input("popover-target", "n_clicks")],
-    [State("popover", "is_open")],
+    Output("auto-toast", "is_open"), [Input("auto-toast-toggle", "n_clicks")]
 )
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
+def open_toast(n):
+    return True
+
 
 @app.callback(
     Output("map", "figure"),
