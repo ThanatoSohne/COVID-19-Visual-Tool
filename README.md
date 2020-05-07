@@ -73,9 +73,11 @@ a stacked bar graph, a table showing the web scraped information, and a density 
 ![Global Cluster Map](https://i.imgur.com/0rB9Xio.jpg)
 
 ###### 3D Molecular Viewer
+Our molecular viewer is Javascript built and allows the user to view two particular types of SARS-CoV-2 proteins whose PDBs were obtained from the [RCSB Protein Data Bank](https://www.rcsb.org/). The two proteins in question are that of [5RE4](https://www.rcsb.org/structure/5RE4) and [6VXX](https://www.rcsb.org/structure/6VXX). The viewer is interactive and allows the user to not only manipulate it but also allows them to render different views after choosing from the options above the viewer.
 ![3D Molecular Viewer](https://i.imgur.com/EKSeMPr.jpg)
 
 ###### Prediction Model
+The prediction models on this page deal with both the US and with particular countries from each one of the continents. The [dataset](https://github.com/datasets/covid-19) used to train these models came from an open source [GitHub Repo](https://github.com/datasets). 
 ![Prediction Models](https://i.imgur.com/ZvupAar.jpg)
 
 
