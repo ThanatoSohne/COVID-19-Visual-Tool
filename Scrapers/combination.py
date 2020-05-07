@@ -288,22 +288,22 @@ def arScrape():
                     take = p.get_text()
                     hold.append(take)
     
-        if (hold[75].split('\n')[1]) == 'Arkansas' and (hold[150].split('\n')[1]) == 'Missing county information':
+        if (hold[78].split('\n')[1]) == 'Arkansas' and (hold[153].split('\n')[1]) == 'Missing county information':
             
             file = open(csvfile, "w")
             file.write(headers)
             
-            for h in hold[75:150]:
+            for h in hold[78:153]:
                 take = h.split('\n')
                 file.write(take[1] + "," + ar + "," + fips.get_county_fips(take[1], state = ar) + ","
                            + str(geocoder.opencage(h.split('\n')[1] + "," + ar, key='').latlng).strip('[]') 
                            +  "," + take[3].replace(',','') + "," + take[5].replace(',','') + "," + take[7].replace(',','') +"\n")
             
-            file.write(hold[150].split('\n')[1] + "," + ar +  "," + fips.get_state_fips(ar) + ","
+            file.write(hold[153].split('\n')[1] + "," + ar +  "," + fips.get_state_fips(ar) + ","
                        + str(geocoder.opencage(ar, key='').latlng).strip('[]') 
-                       +","+ hold[150].split('\n')[3].replace(',','') + "," 
-                       + hold[150].split('\n')[5].replace(',','') + "," 
-                       + hold[150].split('\n')[7].replace(',','') +"\n")
+                       +","+ hold[153].split('\n')[3].replace(',','') + "," 
+                       + hold[153].split('\n')[5].replace(',','') + "," 
+                       + hold[153].split('\n')[7].replace(',','') +"\n")
                 
             file.close()
             
@@ -349,7 +349,7 @@ def aSamScrape():
                 take = p.get_text()
                 hold.append(take)
                 
-        amSam = hold[118].split('\n')
+        amSam = hold[120].split('\n')
         
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
@@ -405,18 +405,18 @@ def azScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (hold[145].split('\n')[1]) == 'Apache' and (hold[159].split('\n')[1]) == 'Yuma':
+        if (hold[149].split('\n')[1]) == 'Apache' and (hold[163].split('\n')[1]) == 'Yuma':
         
             file = open(csvfile, "w")
             file.write(headers)
             
-            for h in hold[145:160]:
+            for h in hold[149:163]:
                 take = h.split('\n')
                 file.write(take[1] + "," + az + "," 
                            + str(fips.get_county_fips(take[1], state = az)).strip() + "," 
                            + str(geocoder.opencage(take[1] + "," + az, key='').latlng).strip('[]') + "," 
                            + take[3].replace(',','') + "," 
-                           + take[5].replace(',','').replace('–','0') + "\n")
+                           + take[5].replace(',','').replace('–','0').strip('< ') + "\n")
                     
             file.close()
             
@@ -665,7 +665,7 @@ def dcScrape():
                 take = p.get_text()
                 hold.append(take)
     
-        capital = hold[125].split('\n')
+        capital = hold[127].split('\n')
         
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
@@ -703,7 +703,7 @@ def deScrape():
         deClient.close()
         
         #Narrow down the parse to the section that is most pertinent 
-        tables = site_parse.find("div", {"class": "mw-parser-output"}).findAll('tbody')[4]
+        tables = site_parse.findAll("div", {"class":"tp-container"})[0]
         pull = tables.findAll('td')
         
         de = "DELAWARE"
@@ -793,12 +793,12 @@ def flScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (hold[161].split('\n')[1]) == 'Alachua' and (hold[227].split('\n')[1]) == 'Washington':
+        if (hold[165].split('\n')[1]) == 'Alachua' and (hold[231].split('\n')[1]) == 'Washington':
         
             file = open(csvfile, "w")
             file.write(headers)
                 
-            for h in hold[161:228]:
+            for h in hold[165:232]:
                 take = h.split('\n')
                 file.write(take[1] + "," + fl + "," 
                            + str(fips.get_county_fips(take[1], state = fl)).strip() + ","
@@ -806,13 +806,13 @@ def flScrape():
                            + take[3].replace(',','').replace('–','0') + "," 
                            + take[5].replace(',','').replace('–','0') + "," 
                            + take[7].replace(',','').replace('–','0') +"\n")
-            file.write(hold[228].split('\n')[1] + "," + fl + "," 
+            file.write(hold[232].split('\n')[1] + "," + fl + "," 
                        + str(fips.get_state_fips(fl)).strip() + "," 
                        + str(liegen.geocode(fl).latitude) + "," 
                        + str(liegen.geocode(fl).longitude) + "," 
-                       + hold[228].split('\n')[3].replace(',','').replace('–','0') + "," 
-                       + hold[228].split('\n')[5].replace(',','').replace('–','0') + "," 
-                       + hold[228].split('\n')[7].replace(',','').replace('–','0') +"\n")
+                       + hold[232].split('\n')[3].replace(',','').replace('–','0') + "," 
+                       + hold[232].split('\n')[5].replace(',','').replace('–','0') + "," 
+                       + hold[232].split('\n')[7].replace(',','').replace('–','0') +"\n")
             
             file.close()
             
@@ -901,10 +901,10 @@ def guScrape():
                 hold.append(take)
     
         gu = "GUAM"
-        guam = hold[128].split('\n')
+        guam = hold[130].split('\n')
         
         mp = "NORTHERN MARIANA ISLANDS"
-        mariana = hold[153].split('\n')
+        mariana = hold[155].split('\n')
         
         #Uses geocode API that grabs latitude and longitude. According to API's 
         #policy, you must use a sleep function to ensure that you are giving their
@@ -1121,12 +1121,12 @@ def ilScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (hold[89].split('\n')[1]) == 'Adams' and (hold[185].split('\n')[1]) == 'Woodford':
+        if (hold[91].split('\n')[1]) == 'Adams' and (hold[187].split('\n')[1]) == 'Woodford':
         
             file = open(csvfile, "w")
             file.write(headers)
                         
-            for h in hold[89:104]:
+            for h in hold[91:106]:
                 take = h.split('\n')
                 file.write(take[1] + "," + il + "," 
                            + str(fips.get_county_fips(take[1], state=il)).strip() + ","
@@ -1135,14 +1135,14 @@ def ilScrape():
                            + take[5].replace(',','') + "," 
                            + take[7].replace(',','').replace('–','0') + "\n")
             #Cook County has some values that needs fixing... use split to do so
-            file.write(hold[104].split('\n')[1] + "," + il + "," 
-                       + str(fips.get_county_fips(hold[104].split('\n')[1], il)).strip() + "," 
-                       + str(geocoder.opencage(hold[104].split('\n')[1], key='').latlng).strip('[]') + "," 
-                       + hold[104].split('\n')[3].replace(',','') + "," 
-                       + hold[104].split('\n')[5].replace(',','') + "," 
-                       + hold[104].split('\n')[7].replace(',','').split(']')[1].split('[')[0].strip() + "\n")
+            file.write(hold[106].split('\n')[1] + "," + il + "," 
+                       + str(fips.get_county_fips(hold[106].split('\n')[1], il)).strip() + "," 
+                       + str(geocoder.opencage(hold[106].split('\n')[1], key='').latlng).strip('[]') + "," 
+                       + hold[106].split('\n')[3].replace(',','') + "," 
+                       + hold[106].split('\n')[5].replace(',','') + "," 
+                       + hold[106].split('\n')[7].replace(',','').split(']')[1].split('[')[0].strip() + "\n")
             
-            for h in hold[104:186]:
+            for h in hold[107:188]:
                 take = h.split('\n')
                 file.write(take[1] + "," + il + "," 
                            + str(fips.get_county_fips(take[1], state=il)).strip() + ","
@@ -1193,17 +1193,17 @@ def inScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (hold[78].split('\n')[1]) == 'Adams' and (hold[169].split('\n')[1]) == 'Whitley':
+        if (hold[80].split('\n')[1]) == 'Adams' and (hold[171].split('\n')[1]) == 'Whitley':
         
             file = open(csvfile, "w")
             file.write(headers)
                 
-            for h in hold[78:170]:
+            for h in hold[80:172]:
                 take = h.split('\n')
                 file.write(take[1] + "," + inD + "," + str(fips.get_county_fips(take[1],state=inD)).strip() + ","
                            + str(geocoder.opencage(take[1] + co + "," + inD, key='').latlng).strip('[]') 
-                           + "," + take[2].replace(',','').replace('–','0') 
-                           + "," + take[3].replace(',','').replace('–','0') + "\n")        
+                           + "," + take[3].replace(',','').replace('–','0') 
+                           + "," + take[5].replace(',','').replace('–','0') + "\n")        
             file.close()
             
             counter += 1
@@ -1246,12 +1246,12 @@ def ioScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended        
-        if (hold[78].split('\n')[1]) == 'Adair' and (hold[176].split('\n')[1]) == 'Wright':
+        if (hold[80].split('\n')[1]) == 'Adair' and (hold[178].split('\n')[1]) == 'Wright':
     
             file = open(csvfile, "w")
             file.write(headers)
         
-            for h in hold[78:177]:
+            for h in hold[80:179]:
                 take = h.split('\n')
                 file.write(take[1] + "," + io + "," + str(fips.get_county_fips(take[1],state=io)).strip() + "," 
                            + str(geocoder.opencage(take[1] + co + "," + io, key='').latlng).strip('[]') 
@@ -1301,16 +1301,16 @@ def kaScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (hold[92].split('\n')[1]) == 'Allen' and (hold[196].split('\n')[1]) == 'Wyandotte':
+        if (hold[94].split('\n')[1]) == 'Allen' and (hold[198].split('\n')[1]) == 'Wyandotte':
            
             file = open(csvfile, "w")
             file.write(headers)
             
-            for h in hold[92:197]:
+            for h in hold[94:199]:
                 take = h.split('\n')
                 file.write(take[1] + "," + ka + "," + str(fips.get_county_fips(take[1],state=ka)).strip() + ","
                            + str(geocoder.opencage(take[1] + co + "," + ka, key='').latlng).strip('[]') + "," 
-                           + take[3].replace('–','0').replace(',','').split('[')[0] + "," 
+                           + take[3].replace('–','0').replace(',','').split(' (')[0] + "," 
                            + take[5].replace('–','0').replace(',','').split('[')[0] + "," 
                            + take[7].replace('–','0').replace(',','').split('[')[0] + "\n")        
             file.close()
@@ -1346,7 +1346,7 @@ def kyScrape():
     
         #CSV file name and header
         csvfile = "COVID-19_cases_kyNews.csv"
-        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths,Recoveries\n"
+        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths\n"
     
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
@@ -1359,7 +1359,7 @@ def kyScrape():
             for a in attr[1:]:
                 file.write(a.get('subregion') + "," + ky + "," + str(fips.get_county_fips(a.get('subregion'), state=ky)).strip() + ","
                            + str(geocoder.opencage(a.get('subregion') + ", " + ky, key='').latlng).strip('[]') + "," 
-                           + str(a.get('cases')[-1:]).strip('[]') + "," + str(a.get('deaths')[-1:]).strip('[]') + "," + str(a.get('recovered')[-1:]).strip('[]') + "\n")
+                           + str(a.get('cases')[-1:]).strip('[]') + "," + str(a.get('deaths')[-1:]).strip('[]')  + "\n")
                 
             file.close()
             
@@ -1389,7 +1389,7 @@ def laScrape():
         
         #CSV file name and header
         csvfile = "COVID-19_cases_laWiki.csv"
-        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths\n"
+        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths,Recoveries\n"
         
         #Hold all of the table's information into an easy to dissect list
         hold = []
@@ -1399,21 +1399,50 @@ def laScrape():
                     take = p.get_text()
                     hold.append(take)
         
+        desoto = hold[155].split('\n')
+        des_fips = '22031'
+        lasalle = hold[169].split('\n')
+        las_fips = '22059'
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended    
-        if (hold[137].split('\n')[1]) == 'Acadia' and (hold[200].split('\n')[1]) == 'Winn':
+        if (hold[140].split('\n')[1]) == 'Acadia' and (hold[203].split('\n')[1]) == 'Winn':
                 
             file = open(csvfile, "w")
             file.write(headers)
             
-            for h in hold[137:201]:
+            for h in hold[140:155]:
                 take = h.split('\n')
                 file.write(take[1] + "," + la + "," + str(fips.get_county_fips(take[1],state=la)).strip() + ","
-                           + str(geocoder.opencage(take[1] + "," + la, key='').latlng).strip('[]') 
-                           + "," + take[5].replace(',','') + "," 
-                           + take[7].replace(',','') + "\n")
-                    
+                           + str(geocoder.opencage(take[1] + "," + la, key='').latlng).strip('[]') + "," 
+                           + take[3].replace(',','').replace('–','0') + ","
+                           + take[5].replace(',','').replace('–','0') + "," 
+                           + take[7].replace(',','').replace('–','0') + "\n")
+            file.write(desoto[1] + "," + la + "," + des_fips + ","
+                           + str(geocoder.opencage(desoto[1] + "," + la, key='').latlng).strip('[]') + "," 
+                           + desoto[3].replace(',','').replace('–','0') + ","
+                           + desoto[5].replace(',','').replace('–','0') + "," 
+                           + desoto[7].replace(',','').replace('–','0') + "\n")
+            for h in hold[156:169]:
+                take = h.split('\n')
+                file.write(take[1] + "," + la + "," + str(fips.get_county_fips(take[1],state=la)).strip() + ","
+                           + str(geocoder.opencage(take[1] + "," + la, key='').latlng).strip('[]') + "," 
+                           + take[3].replace(',','').replace('–','0') + ","
+                           + take[5].replace(',','').replace('–','0') + "," 
+                           + take[7].replace(',','').replace('–','0') + "\n")
+            file.write(lasalle[1] + "," + la + "," + las_fips + ","
+                           + str(geocoder.opencage(lasalle[1] + "," + la, key='').latlng).strip('[]') + "," 
+                           + lasalle[3].replace(',','').replace('–','0') + ","
+                           + lasalle[5].replace(',','').replace('–','0') + "," 
+                           + lasalle[7].replace(',','').replace('–','0') + "\n")
+            for h in hold[170:204]:
+                take = h.split('\n')
+                file.write(take[1] + "," + la + "," + str(fips.get_county_fips(take[1],state=la)).strip() + ","
+                           + str(geocoder.opencage(take[1] + "," + la, key='').latlng).strip('[]') + "," 
+                           + take[3].replace(',','').replace('–','0') + ","
+                           + take[5].replace(',','').replace('–','0') + "," 
+                           + take[7].replace(',','').replace('–','0') + "\n")
+
             file.close()
             
             counter += 1
@@ -1497,7 +1526,7 @@ def mdScrape():
         
         #CSV file name and header
         csvfile = "COVID-19_cases_mdWiki.csv"
-        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths,Recoveries\n"
+        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths\n"
     
         #Uses geocode API that grabs latitude and longitude. According to API's 
         #policy, you must use a sleep function to ensure that you are giving their
@@ -1523,29 +1552,28 @@ def mdScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (hold[80].split('\n')[1]) == 'Allegany' and (hold[104].split('\n')[1]) == 'Unknown' and holdDC[125].split('\n')[3] == "District of Columbia":
+        if (hold[82].split('\n')[1]) == 'Allegany' and (hold[106].split('\n')[1]) == 'Unknown' and holdDC[127].split('\n')[3] == "District of Columbia":
                     
             file = open(csvfile, "w")
             file.write(headers)
                 
-            for h in hold[80:104]:
+            for h in hold[82:106]:
                 take = h.split('\n')
                 file.write(take[1] + "," + md + "," + str(fips.get_county_fips(take[1],state=md)).strip() + ","
                            + str(geocoder.opencage(take[1] + co + "," + md, key='').latlng).strip('[]') + "," 
                            + take[3].replace(',','') + "," 
                            + take[5].replace(',','') + "\n")
                 
-            file.write(hold[104].split('\n')[1] + "," + md + "," + str(fips.get_state_fips(md)).strip() + "," + str(liegen.geocode(md).latitude) + "," 
+            file.write(hold[106].split('\n')[1] + "," + md + "," + str(fips.get_state_fips(md)).strip() + "," + str(liegen.geocode(md).latitude) + "," 
                        + str(liegen.geocode(md).longitude) + "," 
-                       + hold[104].split('\n')[3].replace(',','') + "," 
-                       + hold[104].split('\n')[5].replace(',','') + "\n")
+                       + hold[106].split('\n')[3].replace(',','') + "," 
+                       + hold[106].split('\n')[5].replace(',','') + "\n")
             
-            file.write(holdDC[125].split('\n')[3] + "," + dc + "," 
+            file.write(holdDC[127].split('\n')[3] + "," + dc + "," 
                        + str(fips.get_county_fips("Washington", state= "DC")).strip() + "," 
                        + str(dcGeo.latitude) + "," + str(dcGeo.longitude) + "," 
-                       + holdDC[125].split('\n')[5].replace(',','')+ "," 
-                       + holdDC[125].split('\n')[7].replace(',','') + "," 
-                       + holdDC[125].split('\n')[9].replace(',','') + "\n")
+                       + holdDC[127].split('\n')[5].replace(',','')+ "," 
+                       + holdDC[127].split('\n')[7].replace(',','') + "\n")
             
             file.close()
             
@@ -1936,7 +1964,7 @@ def mnScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if hold[0] == 'Aitkin' and hold[240] == 'Yellow Medicine':    
+        if hold[0] == 'Aitkin' and hold[243] == 'Yellow Medicine':    
             
             file = open(csvfile, "w")
             file.write(headers)
@@ -2238,6 +2266,10 @@ def mnScrape():
             file.write(hold[240] + "," + mn + ","  + str(fips.get_county_fips(hold[240],state=mn)).strip() + ","
                        + str(geocoder.opencage(hold[240] + co + "," + mn, key='').latlng).strip('[]') + "," + hold[241].replace(',','') 
                        + "," + hold[242].replace(',','') +"\n")
+            file.write(hold[243] + "," + mn + ","  + str(fips.get_county_fips(hold[243],state=mn)).strip() + ","
+                       + str(geocoder.opencage(hold[243] + co + "," + mn, key='').latlng).strip('[]') + "," + hold[244].replace(',','') 
+                       + "," + hold[245].replace(',','') +"\n")
+
             
             file.close()
             
@@ -2341,7 +2373,7 @@ def mpScrape():
                     take = p.get_text()
                     hold.append(take)
     
-        nmp = hold[153].split('\n')
+        nmp = hold[155].split('\n')
     
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
@@ -2436,19 +2468,18 @@ def mtScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if tags[0].find('td').text.split('\n')[0] == 'Beaverhead' and tags[31].find('td').text.split('\n')[0] == 'Total':
+        if tags[0].find('td').text == 'Beaverhead' and tags[30].find('td').text == 'Total':
         
             file = open(csvfile, "w")
             file.write(headers)
             
-            for t in tags[:31]:
+            for t in tags[:30]:
                 pull = t.findAll("td")
-                locale = geocoder.opencage(pull[0].text.split('\n')[0] + co + "," + mt, key='')
-                file.write(pull[0].text.split('\n')[0] + "," + mt + "," 
-                           + str(fips.get_county_fips(pull[0].text.split('\n')[0], state=mt)).strip() 
+                locale = geocoder.opencage(pull[0].text + co + "," + mt, key='')
+                file.write(pull[0].text + "," + mt + "," 
+                           + str(fips.get_county_fips(pull[0].text, state=mt)).strip() 
                            + "," + str(locale.latlng).strip('[]') + "," 
-                           + pull[1].text.split('\n')[0].replace('\xa0','0').replace(',','') 
-                           + "," + pull[2].text.split('\n')[0].replace('\xa0','0').replace(',','') + "\n")
+                           + pull[1].text + "," + pull[2].text + "\n")
                 
             file.close()
             
@@ -2526,7 +2557,7 @@ def ndScrape():
         
         #CSV file name and header
         csvfile = "COVID-19_cases_ndWiki.csv"
-        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths\n"
+        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths,Recoveries\n"
         
         #Hold all of the table's information into an easy to dissect list
         hold = []
@@ -2539,19 +2570,20 @@ def ndScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if hold[72].split('\n')[1] == 'Adams' and hold[124].split('\n')[1] == 'Williams':
+        if hold[76].split('\n')[1] == 'Adams' and hold[128].split('\n')[1] == 'Williams':
     
             file = open(csvfile, "w")
             file.write(headers)
             
-            for h in hold[72:125]:
+            for h in hold[76:129]:
                 locale = geocoder.opencage(h.split('\n')[1] + co + "," + nd, key='')
                 take = h.split('\n')
                 file.write(take[1] + "," + nd + "," 
                            + str(fips.get_county_fips(take[1],state=nd)).strip() + "," 
                            + str(locale.latlng).strip('[]') + "," 
-                           + take[3].replace(',','') + ","
-                           + take[5].replace(',','') + "\n")
+                           + take[3].replace(',','').replace('–','0') + ","
+                           + take[5].replace(',','').replace('–','0') + ","
+                           + take[7].replace(',','').replace('–','0') + "\n")
             
             file.close()
             
@@ -2720,18 +2752,18 @@ def njScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended       
-        if (hold[82].split('\n')[1]) == 'Atlantic' and (hold[102].split('\n')[1]) == 'Warren':
+        if (hold[84].split('\n')[1]) == 'Atlantic' and (hold[104].split('\n')[1]) == 'Warren':
                 
             file = open(csvfile, "w")
             file.write(headers)
             
-            for h in hold[82:103]:
+            for h in hold[84:105]:
                 take = h.split('\n')
                 locale = geocoder.opencage(take[1] + co + "," + nj, key='')
                 file.write(take[1] + "," + nj + "," + str(fips.get_county_fips(take[1], state=nj)).strip() + "," + str(locale.latlng).strip('[]') + "," 
-                           + take[3].replace(',','') + "," 
-                           + take[5].replace(',','') + "," 
-                           + take[7].replace(',','') + "\n")
+                           + take[3].replace(',','').replace('–','0') + "," 
+                           + take[5].replace(',','').replace('–','0') + "," 
+                           + take[7].replace(',','').replace('–','0') + "\n")
             
 #            file.write(hold[101].split('\n')[1] + "," + nj + "," + str(fips.get_state_fips(nj)).strip() + "," + str(liegen.geocode(nj).latitude) + "," 
 #                       + str(liegen.geocode(nj).longitude) + "," 
@@ -2780,12 +2812,12 @@ def nmScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (hold[74].split('\n')[1]) == 'Bernalillo' and (hold[106].split('\n')[1]) == 'Valencia':
+        if (hold[76].split('\n')[1]) == 'Bernalillo' and (hold[108].split('\n')[1]) == 'Valencia':
     
             file = open(csvfile, "w")
             file.write(headers)
             
-            for h in hold[74:81]:
+            for h in hold[76:83]:
                 take = h.split('\n')
                 locale = geocoder.opencage(take[1] + "," + nm, key='')
                 file.write(take[1] + "," + nm + "," + str(fips.get_county_fips(take[1],state=nm)).strip() + "," 
@@ -2795,10 +2827,10 @@ def nmScrape():
                 
             file.write("Dona Ana" + "," + nm + "," + "35013" 
                        + "," + str(geocoder.opencage("Dona Ana County" + ", " + nm, key='').latlng).strip('[]') + "," 
-                       + hold[81].split('\n')[3].replace(',','') + "," 
-                       + hold[81].split('\n')[5].replace(',','') + "\n")
+                       + hold[83].split('\n')[3].replace(',','') + "," 
+                       + hold[83].split('\n')[5].replace(',','') + "\n")
             
-            for h in hold[82:107]:
+            for h in hold[84:109]:
                 take = h.split('\n')
                 locale = geocoder.opencage(take[1] + "," + nm, key='')
                 file.write(take[1] + "," + nm + "," + str(fips.get_county_fips(take[1],state=nm)).strip() + "," 
@@ -2840,19 +2872,24 @@ def nvScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (tags[0].get_text().split(': ')[0].strip()) == 'Clark' and (tags[11].get_text().split(': ')[0].strip()) == 'White Pine':
+        if (tags[0].get_text().split(' ')[1].strip()) == 'Clark':
     
             file = open(csvfile, "w")
             file.write(headers)
             
-            for t in range(0,len(tags)):
-                locale = liegen.geocode(tags[t].get_text().split(': ')[0].strip() + co + "," + nv)
-                catch_TimeOut(tags[t].get_text().split(': ')[0].strip() + co + "," + nv)
-                file.write(tags[t].get_text().split(': ')[0].strip() + "," + nv + "," 
-                           + str(fips.get_county_fips(tags[t].get_text().split(': ')[0].strip(),state=nv)).strip() + "," 
+            for t in range(0,(len(tags)-1)):
+                locale = liegen.geocode(tags[t].get_text().split(' ')[1].strip() + co + "," + nv)
+                catch_TimeOut(tags[t].get_text().split(' ')[1].strip() + co + "," + nv)
+                file.write(tags[t].get_text().split(' ')[1].strip() + "," + nv + "," 
+                           + str(fips.get_county_fips(tags[t].get_text().split(' ')[1].strip(),state=nv)).strip() + "," 
                            + str(locale.latitude) + "," + str(locale.longitude) + ","
-                           + tags[t].get_text().split(': ')[1].strip().replace(',','') + "\n")
+                           + tags[t].get_text().split(' ')[0].strip().replace(',','') + "\n")
                 sleep(1)
+            file.write("White Pine" + "," + nv + "," 
+                       + str(fips.get_county_fips("White Pine",state=nv)).strip() + "," 
+                       + str(liegen.geocode("White Pine" + co + ", " + nv).latitude) + "," 
+                       + str(liegen.geocode("White Pine" + co + ", " + nv).longitude) + ","
+                       + tags[-1].get_text().split(' ')[0].strip().replace(',','') + "\n")
             
             file.close()
              
@@ -2923,8 +2960,9 @@ def nyScrape():
                 file.write(take[1].split('[')[0] + "," + ny + "," 
                            + str(fips.get_county_fips(take[1].split('[')[0],state=ny)).strip() + "," 
                            + str(locale.latlng).strip('[]') + "," 
-                           + take[3].split('[')[0].replace(',','') + "," + take[5].replace(',','')
-                           + "," + take[7].replace(',','') + "\n")
+                           + take[3].split('[')[0].replace(',','').replace('–','0') + "," 
+                           + take[5].replace(',','').replace('–','0') + "," 
+                           + take[7].replace(',','').replace('–','0') + "\n")
                 
             bronx = liegen.geocode(brnx + "," + ny)
             file.write(brnx + "," + ny + "," + str(fips.get_county_fips(brnx,state=ny)).strip() + "," + str(bronx.latitude)
@@ -2988,12 +3026,12 @@ def ohScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (hold[76].split('\n')[1]) == 'Adams' and (hold[163].split('\n')[1]) == 'Wyandot':
+        if (hold[78].split('\n')[1]) == 'Adams' and (hold[165].split('\n')[1]) == 'Wyandot':
                     
             file = open(csvfile, "w")
             file.write(headers)
             
-            for h in hold[76:164]:
+            for h in hold[78:166]:
                 take = h.split('\n')
                 locale = geocoder.opencage(take[1] + co + "," + oh, key='')
                 file.write(take[1].split('[')[0] + "," + oh + "," + str(fips.get_county_fips(take[1],state=oh)).strip() + "," 
@@ -3091,7 +3129,7 @@ def orScrape():
                 locale = geocoder.opencage(pull[0].text.strip() + co + "," + orG, key='')
                 file.write(pull[0].text.strip() + "," + orG + "," + str(fips.get_county_fips(pull[0].text,state=orG)).strip() + "," 
                            + str(locale.latlng).strip('[]') + ","
-                           + pull[1].text + "," + pull[2].text + "\n")
+                           + pull[1].text.strip() + "," + pull[2].text.strip() + "\n")
             
             file.close()
             
@@ -3178,97 +3216,150 @@ def prScrape():
                     take = p.get_text()
                     hold.append(take)
         
-        #Break the list into the separate regions of Puerto Rico
-        arec =      hold[70].split('\n')
-        baya =      hold[71].split('\n')
-        caguas =    hold[72].split('\n')
-        faja =      hold[73].split('\n')
-        maya =      hold[74].split('\n')
-        metro =     hold[75].split('\n')
-        ponce =     hold[76].split('\n')
-        usa =       hold[77].split('\n')
-        na =        hold[78].split('\n')
+#        #Break the list into the separate regions of Puerto Rico
+#        arec =      hold[70].split('\n')
+#        baya =      hold[71].split('\n')
+#        caguas =    hold[72].split('\n')
+#        faja =      hold[73].split('\n')
+#        maya =      hold[74].split('\n')
+#        metro =     hold[75].split('\n')
+#        ponce =     hold[76].split('\n')
+#        usa =       hold[77].split('\n')
+#        na =        hold[78].split('\n')
     
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (arec[1]) == 'Arecibo' and (na[1].split('[')[0]) == 'Not available':
+        if hold[72].split('\n')[1] == 'Adjuntas' and hold[150].split('\n')[1] == 'Unknown':
                     
             file = open(csvfile, "w")
             file.write(headers)
-                        
-            aLocale = liegen.geocode(arec[1] + ", PR")
             
-            file.write(arec[1] + "," + pr + "," 
-                       + str(fips.get_county_fips(arec[1],state=pr)).strip() + "," 
-                       + str(aLocale.latitude)
-                       + "," + str(aLocale.longitude) + "," 
-                       + arec[5] + "\n")
-            sleep(1)
-            
-            bLocale = liegen.geocode(baya[1] + ", PR")
-            
-            file.write(baya[1] + "," + pr + "," 
-                       + str(fips.get_county_fips(baya[1],state=pr)).strip() + "," 
-                       + str(bLocale.latitude)
-                       + "," + str(bLocale.longitude) + "," 
-                       + baya[5] + "\n")
-            sleep(1)
-            
-            cLocale = liegen.geocode(caguas[1] + ", PR")
-            
-            file.write(caguas[1] + "," + pr + "," 
-                       + str(fips.get_county_fips(caguas[1],state=pr)).strip() + "," 
-                       + str(cLocale.latitude) + "," 
-                       + str(cLocale.longitude) + "," 
-                       + caguas[5] + "\n")
-            sleep(1)
-            
-            fLocale = liegen.geocode(faja[1] + ", PR")
-            
-            file.write(faja[1] + "," + pr + "," 
-                       + str(fips.get_county_fips(faja[1],state=pr)).strip() + "," 
-                       + str(fLocale.latitude) + "," 
-                       + str(fLocale.longitude) + "," 
-                       + faja[5] + "\n")
-            sleep(1)
-            
-            maLocale = liegen.geocode(maya[1] + ", PR")
-            
-            file.write(maya[1] + "," + pr + "," + "72097" + ","
-                       + str(maLocale.latitude) + "," 
-                       + str(maLocale.longitude) + "," 
-                       + maya[5] + "\n")
-            sleep(1)
-            
-            meLocale = liegen.geocode("Canovanas, PR")
-            
-            file.write(metro[1].split(' (')[0] + "," + pr + "," 
-                       + str(fips.get_county_fips("Canovanas",state=pr)).strip() + "," 
-                       + str(meLocale.latitude) + "," 
-                       + str(meLocale.longitude) + "," 
-                       + metro[5] + "\n")
-            sleep(1)
-            
-            pLocale = liegen.geocode(ponce[1] + ", PR")
-            
-            file.write(ponce[1] + "," + pr + "," 
-                       + str(fips.get_county_fips(ponce[1],state=pr)).strip() + "," 
-                       + str(pLocale.latitude) + "," 
-                       + str(pLocale.longitude) + "," 
-                       + ponce[5] + "\n")
-            sleep(1)
-            
-            file.write(usa[1] + "," + pr + "," 
-                       + str(fips.get_state_fips(pr)).strip() + "," + ""
-                       + "," + "" + "," + usa[5] + "\n")
-            
-            file.write(na[1].split(' [')[0] + "," + pr + "," 
-                       + str(fips.get_state_fips(pr)).strip() + "," 
-                       + str(liegen.geocode(pr).latitude)
-                       + "," + str(liegen.geocode(pr).longitude) + "," 
-                       + na[5] + "\n")
-            
+            for h in hold[72:77]:
+                take = h.split('\n')
+                locale = geocoder.opencage(take[1] + "," + pr, key='')
+                file.write(take[1] + "," + pr + "," + str(fips.get_county_fips(take[1],state=pr)).strip() + "," 
+                           + str(locale.latlng).strip('[]') + "," 
+                           + take[3].replace(',','') + "\n")
+            #Anasco Mun.
+            file.write("Anasco" + "," + pr + "," + "72011" + "," 
+                       + str(geocoder.opencage(hold[77].split('\n')[1] + "," + pr, key='').latlng).strip('[]') + "," 
+                       + hold[77].split('\n')[3].replace(',','') + "\n")
+            for h in hold[78:88]:
+                take = h.split('\n')
+                locale = geocoder.opencage(take[1] + "," + pr, key='')
+                file.write(take[1] + "," + pr + "," + str(fips.get_county_fips(take[1],state=pr)).strip() + "," 
+                           + str(locale.latlng).strip('[]') + "," 
+                           + take[3].replace(',','') + "\n") 
+            #Catano Mun.
+            file.write("Catano" + "," + pr + "," + "72033" + "," 
+                       + str(geocoder.opencage(hold[88].split('\n')[1] + "," + pr, key='').latlng).strip('[]') + "," 
+                       + hold[88].split('\n')[3].replace(',','') + "\n")
+            for h in hold[89:94]:
+                take = h.split('\n')
+                locale = geocoder.opencage(take[1] + "," + pr, key='')
+                file.write(take[1] + "," + pr + "," + str(fips.get_county_fips(take[1],state=pr)).strip() + "," 
+                           + str(locale.latlng).strip('[]') + "," 
+                           + take[3].replace(',','') + "\n") 
+            #Comerio Mun.
+            file.write("Comerio" + "," + pr + "," + "72045" + "," 
+                       + str(geocoder.opencage(hold[94].split('\n')[1] + "," + pr, key='').latlng).strip('[]') + "," 
+                       + hold[94].split('\n')[3].replace(',','') + "\n")
+            for h in hold[95:100]:
+                take = h.split('\n')
+                locale = geocoder.opencage(take[1] + "," + pr, key='')
+                file.write(take[1] + "," + pr + "," + str(fips.get_county_fips(take[1],state=pr)).strip() + "," 
+                           + str(locale.latlng).strip('[]') + "," 
+                           + take[3].replace(',','') + "\n") 
+            #Guanica Mun.
+            file.write("Guanica" + "," + pr + "," + "72055" + "," 
+                       + str(geocoder.opencage(hold[100].split('\n')[1] + "," + pr, key='').latlng).strip('[]') + "," 
+                       + hold[100].split('\n')[3].replace(',','') + "\n")
+            for h in hold[101:110]:
+                take = h.split('\n')
+                locale = geocoder.opencage(take[1] + "," + pr, key='')
+                file.write(take[1] + "," + pr + "," + str(fips.get_county_fips(take[1],state=pr)).strip() + "," 
+                           + str(locale.latlng).strip('[]') + "," 
+                           + take[3].replace(',','') + "\n") 
+            #Juana Diaz Mun.
+            file.write("Juana Diaz" + "," + pr + "," + "72075" + "," 
+                       + str(geocoder.opencage(hold[110].split('\n')[1] + "," + pr, key='').latlng).strip('[]') + "," 
+                       + hold[110].split('\n')[3].replace(',','') + "\n")
+            for h in hold[111:114]:
+                take = h.split('\n')
+                locale = geocoder.opencage(take[1] + "," + pr, key='')
+                file.write(take[1] + "," + pr + "," + str(fips.get_county_fips(take[1],state=pr)).strip() + "," 
+                           + str(locale.latlng).strip('[]') + "," 
+                           + take[3].replace(',','') + "\n") 
+            #Las Maria Mun.
+            file.write("Las Marias" + "," + pr + "," + "72083" + "," 
+                       + str(geocoder.opencage(hold[114].split('\n')[1] + "," + pr, key='').latlng).strip('[]') + "," 
+                       + hold[114].split('\n')[3].replace(',','') + "\n")
+            file.write(hold[115].split('\n')[1] + "," + pr + "," 
+                       + str(fips.get_county_fips(hold[115].split('\n')[1],state=pr)).strip() + "," 
+                       + str(geocoder.opencage(hold[115].split('\n')[1] + "," + pr, key='').latlng).strip('[]') + "," 
+                       + hold[115].split('\n')[3].replace(',','') + "\n")
+            file.write("Loiza" + "," + pr + "," + "72087" + "," 
+                       + str(geocoder.opencage(hold[116].split('\n')[1] + "," + pr, key='').latlng).strip('[]') + "," 
+                       + hold[116].split('\n')[3].replace(',','') + "\n")
+            file.write(hold[117].split('\n')[1] + "," + pr + "," 
+                       + str(fips.get_county_fips(hold[117].split('\n')[1],state=pr)).strip() + "," 
+                       + str(geocoder.opencage(hold[117].split('\n')[1] + "," + pr, key='').latlng).strip('[]') + "," 
+                       + hold[117].split('\n')[3].replace(',','') + "\n")
+            file.write("Manati" + "," + pr + "," + "72091" + "," 
+                       + str(geocoder.opencage(hold[118].split('\n')[1] + "," + pr, key='').latlng).strip('[]') + "," 
+                       + hold[118].split('\n')[3].replace(',','') + "\n")
+            for h in hold[119:121]:
+                take = h.split('\n')
+                locale = geocoder.opencage(take[1] + "," + pr, key='')
+                file.write(take[1] + "," + pr + "," + str(fips.get_county_fips(take[1],state=pr)).strip() + "," 
+                           + str(locale.latlng).strip('[]') + "," 
+                           + take[3].replace(',','') + "\n") 
+            file.write("Mayaguez" + "," + pr + "," + "72097" + "," 
+                       + str(geocoder.opencage(hold[121].split('\n')[1] + "," + pr, key='').latlng).strip('[]') + "," 
+                       + hold[121].split('\n')[3].replace(',','') + "\n")
+            for h in hold[122:128]:
+                take = h.split('\n')
+                locale = geocoder.opencage(take[1] + "," + pr, key='')
+                file.write(take[1] + "," + pr + "," + str(fips.get_county_fips(take[1],state=pr)).strip() + "," 
+                           + str(locale.latlng).strip('[]') + "," 
+                           + take[3].replace(',','') + "\n") 
+            file.write("Penuelas" + "," + pr + "," + "72111" + "," 
+                       + str(geocoder.opencage(hold[128].split('\n')[1] + "," + pr, key='').latlng).strip('[]') + "," 
+                       + hold[128].split('\n')[3].replace(',','') + "\n")
+            for h in hold[129:132]:
+                take = h.split('\n')
+                locale = geocoder.opencage(take[1] + "," + pr, key='')
+                file.write(take[1] + "," + pr + "," + str(fips.get_county_fips(take[1],state=pr)).strip() + "," 
+                           + str(locale.latlng).strip('[]') + "," 
+                           + take[3].replace(',','') + "\n") 
+            file.write("Rio Grande" + "," + pr + "," + "72119" + "," 
+                       + str(geocoder.opencage(hold[132].split('\n')[1] + "," + pr, key='').latlng).strip('[]') + "," 
+                       + hold[132].split('\n')[3].replace(',','') + "\n")
+            for h in hold[133:135]:
+                take = h.split('\n')
+                locale = geocoder.opencage(take[1] + "," + pr, key='')
+                file.write(take[1] + "," + pr + "," + str(fips.get_county_fips(take[1],state=pr)).strip() + "," 
+                           + str(locale.latlng).strip('[]') + "," 
+                           + take[3].replace(',','') + "\n") 
+            file.write("San German" + "," + pr + "," + "72125" + "," 
+                       + str(geocoder.opencage(hold[135].split('\n')[1] + "," + pr, key='').latlng).strip('[]') + "," 
+                       + hold[135].split('\n')[3].replace(',','') + "\n")
+            for h in hold[136:138]:
+                take = h.split('\n')
+                locale = geocoder.opencage(take[1] + "," + pr, key='')
+                file.write(take[1] + "," + pr + "," + str(fips.get_county_fips(take[1],state=pr)).strip() + "," 
+                           + str(locale.latlng).strip('[]') + "," 
+                           + take[3].replace(',','') + "\n") 
+            file.write("San Sebastian" + "," + pr + "," + "72131" + "," 
+                       + str(geocoder.opencage(hold[138].split('\n')[1] + "," + pr, key='').latlng).strip('[]') + "," 
+                       + hold[138].split('\n')[3].replace(',','') + "\n")
+            for h in hold[139:150]:
+                take = h.split('\n')
+                locale = geocoder.opencage(take[1] + "," + pr, key='')
+                file.write(take[1] + "," + pr + "," + str(fips.get_county_fips(take[1],state=pr)).strip() + "," 
+                           + str(locale.latlng).strip('[]') + "," 
+                           + take[3].replace(',','') + "\n") 
             file.close()
             
             counter += 1
@@ -3419,12 +3510,12 @@ def scScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (hold[75].split('\n')[1]) == 'Abbeville' and (hold[120].split('\n')[1]) == 'York':
+        if (hold[78].split('\n')[1]) == 'Abbeville' and (hold[123].split('\n')[1]) == 'York':
                     
             file = open(csvfile, "w")
             file.write(headers)
             
-            for h in hold[75:121]:
+            for h in hold[78:124]:
                 take = h.split('\n')
                 locale = geocoder.opencage(take[1] + co + "," + sc, key='')
                 file.write(take[1] + "," + sc + "," + str(fips.get_county_fips(take[1],state=sc)).strip() 
@@ -3473,12 +3564,12 @@ def sdScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended     
-        if (hold[72].split('\n')[1]) == 'Aurora' and (hold[137].split('\n')[1]) == 'Ziebach':
+        if (hold[73].split('\n')[1]) == 'Aurora' and (hold[138].split('\n')[1]) == 'Ziebach':
                     
             file = open(csvfile, "w")
             file.write(headers)
             
-            for h in hold[72:138]:
+            for h in hold[73:139]:
                 take = h.split('\n')
                 locale = geocoder.opencage(take[1] + co + "," + sd, key='')
                 file.write(take[1] + "," + sd + "," + str(fips.get_county_fips(take[1],state=sd)).strip() 
@@ -3630,37 +3721,37 @@ def utScrape():
         utClient.close()
         
         #Narrow down the parse to the section that is most pertinent based on counties
-        juab = site_parse.find("div", {"class":"n2-ss-layer n2-ow"}).findAll("div", {"class":"n2-ss-layer n2-ow"})[16]
+        juab = site_parse.find("div", {"class":"n2-ss-layer n2-ow"}).findAll("div", {"class":"n2-ss-layer n2-ow"})[9]
         juabCo = "Juab COunty"
         juabCase = str([int(n) for n in (juab.findAll('p')[0].text.split()) if n.isdigit()][0])
         juabHosp = str([int(n) for n in (juab.findAll('p')[0].text.split()) if n.isdigit()][1])
         juabMort = str([int(n) for n in (juab.findAll('p')[0].text.split()) if n.isdigit()][2])
         juabHope = str([int(n) for n in (juab.findAll('p')[0].text.split()) if n.isdigit()][3])
-        millard = site_parse.find("div", {"class":"n2-ss-layer n2-ow"}).findAll("div", {"class":"n2-ss-layer n2-ow"})[21]
+        millard = site_parse.find("div", {"class":"n2-ss-layer n2-ow"}).findAll("div", {"class":"n2-ss-layer n2-ow"})[11]
         millCo = "Millard County"
         millCase = str([int(n) for n in (millard.findAll('p')[0].text.split()) if n.isdigit()][0])
         millHosp = str([int(n) for n in (millard.findAll('p')[0].text.split()) if n.isdigit()][1])
         millMort = str([int(n) for n in (millard.findAll('p')[0].text.split()) if n.isdigit()][2])
         millHope = str([int(n) for n in (millard.findAll('p')[0].text.split()) if n.isdigit()][3])
-        piute = site_parse.find("div", {"class":"n2-ss-layer n2-ow"}).findAll("div", {"class":"n2-ss-layer n2-ow"})[25]
+        piute = site_parse.find("div", {"class":"n2-ss-layer n2-ow"}).findAll("div", {"class":"n2-ss-layer n2-ow"})[13]
         piuteCo = "Piute County"
         piuteCase = str([int(n) for n in (piute.findAll('p')[0].text.split()) if n.isdigit()][0])
         piuteHosp = str([int(n) for n in (piute.findAll('p')[0].text.split()) if n.isdigit()][1])
         piuteMort = str([int(n) for n in (piute.findAll('p')[0].text.split()) if n.isdigit()][2])
         piuteHope = str([int(n) for n in (piute.findAll('p')[0].text.split()) if n.isdigit()][3])
-        sanpete = site_parse.find("div", {"class":"n2-ss-layer n2-ow"}).findAll("div", {"class":"n2-ss-layer n2-ow"})[30]
+        sanpete = site_parse.find("div", {"class":"n2-ss-layer n2-ow"}).findAll("div", {"class":"n2-ss-layer n2-ow"})[15]
         sanpeteCo = "Sanpete County"
         speteCase = str([int(n) for n in (sanpete.findAll('p')[0].text.split()) if n.isdigit()][0])
         speteHosp = str([int(n) for n in (sanpete.findAll('p')[0].text.split()) if n.isdigit()][1])
         speteMort = str([int(n) for n in (sanpete.findAll('p')[0].text.split()) if n.isdigit()][2])
         speteHope = str([int(n) for n in (sanpete.findAll('p')[0].text.split()) if n.isdigit()][3])
-        sevier = site_parse.find("div", {"class":"n2-ss-layer n2-ow"}).findAll("div", {"class":"n2-ss-layer n2-ow"})[34]
+        sevier = site_parse.find("div", {"class":"n2-ss-layer n2-ow"}).findAll("div", {"class":"n2-ss-layer n2-ow"})[17]
         sevCo = "Sevier County"
         sevCase = str([int(n) for n in (sevier.findAll('p')[0].text.split()) if n.isdigit()][0])
         sevHosp = str([int(n) for n in (sevier.findAll('p')[0].text.split()) if n.isdigit()][1])
         sevMort = str([int(n) for n in (sevier.findAll('p')[0].text.split()) if n.isdigit()][2])
         sevHope = str([int(n) for n in (sevier.findAll('p')[0].text.split()) if n.isdigit()][3])
-        wayne = site_parse.find("div", {"class":"n2-ss-layer n2-ow"}).findAll("div", {"class":"n2-ss-layer n2-ow"})[39]
+        wayne = site_parse.find("div", {"class":"n2-ss-layer n2-ow"}).findAll("div", {"class":"n2-ss-layer n2-ow"})[19]
         wayCo = "Wayne County"
         wayCase = str([int(n) for n in (wayne.findAll('p')[0].text.split()) if n.isdigit()][0])
         wayHosp = str([int(n) for n in (wayne.findAll('p')[0].text.split()) if n.isdigit()][1])
@@ -3760,18 +3851,18 @@ def utScrape():
                     hold.append(take)
         
         #Salt Lake County
-        salt = hold[95].split('\n')
+        salt = hold[97].split('\n')
         saltLake = salt[1]
-        saltCase = salt[3]
-        saltMort = salt[5]
-        saltRec = salt[7]
+        saltCase = salt[3].replace('–','0')
+        saltMort = salt[5].replace('–','0')
+        saltRec = salt[7].replace('–','0')
         
         #San Juan County
-        sanjuan = hold[96].split('\n')
+        sanjuan = hold[98].split('\n')
         sanJ = sanjuan[1]
-        sanCases = sanjuan[3]
-        sanMort = sanjuan[5]
-        sanRec = sanjuan[7]
+        sanCases = sanjuan[3].replace('–','0')
+        sanMort = sanjuan[5].replace('–','0')
+        sanRec = sanjuan[7].replace('–','0')
         
         #Southeast Utah Health District broken into counties
         #Grab and hold the information from the html inside of site_parse (making sure
@@ -3792,47 +3883,47 @@ def utScrape():
         
         #Southwest Utah Health District 
         beaver = "Beaver County"
-        bevCase = hold[78].split('\n')[3]
-        bevMort = hold[78].split('\n')[5]
-        bevRec = hold[78].split('\n')[7]
+        bevCase = hold[80].split('\n')[3].replace('–','0')
+        bevMort = hold[80].split('\n')[5].replace('–','0')
+        bevRec = hold[80].split('\n')[7].replace('–','0')
 
         
         garfield = "Garfield County"
-        garCase = hold[86].split('\n')[3]
-        garMort = hold[86].split('\n')[5]
-        garRec = hold[86].split('\n')[7]
+        garCase = hold[88].split('\n')[3].replace('–','0')
+        garMort = hold[88].split('\n')[5].replace('–','0')
+        garRec = hold[88].split('\n')[7].replace('–','0')
         
         iron = "Iron County"
-        feCase = hold[88].split('\n')[3]
-        feMort = hold[88].split('\n')[5]
-        feRec = hold[88].split('\n')[7]
+        feCase = hold[90].split('\n')[3].replace('–','0')
+        feMort = hold[90].split('\n')[5].replace('–','0')
+        feRec = hold[90].split('\n')[7].replace('–','0')
 
         
         kane = "Kane County"
-        kaneCase = hold[90].split('\n')[3]
-        kaneMort = hold[90].split('\n')[5]
-        kaneRec = hold[90].split('\n')[7]
+        kaneCase = hold[92].split('\n')[3].replace('–','0')
+        kaneMort = hold[92].split('\n')[5].replace('–','0')
+        kaneRec = hold[92].split('\n')[7].replace('–','0')
 
         
         washC = "Washington County"
-        washCase = hold[104].split('\n')[3]
-        washMort = hold[104].split('\n')[5]
-        washRec = hold[104].split('\n')[7]
+        washCase = hold[106].split('\n')[3].replace('–','0')
+        washMort = hold[106].split('\n')[5].replace('–','0')
+        washRec = hold[106].split('\n')[7].replace('–','0')
 
         
         #Summit County 
-        summit = hold[99].split('\n')
+        summit = hold[101].split('\n')
         sumCo = summit[1] + " County"
-        sumCase = summit[3]
-        sumMort = summit[5]
-        sumRec = summit[7]
+        sumCase = summit[3].replace('–','0')
+        sumMort = summit[5].replace('–','0')
+        sumRec = summit[7].replace('–','0')
         
         #Tooele County
-        tooele = hold[100].split('\n')
+        tooele = hold[102].split('\n')
         toolCo = tooele[1] + " County"
-        toolCase = tooele[3]
-        toolMort = tooele[5]
-        toolRec = tooele[7]
+        toolCase = tooele[3].replace('–','0')
+        toolMort = tooele[5].replace('–','0')
+        toolRec = tooele[7].replace('–','0')
         
         #TriCounty Health District broken into counties
         #Grab and hold the information from the html inside of site_parse (making sure
@@ -3860,25 +3951,25 @@ def utScrape():
         daggKhaus = daggett[2].split(": ")[1]
     
         #Utah County
-        utah = hold[102].split('\n')
+        utah = hold[104].split('\n')
         utahCo = utah[1]
-        utahCase = utah[3]
-        utahMort = utah[5]
-        utahRec = utah[7]
+        utahCase = utah[3].replace('–','0')
+        utahMort = utah[5].replace('–','0')
+        utahRec = utah[7].replace('–','0')
         
         #Wasatch County
-        wasa = hold[103].split('\n')
+        wasa = hold[105].split('\n')
         wasaCo = wasa[1] + ' County'
-        wasaCase = wasa[3]
-        wasaMort = wasa[5]
-        wasaRec = wasa[7]
+        wasaCase = wasa[3].replace('–','0')
+        wasaMort = wasa[5].replace('–','0')
+        wasaRec = wasa[7].replace('–','0')
         
         #Weber-Morgan Health District
-        weber = hold[106].split('\n')
+        weber = hold[108].split('\n')
         webCo = weber[1] + ' County'
-        webCase = weber[3]
-        webMort = weber[5]
-        webRec = weber[7]
+        webCase = weber[3].replace('–','0')
+        webMort = weber[5].replace('–','0')
+        webRec = weber[7].replace('–','0')
         webFips = "49057"
         
         ut = "UTAH"
@@ -3945,7 +4036,7 @@ def utScrape():
                        + "," + bevCase + "," + bevMort + "," + bevRec + "," + "" + "," + "" + "\n")
             file.write(garfield + "," + ut + "," + str(fips.get_county_fips(garfield,state=ut)).strip() 
                        + "," + str(geocoder.opencage(garfield + ", " + ut,key='').latlng).strip('[]')
-                       + "," + garCase + "," + garMort + "," + "" + "," + "" + "," + garKhaus + "\n")
+                       + "," + garCase + "," + garMort + "," + "" + "," + "" + "," + "" + "\n")
             file.write(iron + "," + ut + "," + str(fips.get_county_fips(iron,state=ut)).strip() 
                        + "," + str(geocoder.opencage(iron + ", " + ut,key='').latlng).strip('[]')
                        + "," + feCase + "," + feMort + "," + feRec + "," + "" + "," + "" + "\n")
@@ -4234,12 +4325,12 @@ def vtScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended       
-        if (hold[77].split('\n')[1]) == 'Addison' and (hold[91].split('\n')[1]) == 'Unassigned':
+        if (hold[78].split('\n')[1]) == 'Addison' and (hold[92].split('\n')[1]) == 'Unassigned':
     
             file = open(csvfile, "w")
             file.write(headers)
             
-            for h in hold[77:91]:
+            for h in hold[78:92]:
                 take = h.split('\n')
                 locale = liegen.geocode(take[1] + co + "," + vt)
                 catch_TimeOut(take[1] + co + "," + vt)
@@ -4251,13 +4342,13 @@ def vtScrape():
                            + take[7].replace(',','').replace('–','0') + "\n")
                 sleep(1.1)
             
-            file.write(hold[91].split('\n')[1] + "," + vt + "," 
+            file.write(hold[92].split('\n')[1] + "," + vt + "," 
                        + str(fips.get_state_fips(vt)).strip() + "," 
                        + str(liegen.geocode(vt).latitude) + ","
                        + str(liegen.geocode(vt).longitude) + "," 
-                       + hold[91].split('\n')[3].replace(',','') + "," 
-                       + hold[91].split('\n')[5].replace(',','') + "," 
-                       + hold[91].split('\n')[7].replace(',','').replace('n/a','') + "\n")
+                       + hold[92].split('\n')[3].replace(',','') + "," 
+                       + hold[92].split('\n')[5].replace(',','') + "," 
+                       + hold[92].split('\n')[7].replace(',','').replace('n/a','') + "\n")
             
             file.close()
         
@@ -4301,12 +4392,12 @@ def waScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (hold[87].split('\n')[1]) == 'Adams' and (hold[126].split('\n')[1]) == 'Unassigned':
+        if (hold[89].split('\n')[1]) == 'Adams' and (hold[128].split('\n')[1]) == 'Unassigned':
         
             file = open(csvfile, "w")
             file.write(headers)    
         
-            for h in hold[87:126]:
+            for h in hold[89:128]:
                 take = h.split('\n')
                 locale = geocoder.opencage(take[1] + co + "," + wa, key='')
                 file.write(take[1] + "," + wa + "," + str(fips.get_county_fips(take[1],state=wa)).strip() + "," 
@@ -4314,12 +4405,12 @@ def waScrape():
                            + take[3].split('[')[0].replace(',','') 
                            + "," + take[5].split('[')[0].replace(',','') + "\n")
                 
-            file.write(hold[126].split('\n')[1] + "," + wa + "," 
+            file.write(hold[128].split('\n')[1] + "," + wa + "," 
                        + str(fips.get_state_fips(wa)).strip() + "," 
                        + str(liegen.geocode(wa).latitude) + "," 
                        + str(liegen.geocode(wa).longitude) + "," 
-                       + hold[126].split('\n')[3].split('[')[0].replace(',','') + "," 
-                       + hold[126].split('\n')[5].split('[')[0].replace(',','') + "\n")
+                       + hold[128].split('\n')[3].split('[')[0].replace(',','') + "," 
+                       + hold[128].split('\n')[5].split('[')[0].replace(',','') + "\n")
             
             file.close()
             
@@ -4414,12 +4505,12 @@ def wvScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if hold[135].split('\n')[1] == 'Barbour' and hold[189].split('\n')[1] == 'Wyoming':
+        if hold[141].split('\n')[1] == 'Barbour' and hold[195].split('\n')[1] == 'Wyoming':
         
             file = open(csvfile, "w")
             file.write(headers)
             
-            for h in hold[135:190]:
+            for h in hold[141:196]:
                 take = h.split('\n')
                 locale = geocoder.opencage(take[1] + "," + wv, key='')
                 file.write(take[1] + "," + wv + "," + str(fips.get_county_fips(take[1],state=wv)).strip() + ","
@@ -4456,8 +4547,7 @@ def wyScrape():
         
         #CSV file name and header
         csvfile = "COVID-19_cases_wyWiki.csv"
-        headers = "County,State,fips,Latitude,Longitude,Total Cases,Deaths,Recoveries\n"
-        
+        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths,Recoveries\n"
         
         #Hold all of the table's information into an easy to dissect list
         hold = []
@@ -4481,7 +4571,9 @@ def wyScrape():
                 file.write(take[1] + "," + wy + "," 
                            + str(fips.get_county_fips(take[1],state=wy)).strip() + ","
                            + str(locale.latlng).strip('[]') + "," 
-                           + str(int(take[3]) + int(take[5])) + "," + take[11] + "," + take[9] + "\n")
+                           + take[3].strip() + ","
+                           + take[5].strip() + ","
+                           + take[7].strip() + "\n")
             
             file.close()
         
@@ -4496,95 +4588,100 @@ def wyScrape():
 
 def main():
     
-    akScrape()
-    alScrape()
-    arScrape()
-    aSamScrape()
-    azScrape()
-    caScrape()
-    coScrape()
-    ctScrape()
-    dcScrape()
-    deScrape()
-    flScrape()
-    gaScrape()
-    guScrape()
-    hiScrape()
-    idScrape()
-    ilScrape()
-    inScrape()
-    ioScrape()
-    kaScrape()
-    kyScrape()
-    laScrape()
-    maScrape()
-    mdScrape()
-    meScrape()
-    miScrape()
-    mnScrape()
-    moScrape()
-    mpScrape()
-    msScrape()
-    mtScrape()
-    ncScrape()
-    ndScrape()
-    neScrape()
-    nhScrape()
-    njScrape()
-    nmScrape()
-    nvScrape()
-    nyScrape()
-    ohScrape()
-    okScrape()
-    orScrape()
-    paScrape()
-    prScrape()
-    riScrape()
-    scScrape()
-    sdScrape()
-    tnScrape()
-    txScrape()
-    utScrape()
-    vaScrape()
-    viScrape()
-    vtScrape()
-    waScrape()
-    wiScrape()
-    wvScrape()
-    wyScrape()
-    
-    if counter == 56:
-        path = "C:/Users/Erwac/Desktop/COVID-19/COVID-19-Outbreak-Visualization-Tool/Web Scrapers/US States"
-        os.chdir(path)
+    #Runs this on a 24 hour basis... Just comment out if running manually
+    while True:
         
-        csvFile = "csv"
+        akScrape()
+        alScrape()
+        arScrape()
+        aSamScrape()
+        azScrape()
+        caScrape()
+        coScrape()
+        ctScrape()
+        dcScrape()
+        deScrape()
+        flScrape()
+        gaScrape()
+        guScrape()
+        hiScrape()
+        idScrape()
+        ilScrape()
+        inScrape()
+        ioScrape()
+        kaScrape()
+        kyScrape()
+        laScrape()
+        maScrape()
+        mdScrape()
+        meScrape()
+        miScrape()
+        mnScrape()
+        moScrape()
+        mpScrape()
+        msScrape()
+        mtScrape()
+        ncScrape()
+        ndScrape()
+        neScrape()
+        nhScrape()
+        njScrape()
+        nmScrape()
+        nvScrape()
+        nyScrape()
+        ohScrape()
+        okScrape()
+        orScrape()
+        paScrape()
+        prScrape()
+        riScrape()
+        scScrape()
+        sdScrape()
+        tnScrape()
+        txScrape()
+        utScrape()
+        vaScrape()
+        viScrape()
+        vtScrape()
+        waScrape()
+        wiScrape()
+        wvScrape()
+        wyScrape()
         
-        alles_COVID = []
+        if counter == 56:
+            path = "C:/Users/Erwac/Desktop/COVID-19-Visual-Tool/Web Scraped Docs/US States"
+            os.chdir(path)
+            
+            csvFile = "csv"
+            
+            alles_COVID = []
+            
+            alles_COVID = [i for i in glob.glob('COVID-19_*.{}'.format(csvFile))]
+            
+            hold = []
+            
+            for i in alles_COVID:
+                reader = list(csv.reader(open(i)))
+                hold.append(reader)
+            
+            
+            headers = ['County', 'State', 'fips', 'Latitude', 'Longitude', 
+                       'Confirmed Cases', 'Deaths', 'Recoveries', 'Released from Isolation',
+                       'Hospitalized']
+            
+            f = open("combined.csv","w")
+            writer = csv.writer(f)
+            writer.writerow(headers)
+            
+            for col in hold:
+                writer.writerows(col[1:])
         
-        alles_COVID = [i for i in glob.glob('COVID-19_*.{}'.format(csvFile))]
+            f.close()
+        else:
+            print(cl('Not all scrapers compiled properly. Please fix and run again.', 'red'))
         
-        hold = []
-        
-        for i in alles_COVID:
-            reader = list(csv.reader(open(i)))
-            hold.append(reader)
-        
-        
-        headers = ['County', 'State', 'fips', 'Latitude', 'Longitude', 
-                   'Confirmed Cases', 'Deaths', 'Recoveries', 'Released from Isolation',
-                   'Hospitalized']
-        
-        f = open("combined.csv","w")
-        writer = csv.writer(f)
-        writer.writerow(headers)
-        
-        for col in hold:
-            writer.writerows(col[1:])
-    
-        f.close()
-    else:
-        print(cl('Not all scrapers compiled properly. Please fix and run again.', 'red'))
-
+        #24 hours in seconds
+        sleep(86400)
     
 if __name__ == "__main__":
     main()
