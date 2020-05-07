@@ -55,6 +55,7 @@ states = [{'label': 'Alaska', 'value': 'AK'},
           {'label': 'Oklahoma', 'value': 'OK'},
           {'label': 'Oregon', 'value': 'OR'},
           {'label': 'Pennsylvania', 'value': 'PA'},
+          {'label': 'Puerto Rico', 'value': 'PR'},
           {'label': 'Rhode Island', 'value': 'RI'},
           {'label': 'South Carolina', 'value': 'SC'},
           {'label': 'South Dakota', 'value': 'SD'},
@@ -843,7 +844,8 @@ def ctsub():
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases"],
+                        "Latitude", "Longitude", "Confirmed Cases", "Deaths",
+                        "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
@@ -1384,13 +1386,13 @@ def idsub():
         name='Recoveries',
         orientation='h',
         marker=dict(
-            color='rgba(95, 107, 106, 0.6)',
-            line=dict(color='rgba(95, 107, 106, 1.0)', width=3)
+            color='rgba(252, 186, 3, 0.6)',
+            line=dict(color='rgba(252, 186, 3, 1.0)', width=3)
         )
     ))
     idFIG.add_trace(
         go.Densitymapbox(lat=cleanID.Latitude, lon=cleanID.Longitude,
-                         z=cleanID['Confirmed Cases'], radius=25,
+                         z=cleanID['Confirmed Cases'], radius=30,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -1416,8 +1418,8 @@ def idsub():
     )
     idFIG.update_layout(
         mapbox_style="stamen-terrain",
-        mapbox_center_lat=20.9,
-        mapbox_center_lon=-157.1,
+        mapbox_center_lat=44.06,
+        mapbox_center_lon=-114.74,
         mapbox=dict(
             zoom=4.8
         ),
@@ -1470,7 +1472,7 @@ def ilsub():
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
-            color='rgba(59, 82, 105, 0.6)',
+            color='rgba(252, 186, 3, 0.6)',
             line=dict(color='rgba(59, 82, 105, 1.0)', width=3)
         )
     ),
@@ -1498,7 +1500,7 @@ def ilsub():
     ))
     ilFIG.add_trace(
         go.Densitymapbox(lat=cleanIL.Latitude, lon=cleanIL.Longitude,
-                         z=cleanIL['Confirmed Cases'], radius=25,
+                         z=cleanIL['Confirmed Cases'], radius=35,
                          showscale=False, colorscale='rainbow',
                          visible=True),
         row=2, col=2)
@@ -1524,8 +1526,8 @@ def ilsub():
     )
     ilFIG.update_layout(
         mapbox_style="stamen-terrain",
-        mapbox_center_lat=40.01,
-        mapbox_center_lon=-88.3,
+        mapbox_center_lat=40.6,
+        mapbox_center_lon=-89.3,
         mapbox=dict(
             zoom=4.8
         ),
@@ -1758,7 +1760,7 @@ def kamap():
     kaFig = px.choropleth_mapbox(cleanKA, geojson=counties, locations='fips', color='Confirmed Cases',
                                  color_continuous_scale='darkmint', range_color=(0, maxKA),
                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=5.4, center={"lat": 38.541749, "lon": -98.428791},
+                                 zoom=5, center={"lat": 38.541749, "lon": -98.428791},
                                  opacity=0.6, labels={"County": "County"})
 
     kaFig.update_layout(mapbox_style="satellite-streets",
@@ -1920,7 +1922,7 @@ def kysub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
@@ -2213,7 +2215,7 @@ def mdsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
@@ -2378,7 +2380,7 @@ def mimap():
     miFig = px.choropleth_mapbox(cleanMI, geojson=counties, locations='fips', color='Confirmed Cases',
                                  color_continuous_scale='spectral_r', range_color=(0, maxMI),
                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.4, center={"lat": 44.488022, "lon": -84.746015},
+                                 zoom=5.2, center={"lat": 44.488022, "lon": -84.746015},
                                  opacity=0.6, labels={"County": "County"})
 
     miFig.update_layout(mapbox_style="satellite-streets",
@@ -4052,20 +4054,93 @@ def pasub():
 
 
 ##---------------------------PUERTO RICO CHOROPLETH MAP-----------------------------#
-# prDF = pd.read_csv('https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Outbreak-Visualization-Tool/master/Web%20Scrapers/US%20States/COVID-19_cases_prWiki.csv',encoding = 'ISO-8859-1', dtype={'fips':str})
-# prDF.head()
-##Used to round up to a proper max for the range_color function
-# maxPR = (math.ceil(prDF['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-#
-# prFig = px.choropleth_mapbox(prDF, geojson = counties, locations = 'fips', color = 'Confirmed Cases',
-#                             color_continuous_scale = 'tropic', range_color = (0,maxPR),
-#                             hover_data = ['County', 'Confirmed Cases'],
-#                             zoom = 7, center = {"lat": 18.215691, "lon": -66.414655},
-#                             opacity = 0.6, labels = {"County": "Region"})
-#
-# prFig.update_layout(mapbox_style = "satellite-streets", mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-# prFig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-# prFig.show()
+
+prDF = pd.read_csv(
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_prWiki.csv',
+    encoding='Latin-1', dtype={'fips': str})
+cleanPR = prDF.fillna(0)
+
+
+def prmap():
+    # Used to round up to a proper max for the range_color function
+    maxPR = (math.ceil(cleanPR['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+
+    prFig = px.choropleth_mapbox(cleanPR, geojson=counties, locations='fips', color='Confirmed Cases',
+                                 color_continuous_scale='sunset', range_color=(0, maxPR),
+                                 hover_data=['County', 'Confirmed Cases'],
+                                 zoom=6, center={"lat": 18.192825, "lon": -66.448568},
+                                 opacity=0.6, labels={"County": "Municipality"})
+
+    prFig.update_layout(mapbox_style="satellite-streets",
+                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+    prFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    return prFig
+
+
+# --SUBPLOT--#
+def prsub():
+    prFIG = make_subplots(
+        rows=2, cols=2,
+        column_widths=[0.6, 0.6],
+        row_heights=[0.6, 0.6],
+        vertical_spacing=0.03,
+        horizontal_spacing=0.03,
+        specs=[[{"type": "table", "colspan": 2}, None],
+               [{"type": "bar"}, {"type": "Densitymapbox"}]])
+
+    prFIG.add_trace(go.Bar(
+        y=cleanPR['County'],
+        x=cleanPR['Confirmed Cases'],
+        name='Confirmed Cases',
+        orientation='h',
+        marker=dict(
+            color='rgba(59, 82, 105, 0.6)',
+            line=dict(color='rgba(59, 82, 105, 1.0)', width=3)
+        )
+    ),
+        row=2, col=1
+    )
+
+    prFIG.add_trace(
+        go.Densitymapbox(lat=cleanPR.Latitude, lon=cleanPR.Longitude,
+                         z=cleanPR['Confirmed Cases'], radius=25,
+                         showscale=False, colorscale='picnic',
+                         visible=True),
+        row=2, col=2)
+    prFIG.add_trace(
+        go.Table(
+            header=dict(
+                values=["County", "State", "fips",
+                        "Latitude", "Longitude", "Confirmed Cases"],
+                line_color='darkslategray',
+                fill_color='grey',
+                font=dict(color='white', size=14, family='PT Sans Narrow'),
+                align="left"
+            ),
+            cells=dict(
+                values=[cleanPR[k].tolist() for k in cleanPR.columns[:]],
+                fill_color='black',
+                line_color='white',
+                font=dict(color='white', size=12, family='Gravitas One'),
+                align="left")
+        ),
+        row=1, col=1
+    )
+    prFIG.update_layout(
+        mapbox_style="stamen-terrain",
+        mapbox_center_lat=18.19,
+        mapbox_center_lon=-66.45,
+        mapbox=dict(
+            zoom=5
+        ),
+        barmode='stack',
+        height=800,
+        width=1100,
+        showlegend=True,
+        title_text="COVID-19's Impact in Puerto Rico"
+    )
+    return prFIG
+
 
 # -----------------------RHODE ISLAND CHOROPLETH MAP----------------------------#
 riDF = pd.read_csv(
@@ -5769,8 +5844,16 @@ page1_card9 = [
             dbc.ListGroup([
                 dbc.ListGroupItem("Imgur's Feel Good Moments", href="https://imgur.com/t/uplifting", color="secondary"),
                 dbc.ListGroupItem(
+                    "Take a break from the constant news dealing with COVID-19 and read a book or listen to music.",
+                    color="info"),
+                dbc.ListGroupItem(
                     html.Embed(src="https://www.youtube.com/embed/-kcOpyM9cBg"),
                     color="warning"),
+                dbc.ListGroupItem("Take a moment to call, text, or Skype a loved one, a neighbor, or a friend.",
+                                  color="primary"),
+                dbc.ListGroupItem("Sometimes we need a little bit of quiet. Try some meditations at Headspace.",
+                                  href="https://www.headspace.com/covid-19", color="warning"),
+                dbc.ListGroupItem("Always remember to be kind to yourself and others.", color="secondary"),
             ]
             ),
         ]
@@ -6247,6 +6330,8 @@ def build_map(value):
         return ormap()
     elif value == 'PA':
         return pamap()
+    elif value == 'PR':
+        return prmap()
     elif value == 'RI':
         return rimap()
     elif value == 'SC':
@@ -6354,6 +6439,8 @@ def build_tables(value):
         return orsub()
     elif value == 'PA':
         return pasub()
+    elif value == 'PR':
+        return prsub()
     elif value == 'RI':
         return risub()
     elif value == 'SC':
