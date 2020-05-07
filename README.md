@@ -70,13 +70,13 @@ powerful graphing libraries. Within our web app, the page dealing with the infec
 changeable choropleth map that allows the user to choose from a dropdown menu a specific state. Below this is a subplot graph comprised of
 a stacked bar graph, a table showing the web scraped information, and a density heat map. 
 ![Web App Map SubPlot](https://i.imgur.com/HhuEuBD.jpg)
-
+![Global Cluster Map](https://i.imgur.com/0rB9Xio.jpg)
 
 ###### 3D Molecular Viewer
+![3D Molecular Viewer](https://i.imgur.com/EKSeMPr.jpg)
 
 ###### Prediction Model
-
-
+![Prediction Models](https://i.imgur.com/ZvupAar.jpg)
 
 
 
