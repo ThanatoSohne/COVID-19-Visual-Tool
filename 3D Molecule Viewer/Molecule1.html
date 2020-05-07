@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/jquery.slick/1.6.0/slick.css">
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/jquery.slick/1.5.5/slick.min.js"></script>
+
+<link rel="stylesheet" type="text/css" href="molecule1.css">
+
+
+</head>
+
+
+<body>
+
+<!-- Page Title -->
+<div>
+<h1> Crystal Structure of SARS-CoV-2 main protease in complex with Z1129283193 </h1>
+
+</div>
+
+<!-- Function to change the molecule based on user input -->
+<script>
+$(document).ready(function() {
+	$("#change").click(function() {
+				<!-- PDBID of Protein: -->
+				var pdb = "&pdbid=5RE4"
+				<!-- Getting value from Representation input -->
+				var mode= $("input:radio[name='mode']:checked").val();
+				<!-- Getting value from Background input -->
+                var background = $("input:radio[name='bg']:checked").val();
+				<!-- Getting value from Chain Representation input -->
+				var chainType= $("input:radio[name='chainType']:checked").val();
+				<!-- Getting value from color input -->
+				var chainColor= $("input:radio[name='chainColor']:checked").val();
+				
+				<!-- Embed URL from Molview.com -->
+				var url = "https://embed.molview.org/v1/?mode=";
+				<!-- Changing URL values based on input values from above -->
+				var Updateurl = url + mode + pdb + background + chainType + chainColor;
+				
+				<!-- Getting ID from embed tag -->
+				var parent = $('embed#bgs').parent();
+				<!-- Setting the embed tag with new URL -->
+				var newUrl = "<embed id=\"bgs\" src=\"" + Updateurl+ "\" width=\"1200\" height=\"500\" />";
+				<!-- Set new embed tag -->
+				var newElement = $(newUrl);
+				
+				<!-- Remove old Embed Tag -->
+				$('embed#bgs').remove();
+				<!-- Append new embed tag to DIV element -->
+				parent.append(newElement);
+				<!-- $("#iframe_id").attr("src", url); -->
+                
+            });
+  });
+</script>
+
+<!--Table with Molecule information -->
+<div class="flex_container"> 
+<table>
+  <tr>
+    <th>Macromolecule Content</th>
+  </tr>
+  <tr>
+    <td>Total Structure Weight: 34.21 </td>
+  </tr>
+  <tr>
+    <td>Atom Count: 2728 </td>
+  </tr>
+  <tr>
+    <td>Residue Count: 304 </td>
+  </tr>
+  <tr>
+    <td>Unique protein chains: 1</td>
+  </tr>
+</table>
+
+
+<!-- Radio Buttons -->
+  <div class="current_items">
+    <div class="current_items__row">
+      <p> Background </p>
+      <div class="wrapper_input">
+        <input type="radio" name="bg" id="radio1" value ="&bg=white" checked="checked">
+        <label for="radio1">White</label>
+      </div>
+      <div class="wrapper_input">
+        <input type="radio" name="bg"  value ="&bg=gray" id="radio2">
+        <label for="radio2">Gray</label>
+      </div>
+      <div class="wrapper_input">
+        <input type="radio" name="bg" value ="&bg=black" id="radio3">
+        <label for="radio3">Black</label>
+      </div>
+    </div>
+    <div class="current_items__row">
+      <p> Representation </p>
+      <div class="wrapper_input">
+        <input type="radio" name="mode" value ="balls" checked="checked" id="radio4" >
+        <label for="radio4">Ball and Stick</label>
+      </div>
+      <div class="wrapper_input">
+        <input type="radio" name="mode" value ="stick" id="radio5">
+        <label for="radio5">Stick</label>
+      </div>
+      <div class="wrapper_input">
+        <input type="radio" name="mode" value ="vdw" id="radio6">
+        <label for="radio6">van deer wall spheres</label>
+      </div>
+       <div class="wrapper_input">
+        <input type="radio" name="mode" value ="wireframe" id="radio7">
+        <label for="radio7">Wireframe</label>
+      </div>
+      <div class="wrapper_input">
+        <input type="radio" name="mode" value ="line" id="radio8">
+        <label for="radio8">Line</label>
+      </div>
+    </div>
+    <div class="current_items__row">
+      <div class="wrapper_input">
+        <p>Chain Representation with Bonds</p>
+        <input type="radio" name="chainType" value="&chainType=ribbon&chainBonds=true" checked="checked" id="radio9">
+        <label for="radio9">Ribbon</label>
+      </div>
+      <div class="wrapper_input">
+        <input type="radio" name="chainType" value="&chainType=cylinders&chainBonds=true" id="radio10">
+        <label for="radio10">Cylinder and Plate</label>
+      </div>
+      <div class="wrapper_input">
+        <input type="radio" name="chainType" value="&chainType=btube&chainBonds=true" id="radio11">
+        <label for="radio11">B-factor Tube</label>
+      </div>
+      <div class="wrapper_input">
+        <input type="radio" name="chainType" value="&chainType=ctrace&chainBonds=true" id="radio12">
+        <label for="radio12">C-alpha trace</label>
+      </div>
+    </div>
+    <div class="current_items__row">
+      <div class="wrapper_input">
+        <p> Chain Color Scheme </p>
+        <input type="radio" name="chainColor" value="&chainColor=ss" checked="checked" id="radio13">
+        <label for="radio13">Secondary Strucuture</label>
+      </div>
+      <div class="wrapper_input">
+        <input type="radio" name="chainColor" value="&chainColor=spectrum" id="radio14">
+        <label for="radio14">Spectrum</label>
+      </div>
+      <div class="wrapper_input">
+        <input type="radio" name="chainColor" value="&chainColor=chain" id="radio15">
+        <label for="radio15">Chain</label>
+      </div>
+      <div class="wrapper_input">
+        <input type="radio" name="chainColor" value="&chainColor=residue" id="radio16">
+        <label for="radio16">Residue</label>
+      </div>
+      <div class="wrapper_input">
+        <input type="radio" name="chainColor" value="&chainColor=polarity" id="radio16">
+        <label for="radio16">Polarity</label>
+      </div>
+      <div class="wrapper_input">
+        <input type="radio" name="chainColor" value="&chainColor=bfactor" id="radio16">
+        <label for="radio16">B-Factor</label>
+      </div>
+    </div>
+  </div>
+  
+ <!-- Button to update molecule-->
+<p><input id ="change" type="button" value="Reload Molecule with Selected Inputs"></p>
+<!-- Embed Tag utilizing Molview: Gets updated onclick-->
+<embed id="bgs" src ="https://embed.molview.org/v1/?mode=line&pdbid=5RE4" width="1200" height="500">
+</div>
+
+
+</body>
+</html>
