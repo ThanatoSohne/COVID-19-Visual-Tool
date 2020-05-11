@@ -363,7 +363,7 @@ def alsub():
 
 # -------------------------ARKANSAS CHOROPLETH MAP------------------------------#
 arDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_arWiki.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ardoh.csv',
     dtype={'fips': str})
 cleanAR = arDF.fillna(0)
 
@@ -3358,7 +3358,7 @@ def njsub():
 
 # ---------------------------NEW MEXICO CHOROPLETH MAP-----------------------------#
 nmDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nmdoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nmWiki.csv',
     dtype={'fips': str})
 cleanNM = nmDF.fillna(0)
 
@@ -5664,6 +5664,10 @@ navbar = dbc.Navbar(
                 id="navbar-collapse",
                 navbar=True,
             ),
+            dbc.Col(
+                dbc.Button("Our GitHub Repo", href="https://github.com/ThanatoSohne/COVID-19-Visual-Tool",
+                           outline=True, color="warning", size="sm", className="mr-1")
+            ),
         ]
     ),
     color="dark",
@@ -5847,18 +5851,56 @@ page1_card9 = [
                     "Take a break from the constant news dealing with COVID-19 and read a book or listen to music.",
                     color="info"),
                 dbc.ListGroupItem(
-                    html.Embed(src="https://www.youtube.com/embed/-kcOpyM9cBg"),
+                    html.Embed(src="https://www.youtube.com/embed/-kcOpyM9cBg",
+                               height="auto",
+                               width="100%"),
                     color="warning"),
                 dbc.ListGroupItem("Take a moment to call, text, or Skype a loved one, a neighbor, or a friend.",
                                   color="primary"),
                 dbc.ListGroupItem("Sometimes we need a little bit of quiet. Try some meditations at Headspace.",
                                   href="https://www.headspace.com/covid-19", color="warning"),
                 dbc.ListGroupItem("Always remember to be kind to yourself and others.", color="secondary"),
+                dbc.ListGroupItem(
+                    [
+                        dbc.ListGroupItemHeading("Happy Playlist for These Tough Times"),
+                        html.Embed(src="https://www.youtube.com/embed/videoseries?list=PL7eGsz72w679_8u2NEz4Ag3YyqPjxYtlb",
+                                   height="auto",
+                                   width="100%"),
+                    ]
+                ),
             ]
             ),
         ]
     ),
 ]
+
+page1_card10 = dbc.CardBody(
+    [
+        html.Blockquote(
+            [
+                html.P(
+                    """Keep informed on the FACTS of COVID-19. This way you can help
+                    to squash rumors that you come across thus stemming the tide
+                    of undue hatred, reckless behavior, and -ultimately- save lives.""",
+                    style={
+                        "font-family": "American Typewriter",
+                        "font-weight": "bold",
+                        "font-style": "italic",
+                    },
+                ),
+                dbc.Button("CDC's COVID-19 Homepage",
+                           color="info",
+                           size="sm",
+                           external_link="True",
+                           block="True",
+                           href="https://www.cdc.gov/coronavirus/2019-nCoV/index.html"),
+
+            ],
+            className="blockquote",
+        )
+    ]
+)
+
 
 mason = dbc.CardColumns(
     [
@@ -5871,6 +5913,7 @@ mason = dbc.CardColumns(
         dbc.Card(page1_card6, color="secondary", inverse=False),
         dbc.Card(page1_card4, color="success", outline=True),
         dbc.Card(page1_card3, color="dark", outline=True),
+        dbc.Card(page1_card10, color="warning", outline=True),
         ###So on and so forth....
     ]
 )
@@ -5913,7 +5956,8 @@ us_map = html.Div(
                                         the overall reach COVID-19 has had within our communities here in the US. Some maps will 
                                         have a few counties missing due to either those counties not having cases or because their
                                         numbers have yet to be reported. All data scraped in order to build these sites come from a 
-                                        range of sources that had the most reliable and most current of information.""",
+                                        range of sources that had the most reliable and most current of information. You can
+                                        view these on our GitHub repo within the Scrapers or Scraped Docs page.""",
                                     style={'border': '4mm ridge rgba(28, 106, 128,.6)',
                                            'outline': '0.5rem rgba(222, 109, 89,.7)',
                                            'font-family': 'Goudy Old Style, Garamond, Big Caslon, Times New Roman, serif',
