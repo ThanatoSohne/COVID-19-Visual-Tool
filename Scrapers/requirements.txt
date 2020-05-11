@@ -1,0 +1,11 @@
+addfips==0.2.2
+beautifulsoup4==4.8.2
+geocoder==1.38.1
+geopy==1.21.0
+opencage==1.2
+pandas==0.24.2
+request==2019.4.13
+requests==2.23.0
+termcolor==1.1.0
+urllib3==1.25.8
+wikipedia==1.4.0
