@@ -231,7 +231,7 @@ def alScrape():
         #Do note that as of 4/15/2020, the json continuously changes the first 
         #CNTYNAME attribute
         test = []
-        if(attr[0].get('attributes').get('CNTYNAME')) == 'Blount':
+        if(attr[0].get('attributes').get('CNTYNAME')) == 'Clay':
             test = True
         else:
             test = False
@@ -339,7 +339,7 @@ def aSamScrape():
                 take = p.get_text()
                 hold.append(take)
                 
-        amSam = hold[124].split('\n')
+        amSam = hold[127].split('\n')
         
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
@@ -655,7 +655,7 @@ def dcScrape():
                 take = p.get_text()
                 hold.append(take)
     
-        capital = hold[131].split('\n')
+        capital = hold[134].split('\n')
         
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
@@ -891,10 +891,10 @@ def guScrape():
                 hold.append(take)
     
         gu = "GUAM"
-        guam = hold[134].split('\n')
+        guam = hold[137].split('\n')
         
         mp = "NORTHERN MARIANA ISLANDS"
-        mariana = hold[159].split('\n')
+        mariana = hold[162].split('\n')
         
         #Uses geocode API that grabs latitude and longitude. According to API's 
         #policy, you must use a sleep function to ensure that you are giving their
@@ -1111,7 +1111,7 @@ def ilScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (hold[0].split('\n')[1]) == 'Adams' and (hold[96].split('\n')[1]) == 'Woodford':
+        if (hold[0].split('\n')[1]) == 'Adams' and (hold[98].split('\n')[1]) == 'Woodford':
         
             file = open(csvfile, "w")
             file.write(headers)
@@ -1126,13 +1126,13 @@ def ilScrape():
                            + take[7].replace(',','').replace('–','0') + "\n")
             #Cook County has some values that needs fixing... use split to do so
             file.write(hold[15].split('\n')[1] + "," + il + "," 
-                       + str(fips.get_county_fips(hold[106].split('\n')[1], il)).strip() + "," 
-                       + str(geocoder.opencage(hold[106].split('\n')[1], key='').latlng).strip('[]') + "," 
+                       + str(fips.get_county_fips(hold[15].split('\n')[1], il)).strip() + "," 
+                       + str(geocoder.opencage(hold[15].split('\n')[1], key='').latlng).strip('[]') + "," 
                        + hold[15].split('\n')[3].replace(',','') + "," 
                        + hold[15].split('\n')[5].replace(',','') + "," 
                        + hold[15].split('\n')[7].replace(',','').split(']')[1].split('[')[0].strip() + "\n")
             
-            for h in hold[16:97]:
+            for h in hold[16:99]:
                 take = h.split('\n')
                 file.write(take[1] + "," + il + "," 
                            + str(fips.get_county_fips(take[1], state=il)).strip() + ","
@@ -1542,7 +1542,7 @@ def mdScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (hold[0].split('\n')[1]) == 'Allegany' and (hold[-3].split('\n')[1]) == 'Unknown' and holdDC[131].split('\n')[3] == "District of Columbia":
+        if (hold[0].split('\n')[1]) == 'Allegany' and (hold[-3].split('\n')[1]) == 'Unknown' and holdDC[134].split('\n')[3] == "District of Columbia":
                     
             file = open(csvfile, "w")
             file.write(headers)
@@ -1954,7 +1954,7 @@ def mnScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if hold[0] == 'Aitkin' and hold[249] == 'Yellow Medicine':    
+        if hold[0] == 'Aitkin' and hold[258] == 'Yellow Medicine':    
             
             file = open(csvfile, "w")
             file.write(headers)
@@ -2265,6 +2265,15 @@ def mnScrape():
             file.write(hold[249] + "," + mn + ","  + str(fips.get_county_fips(hold[249],state=mn)).strip() + ","
                        + str(geocoder.opencage(hold[249] + co + "," + mn, key='').latlng).strip('[]') + "," + hold[250].replace(',','') 
                        + "," + hold[251].replace(',','') +"\n")
+            file.write(hold[252] + "," + mn + ","  + str(fips.get_county_fips(hold[252],state=mn)).strip() + ","
+                       + str(geocoder.opencage(hold[252] + co + "," + mn, key='').latlng).strip('[]') + "," + hold[253].replace(',','') 
+                       + "," + hold[254].replace(',','') +"\n")
+            file.write(hold[255] + "," + mn + ","  + str(fips.get_county_fips(hold[255],state=mn)).strip() + ","
+                       + str(geocoder.opencage(hold[255] + co + "," + mn, key='').latlng).strip('[]') + "," + hold[256].replace(',','') 
+                       + "," + hold[257].replace(',','') +"\n")
+            file.write(hold[258] + "," + mn + ","  + str(fips.get_county_fips(hold[258],state=mn)).strip() + ","
+                       + str(geocoder.opencage(hold[258] + co + "," + mn, key='').latlng).strip('[]') + "," + hold[259].replace(',','') 
+                       + "," + hold[260].replace(',','') +"\n")
             
             file.close()
             
@@ -2299,7 +2308,7 @@ def moScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (tables[1].find('td').text) == 'Adair' and (tables[169].find('td').text) == 'TBD':
+        if (tables[1].find('td').text) == 'Adair' and (tables[172].find('td').text) == 'TBD':
         
             file = open(csvfile, "w")
             file.write(headers)
@@ -2315,7 +2324,7 @@ def moScrape():
                        + "," + tables[118].findAll('td')[1].text + "," + "" + "\n")
             
             #Pull from the county death table
-            for t in tables[138:170]:
+            for t in tables[138:172]:
                 pull = t.findAll('td')
                 locale = geocoder.opencage(pull[0].text + co + "," + mo, key='')
                 file.write(pull[0].text + "," + mo + "," + str(fips.get_county_fips(pull[0].text,state=mo)).strip() + "," + str(locale.latlng).strip('[]')
@@ -2368,7 +2377,7 @@ def mpScrape():
                     take = p.get_text()
                     hold.append(take)
     
-        nmp = hold[159].split('\n')
+        nmp = hold[162].split('\n')
     
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
@@ -4584,7 +4593,7 @@ def wyScrape():
 
 def main():
     
-    path = "\"
+    path = ""
     os.chdir(path)
     
     #Runs this on a 24 hour basis... Just comment out if running manually
