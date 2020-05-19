@@ -15,6 +15,7 @@ import random as r
 from datetime import date
 import xlrd
 
+
 # ----------------------Variables and Plots Held Here----------------------------------------------#
 # Dropdown menu options for state maps on page 2
 states = [{'label': 'Alaska', 'value': 'AK'},
@@ -88,21 +89,12 @@ with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-c
 def mundiScatter():
     df = pd.read_csv(
         'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/COVID-19_cases_worldMeters.csv',
-        encoding='Latin-1')
-
-    # country = df['Country'].tolist()
-    # tCases = df['Total Cases'].tolist()
-    # nCases = df['New Cases'].tolist()
-    # tDeaths = df['Total Deaths'].tolist()
-    # nDeaths = df['New Deaths'].tolist()
-    # hope = df['Total Recovered'].tolist()
-    # active = df['Active Cases'].tolist()
-    # serious = df['Serious/Critical'].tolist()
-    # tested = df['Total Tested'].tolist()
+        encoding='latin_1')
+    df = df.fillna(0)
 
     geofig = px.scatter_geo(df, locations="Country", locationmode="country names", color="Total Cases",
                             hover_data=["Total Cases", "New Cases", "Total Deaths", "New Deaths", "Serious/Critical",
-                                        "Total Recovered", "Active Cases", "Total Tested"],
+                                        "Total Recovered", "Active Cases", "Total Tested", "Population"],
                             hover_name="Country", color_continuous_scale="balance",
                             size="Total Cases", projection="orthographic", text="Country",
                             opacity=0.5, size_max=70)
@@ -117,7 +109,7 @@ def aniGlobe():
     if int(ahora.strftime("%d")) < 10:
         yest = ('0' + str(int(ahora.strftime("%d")) - 1))
     else:
-        yest = str(ahora.strftime('%d'))
+        yest = str(int(ahora.strftime('%d')) - 1)
 
     ecdc = 'https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide-2020-'
     xls = '.xlsx'
@@ -134,12 +126,11 @@ def aniGlobe():
     see = table['Date'].astype(str).str[:]
 
     blanche = px.scatter(table, x='Population', y='Cases', animation_frame=see,
-                         animation_group='Countries/Territories', size='Deaths',
+                         animation_group='Countries/Territories', size=table['Deaths'].clip(lower=0),
                          color='Continent', hover_name='Countries/Territories',
-                         log_y=True, size_max=500, range_x=[10000000, 2000000000], range_y=[1, 100000])
+                         log_y=True, size_max=500, range_x=[10000000, 2000000000], range_y=[1, 200000])
     blanche.update_layout(showlegend=False,
                           title="ECDC's Data Showing the Infected Cases Color Coded by Continent with Daily Deaths as Time Progressed")
-
     return blanche
 
 
@@ -2063,7 +2054,7 @@ def lasub():
 
 # ---------------------------MASSACHUSETTS CHOROPLETH MAP------------------------------#
 maDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_maNews.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_maWiki.csv',
     dtype={'fips': str})
 cleanMA = maDF.fillna(0)
 
@@ -2074,7 +2065,7 @@ def mamap():
 
     maFig = px.choropleth_mapbox(cleanMA, geojson=counties, locations='fips', color='Confirmed Cases',
                                  color_continuous_scale='brwnyl', range_color=(0, maxMA),
-                                 hover_data=['County', 'Confirmed Cases'],
+                                 hover_data=['County', 'Confirmed Cases','Deaths'],
                                  zoom=6.3, center={"lat": 42.357952, "lon": -72.062769},
                                  opacity=0.6, labels={"County": "County"})
 
@@ -2107,6 +2098,16 @@ def masub():
     ),
         row=2, col=1
     )
+    maFIG.add_trace(go.Bar(
+        y=cleanMA['County'],
+        x=cleanMA['Deaths'],
+        name='Deaths',
+        orientation='h',
+        marker=dict(
+            color='rgba(160, 184, 152, 0.6)',
+            line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
+        )
+    ))
     maFIG.add_trace(
         go.Densitymapbox(lat=cleanMA.Latitude, lon=cleanMA.Longitude,
                          z=cleanMA['Confirmed Cases'], radius=25,
@@ -2117,7 +2118,7 @@ def masub():
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases"],
+                        "Latitude", "Longitude", "Confirmed Cases","Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
@@ -2467,7 +2468,7 @@ def misub():
 # ---------------------------MINNESOTA CHOROPLETH MAP------------------------------#
 mnDF = pd.read_csv(
     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_mndoh.csv',
-    dtype={'fips': str})
+    dtype={'fips': str}, encoding='latin_1')
 cleanMN = mnDF.fillna(0)
 
 
@@ -3162,7 +3163,7 @@ def nesub():
 
 # ---------------------------NEW HAMPSHIRE CHOROPLETH MAP-----------------------------#
 nhDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nhNews.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nhWiki.csv',
     dtype={'fips': str})
 cleanNH = nhDF.fillna(0)
 
@@ -3173,7 +3174,7 @@ def nhmap():
 
     nhFig = px.choropleth_mapbox(cleanNH, geojson=counties, locations='fips', color='Confirmed Cases',
                                  color_continuous_scale='phase', range_color=(0, maxNH),
-                                 hover_data=['County', 'Confirmed Cases'],
+                                 hover_data=['County', 'Confirmed Cases','Deaths'],
                                  zoom=6, center={"lat": 43.989517, "lon": -71.469112},
                                  opacity=0.6, labels={"County": "County"})
 
@@ -3206,6 +3207,16 @@ def nhsub():
     ),
         row=2, col=1
     )
+    nhFIG.add_trace(go.Bar(
+        y=cleanNH['County'],
+        x=cleanNH['Deaths'],
+        name='Deaths',
+        orientation='h',
+        marker=dict(
+            color='rgba(160, 184, 152, 0.6)',
+            line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
+        )
+    ))
     nhFIG.add_trace(
         go.Densitymapbox(lat=cleanNH.Latitude, lon=cleanNH.Longitude,
                          z=cleanNH['Confirmed Cases'], radius=25,
@@ -3216,7 +3227,7 @@ def nhsub():
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases"
+                        "Latitude", "Longitude", "Confirmed Cases","Deaths"
                         ],
                 line_color='darkslategray',
                 fill_color='grey',
@@ -3457,7 +3468,7 @@ def nmsub():
 
 # ---------------------------NEVADA CHOROPLETH MAP-----------------------------#
 nvDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nvNews.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nvWiki.csv',
     dtype={'fips': str})
 cleanNV = nvDF.fillna(0)
 
@@ -3468,7 +3479,7 @@ def nvmap():
 
     nvFig = px.choropleth_mapbox(cleanNV, geojson=counties, locations='fips', color='Confirmed Cases',
                                  color_continuous_scale='curl', range_color=(0, maxNV),
-                                 hover_data=['County', 'Confirmed Cases'],
+                                 hover_data=['County', 'Confirmed Cases','Deaths'],
                                  zoom=5, center={"lat": 38.502032, "lon": -117.023060},
                                  opacity=0.6, labels={"County": "County"})
 
@@ -3501,6 +3512,16 @@ def nvsub():
     ),
         row=2, col=1
     )
+    nvFIG.add_trace(go.Bar(
+        y=cleanNV['County'],
+        x=cleanNV['Deaths'],
+        name='Deaths',
+        orientation='h',
+        marker=dict(
+            color='rgba(160, 184, 152, 0.6)',
+            line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
+        )
+    ))
     nvFIG.add_trace(
         go.Densitymapbox(lat=cleanNV.Latitude, lon=cleanNV.Longitude,
                          z=cleanNV['Confirmed Cases'], radius=25,
@@ -5333,7 +5354,7 @@ def wysub():
         orientation='h',
         marker=dict(
             color='rgba(59, 82, 105, 0.6)',
-            line=dict(color='rgba(59, 82, 105, 1.0)', width=3)
+            line=dict(color='rgba(59, 81, 105, 1.0)', width=3)
         )
     ),
         row=2, col=1
@@ -5956,8 +5977,7 @@ us_map = html.Div(
                                         the overall reach COVID-19 has had within our communities here in the US. Some maps will 
                                         have a few counties missing due to either those counties not having cases or because their
                                         numbers have yet to be reported. All data scraped in order to build these sites come from a 
-                                        range of sources that had the most reliable and most current of information. You can
-                                        view these on our GitHub repo within the Scrapers or Scraped Docs page.""",
+                                        range of sources that had the most reliable and most current of information.""",
                                     style={'border': '4mm ridge rgba(28, 106, 128,.6)',
                                            'outline': '0.5rem rgba(222, 109, 89,.7)',
                                            'font-family': 'Goudy Old Style, Garamond, Big Caslon, Times New Roman, serif',
@@ -6199,7 +6219,7 @@ oracle = html.Div(
                                 is observed in the model above, particularly those dealing with confirmed cases over
                                 deaths in the US and extends the outlook to a particular country from every continent.
                                 """,
-                                   style={'border': '4mm ridge rgba(144, 96, 181,.6)',
+                                   style={'border': '4mm ridge rgba(144, 96, 181,.5)',
                                           'outline': '0.5rem rgba(237, 245, 122,.7)',
                                           'font-family': 'Goudy Old Style, Garamond, Big Caslon, Times New Roman, serif',
                                           'font-size': '18px',
