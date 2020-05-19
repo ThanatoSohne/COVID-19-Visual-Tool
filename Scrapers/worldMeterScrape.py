@@ -1,7 +1,12 @@
+import os
 import bs4
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup as soup
 import pandas as pd
+
+path = "C:/Users/Erwac/Desktop/COVID-19-Visual-Tool/Web Scraped Docs"
+os.chdir(path)
+
 
 gebMeter = 'https://www.worldometers.info/coronavirus/'
 bypass = {'User-Agent': 'Mozilla/5.0'}
@@ -25,21 +30,22 @@ for t in tables:
     dataCont.append(take)
     
 csvfile = "COVID-19_cases_worldMeters.csv"
-headers = "Country,Total Cases,New Cases,Total Deaths,New Deaths,Total Recovered,Active Cases,Serious/Critical,Total Tested\n"
+headers = "Country,Total Cases,New Cases,Total Deaths,New Deaths,Total Recovered,Active Cases,Serious/Critical,Total Tested,Population\n"
 
 file = open(csvfile, "w", encoding='Latin-1')
 file.write(headers)
 
 for d in dataCont[8:]:
     zbornak = d.split('\n')
-    file.write(zbornak[1] + "," + zbornak[2].replace(',','') + "," 
-               + zbornak[3].replace(',','').strip('+') + "," 
-               + zbornak[4].replace(',','') + "," 
-               + zbornak[5].replace(',','').strip('+') + "," 
-               + zbornak[6].replace(',','') + "," 
+    file.write(zbornak[2] + "," + zbornak[3].replace(',','') + "," 
+               + zbornak[4].replace(',','').strip('+') + "," 
+               + zbornak[5].replace(',','') + "," 
+               + zbornak[6].replace(',','').strip('+') + "," 
                + zbornak[7].replace(',','') + "," 
                + zbornak[8].replace(',','') + "," 
-               + zbornak[11].replace(',','') + "\n")
+               + zbornak[9].replace(',','') + "," 
+               + zbornak[12].replace(',','') + ","
+               + zbornak[14].replace(',','') + "\n")
     
 file.close()
 

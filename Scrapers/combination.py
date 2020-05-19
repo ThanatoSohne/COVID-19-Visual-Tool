@@ -13,11 +13,13 @@ import pandas as pd
 import wikipedia
 from termcolor import colored as cl
 
-#Used to catch a time out from the Nominatim servers and continue to try
-#running the code until it responds
-#Information for this code and the code for the Nominatim and geopy comes 
-#from their documentation: https://geopy.readthedocs.io/en/stable/#
-#and from StackOverflow https://stackoverflow.com/a/48039673
+"""
+Used to catch a time out from the Nominatim servers and continue to try
+running the code until it responds
+Information for this code and the code for the Nominatim and geopy comes 
+from their documentation: https://geopy.readthedocs.io/en/stable/#
+and from StackOverflow https://stackoverflow.com/a/48039673
+"""
 def catch_TimeOut(locale):
     liegen = Nominatim(user_agent = 'combiner-atomeundwolke@gmail.com')
     try:
@@ -34,6 +36,31 @@ fips = addfips.AddFIPS()
 #Constant counter to ensure that all files have been compiled before
 #they are combined into one CSV
 counter = 0
+
+#Grab and hold the information from the html inside of site_parse (making sure
+#to close the request from the page)
+#This will be used to hold the state counts for AS, DC, GU, MP
+wiki = 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_the_United_States'
+wikiClient = req(wiki)
+site_parseAll = soup(wikiClient.read(), "lxml")
+wikiClient.close()
+#Narrow down the parse to the section that is most pertinent 
+wikiTable = site_parseAll.find("div", {"id":"covid19-container"}).findAll("tbody")
+#Master hold
+holdWiki = []
+for w in wikiTable:
+    pull = w.findAll('tr')
+    for p in pull[3:-2]:
+        take = p.get_text()
+        holdWiki.append(take)
+#American Samoa
+amSam = holdWiki[2].split('\n')
+#Washington, DC
+capital = holdWiki[9].split('\n')
+#Guam
+guam = holdWiki[12].split('\n')
+#North Mariana Islands
+mariana = holdWiki[37].split('\n')
 
 #Each state/ territory will have a scraper. Some will be combined
 #for a more efficient or easy to view map in the web app
@@ -231,7 +258,7 @@ def alScrape():
         #Do note that as of 4/15/2020, the json continuously changes the first 
         #CNTYNAME attribute
         test = []
-        if(attr[0].get('attributes').get('CNTYNAME')) == 'Clay':
+        if(attr[0].get('attributes').get('CNTYNAME')) == 'Bullock':
             test = True
         else:
             test = False
@@ -294,7 +321,7 @@ def arScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if arHold.at[75, 'County'] == 'Arkansas' and len(arHold.columns) == 8:
+        if arHold.at[77, 'County'] == 'Arkansas' and len(arHold.columns) == 8:
         
             arHold.to_csv('COVID-19_cases_ardoh.csv',index=False, header=True)
             counter += 1
@@ -308,17 +335,7 @@ def arScrape():
         
 def aSamScrape():
     
-    try:
-        #Grab and hold the information from the html inside of site_parse (making sure
-        #to close the request from the page)
-        asWiki = 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_the_United_States'
-        asClient = req(asWiki)
-        site_parse = soup(asClient.read(), "lxml")
-        asClient.close()
-        
-        #Narrow down the parse to the section that is most pertinent 
-        tables = site_parse.find("div", {"class": "mw-parser-output"}).find_all('tbody')
-        
+    try:        
         #CSV file name and header
         csvfile = "COVID-19_cases_asWiki.csv"
         headers = "Region,State,fips,Latitude,Longitude,Confirmed Cases,Deaths,Recoveries\n"
@@ -330,17 +347,7 @@ def aSamScrape():
         #servers enough time 
         asGeo = liegen.geocode(aSam)
         sleep(1)
-        
-        #Hold all of the table's information into an easy to dissect list
-        hold = []
-        for t in tables:
-            pull = t.findAll('tr')
-            for p in pull:
-                take = p.get_text()
-                hold.append(take)
-                
-        amSam = hold[127].split('\n')
-        
+                                
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
@@ -624,17 +631,7 @@ def ctScrape():
     
 def dcScrape():
     
-    try:
-        #Grab and hold the information from the html inside of site_parse (making sure
-        #to close the request from the page)
-        dcWiki = 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_the_United_States'
-        dcClient = req(dcWiki)   
-        site_parse = soup(dcClient.read(), "lxml")
-        dcClient.close()
-        
-        #Narrow down the parse to the section that is most pertinent 
-        tables = site_parse.find("div", {"class": "mw-parser-output"}).find_all('tbody')
-        
+    try:        
         #CSV file name and header
         csvfile = "COVID-19_cases_dcWiki.csv"
         headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths,Recoveries\n"
@@ -646,17 +643,7 @@ def dcScrape():
         #servers enough time 
         dcGeo = liegen.geocode(dc)
         sleep(1)
-        
-        #Hold all of the table's information into an easy to dissect list
-        hold = []
-        for t in tables:
-            pull = t.findAll('tr')
-            for p in pull:
-                take = p.get_text()
-                hold.append(take)
-    
-        capital = hold[134].split('\n')
-        
+                    
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
@@ -867,34 +854,14 @@ def gaScrape():
         
 def guScrape():
     
-    try:
-        #Grab and hold the information from the html inside of site_parse (making sure
-        #to close the request from the page)
-        guWiki = 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_the_United_States'
-        guClient = req(guWiki)
-        site_parse = soup(guClient.read(), "lxml")
-        guClient.close()
-        
-        #Narrow down the parse to the section that is most pertinent
-        tables = site_parse.find("div", {"class": "mw-parser-output"}).find_all('tbody')
-        
+    try:        
         #CSV file name and header
         csvfile = "COVID-19_cases_gu_mp_Wiki.csv"
         headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths,Recoveries\n"
-        
-        #Hold all of the table's information into an easy to dissect list
-        hold = []
-        for t in tables:
-            pull = t.findAll('tr')
-            for p in pull:
-                take = p.get_text()
-                hold.append(take)
-    
+            
         gu = "GUAM"
-        guam = hold[137].split('\n')
         
         mp = "NORTHERN MARIANA ISLANDS"
-        mariana = hold[162].split('\n')
         
         #Uses geocode API that grabs latitude and longitude. According to API's 
         #policy, you must use a sleep function to ensure that you are giving their
@@ -1449,37 +1416,61 @@ def maScrape():
     try:
         #Grab and hold the information from the html inside of site_parse (making sure
         #to close the request from the page)
-        maNews = 'https://www.livescience.com/massachusetts-coronavirus-updates.html'
-        maClient = req(maNews)
+        maWiki = 'https://en.wikipedia.org/wiki/COVID-19_pandemic_in_Massachusetts'
+        maClient = req(maWiki)
         site_parse = soup(maClient.read(), "lxml")
         maClient.close()
         
         #Narrow down the parse to the section that is most pertinent 
-        tables = site_parse.find("div", {"itemprop": "articleBody"}).find('ul')
-        tags = tables.findAll('li')
+        tables = site_parse.find("div", {"class": "tp-container"}).findAll('tbody')        
         
         ma = "MASSACHUSETTS"
         co = ' County'
         
         #CSV file name and header
-        csvfile = "COVID-19_cases_maNews.csv"
-        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases\n"
+        csvfile = "COVID-19_cases_maWiki.csv"
+        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths\n"
         
+        #Hold all of the table's information into an easy to dissect list
+        hold = []
+        for t in tables:
+                pull = t.findAll('tr')
+                for p in pull[2:-2]:
+                    take = p.get_text()
+                    hold.append(take)
+                    
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (tags[0].get_text().split(': ')[0]) == 'Middlesex' and (tags[14].get_text().split(': ')[0]) == 'Nantucket':
+        if (hold[0].split('\n')[1]) == 'Barnstable' and (hold[-2].split('\n')[1]) == 'Worcester':
     
             file = open(csvfile, "w")
             file.write(headers)
             
-            for t in range(0,15):
-                locale = liegen.geocode(tags[t].get_text().split(': ')[0] + co + "," + ma)
-                catch_TimeOut(tags[t].get_text().split(': ')[0] + co + "," + ma)
-                file.write(tags[t].get_text().split(': ')[0] + "," + ma + "," + str(fips.get_county_fips(tags[t].get_text().split(': ')[0],state=ma)).strip() 
-                           + "," + str(locale.latitude) + "," + str(locale.longitude) + ","
-                           + tags[t].get_text().split(': ')[1].replace(',','') + "\n")
-                sleep(1)
+            for h in hold[0:3]:
+                take = h.split('\n')
+                file.write(take[1] + "," + ma + "," + str(fips.get_county_fips(take[1],state=ma)).strip() + ","
+                           + str(geocoder.opencage(take[1] + co + "," + ma, key='').latlng).strip('[]') + "," 
+                           + take[3].replace('–','0').replace(',','') + "," 
+                           + take[5].replace('–','0').replace(',','') + "\n") 
+            
+            file.write('Dukes' + "," + ma + "," + str(fips.get_county_fips('Dukes',state=ma)).strip() + ","
+                       + str(geocoder.opencage('Dukes' + co + "," + ma, key='').latlng).strip('[]') + "," 
+                       + hold[3].split('\n')[3].replace('–','0').replace(',','') + "," 
+                       + hold[3].split('\n')[5].replace('–','0').replace(',','') + "\n") 
+
+            file.write('Nantucket' + "," + ma + "," + str(fips.get_county_fips('Nantucket',state=ma)).strip() + ","
+                       + str(geocoder.opencage('Nantucket' + co + "," + ma, key='').latlng).strip('[]') + "," 
+                       + hold[3].split('\n')[3].replace('–','0').replace(',','') + "," 
+                       + hold[3].split('\n')[5].replace('–','0').replace(',','') + "\n") 
+            
+            for h in hold[4:-1]:
+                take = h.split('\n')
+                file.write(take[1] + "," + ma + "," + str(fips.get_county_fips(take[1],state=ma)).strip() + ","
+                           + str(geocoder.opencage(take[1] + co + "," + ma, key='').latlng).strip('[]') + "," 
+                           + take[3].replace('–','0').replace(',','') + "," 
+                           + take[5].replace('–','0').replace(',','') + "\n") 
+
                     
             file.close()
              
@@ -1500,15 +1491,9 @@ def mdScrape():
         mdClient = req(mdWiki)
         site_parse = soup(mdClient.read(), "lxml")
         mdClient.close()
-        #This was done in order to add DC into the map 
-        dcWiki = 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_the_United_States'
-        dcClient = req(dcWiki)
-        site_parseDC = soup(dcClient.read(), "lxml")
-        dcClient.close()
         
         #Narrow down the parse to the section that is most pertinent for both sites
         tables = site_parse.find("div", {"class": "tp-container"}).findAll('tbody')        
-        tablesDC = site_parseDC.find("div", {"class": "mw-parser-output"}).find_all('tbody')
         
         md = "MARYLAND"
         co = ' County'    
@@ -1527,22 +1512,16 @@ def mdScrape():
         #Hold all of the table's information into an easy to dissect list for both 
         #places
         hold = []
-        holdDC = []
         for t in tables:
                 pull = t.findAll('tr')
                 for p in pull[2:]:
                     take = p.get_text()
                     hold.append(take)
-        for t in tablesDC:
-            pull = t.findAll('tr')
-            for p in pull:
-                take = p.get_text()
-                holdDC.append(take)
     
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (hold[0].split('\n')[1]) == 'Allegany' and (hold[-3].split('\n')[1]) == 'Unknown' and holdDC[134].split('\n')[3] == "District of Columbia":
+        if (hold[0].split('\n')[1]) == 'Allegany' and (hold[-3].split('\n')[1]) == 'Unknown' and capital[3] == "District of Columbia":
                     
             file = open(csvfile, "w")
             file.write(headers)
@@ -1559,11 +1538,11 @@ def mdScrape():
                        + hold[-3].split('\n')[3].replace(',','') + "," 
                        + hold[-3].split('\n')[5].replace(',','') + "\n")
             
-            file.write(holdDC[131].split('\n')[3] + "," + dc + "," 
+            file.write(capital[3] + "," + dc + "," 
                        + str(fips.get_county_fips("Washington", state= "DC")).strip() + "," 
                        + str(dcGeo.latitude) + "," + str(dcGeo.longitude) + "," 
-                       + holdDC[131].split('\n')[5].replace(',','')+ "," 
-                       + holdDC[131].split('\n')[7].replace(',','') + "\n")
+                       + capital[5].replace(',','')+ "," 
+                       + capital[7].replace(',','') + "\n")
             
             file.close()
             
@@ -2308,7 +2287,7 @@ def moScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (tables[1].find('td').text) == 'Adair' and (tables[172].find('td').text) == 'TBD':
+        if (tables[1].find('td').text) == 'Adair' and (tables[174].find('td').text) == 'TBD':
         
             file = open(csvfile, "w")
             file.write(headers)
@@ -2324,7 +2303,7 @@ def moScrape():
                        + "," + tables[118].findAll('td')[1].text + "," + "" + "\n")
             
             #Pull from the county death table
-            for t in tables[138:172]:
+            for t in tables[138:174]:
                 pull = t.findAll('td')
                 locale = geocoder.opencage(pull[0].text + co + "," + mo, key='')
                 file.write(pull[0].text + "," + mo + "," + str(fips.get_county_fips(pull[0].text,state=mo)).strip() + "," + str(locale.latlng).strip('[]')
@@ -2347,16 +2326,6 @@ def moScrape():
 def mpScrape():
     
     try:
-        #Grab and hold the information from the html inside of site_parse (making sure
-        #to close the request from the page)
-        mpWiki = 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_the_United_States'
-        mpClient = req(mpWiki)
-        site_parse = soup(mpClient.read(), "lxml")
-        mpClient.close()
-        
-        #Narrow down the parse to the section that is most pertinent 
-        tables = site_parse.find("div", {"class": "mw-parser-output"}).find_all('tbody')
-        
         #CSV file name and header
         csvfile = "COVID-19_cases_mpWiki.csv"
         headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths,Recoveries\n"
@@ -2368,29 +2337,19 @@ def mpScrape():
         #servers enough time 
         mpGeo = liegen.geocode(mp)
         sleep(1)
-        
-        #Hold all of the table's information into an easy to dissect list
-        hold = []
-        for t in tables:
-                pull = t.findAll('tr')
-                for p in pull:
-                    take = p.get_text()
-                    hold.append(take)
-    
-        nmp = hold[162].split('\n')
-    
+                
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if nmp[3] == "Northern Mariana Islands":
+        if mariana[3] == "Northern Mariana Islands":
     
             file = open(csvfile, "w")
             file.write(headers)
             
-            file.write(nmp[3] + "," + mp + "," + str(fips.get_county_fips("Rota",state=mp)).strip() + ","  + str(mpGeo.latitude) 
-                       + "," + str(mpGeo.longitude) + "," + nmp[5].replace(',','') 
-                       + "," + nmp[7].replace(',','') + "," 
-                       + nmp[9].replace(',','') + "\n")
+            file.write(mariana[3] + "," + mp + "," + str(fips.get_county_fips("Rota",state=mp)).strip() + ","  + str(mpGeo.latitude) 
+                       + "," + str(mpGeo.longitude) + "," + mariana[5].replace(',','') 
+                       + "," + mariana[7].replace(',','') + "," 
+                       + mariana[9].replace(',','') + "\n")
             
             file.close()
             
@@ -2668,50 +2627,47 @@ def nhScrape():
     try:
         #Grab and hold the information from the html inside of site_parse (making sure
         #to close the request from the page)
-        nhNews = 'https://www.livescience.com/new-hampshire-coronavirus-updates.html'
-        nhClient = req(nhNews)
+        nhWiki = 'https://en.wikipedia.org/wiki/COVID-19_pandemic_in_New_Hampshire'
+        nhClient = req(nhWiki)
         site_parse = soup(nhClient.read(), "lxml")
         nhClient.close()
         
         #Narrow down the parse to the section that is most pertinent
-        tables = site_parse.find("article", {"class":"news-article"}).find("div", {"itemprop": "articleBody"}).find('ul')
-        tags = tables.findAll('li')
+        tables = site_parse.find("div", {"class": "tp-container"}).findAll('tbody')        
         
         nh = "NEW HAMPSHIRE"
+        co = ' County'
+
         
         #CSV file name and header
-        csvfile = "COVID-19_cases_nhNews.csv"
-        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases\n"
+        csvfile = "COVID-19_cases_nhWiki.csv"
+        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths\n"
+        
+        #Hold all of the table's information into an easy to dissect list
+        hold = []    
+        for t in tables:
+                pull = t.findAll('tr')
+                for p in pull[2:-2]:
+                    take = p.get_text()
+                    hold.append(take)
+
         
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (tags[0].get_text().split(' ')[0]) == 'Belknap' and (tags[11].get_text().split(' ')[0]) == 'Sullivan':
+        if (hold[0].split('\n')[1]) == 'Belknap' and (hold[-1].split('\n')[1]) == 'Unassigned':
     
             file = open(csvfile, "w")
             file.write(headers)
                 
-            for t in range(0,5):
-                locale = liegen.geocode(tags[t].get_text().split(' ')[0] + "," + nh)
-                catch_TimeOut(tags[t].get_text().split(' ')[0])
-                file.write(tags[t].get_text().split(' ')[0] + "," + nh + "," 
-                           + str(fips.get_county_fips(tags[t].get_text().split(' ')[0],state=nh)).strip() + "," + str(locale.latitude) 
-                           + "," + str(locale.longitude) + "," + tags[t].get_text().split(' ')[1] + "\n")
-                sleep(1)
-            localeH = liegen.geocode("Hillsborough, New Hampshire")
-            file.write("Hillsborough" + "," + nh + "," 
-                           + str(fips.get_county_fips("Hillsborough",state=nh)).strip() + "," + str(localeH.latitude) 
-                           + "," + str(localeH.longitude) + "," 
-                           + str(int(tags[5].get_text().split(' – ')[1].split(' ')[1]) 
-                           + int(tags[6].get_text().split(' – ')[1].split(' ')[1]) 
-                           + int(tags[7].get_text().split(' – ')[1].split(' ')[1])) + "\n")
-            for t in range(8,len(tags)):
-                locale = liegen.geocode(tags[t].get_text().split(' ')[0] + "," + nh)
-                catch_TimeOut(tags[t].get_text().split(' ')[0])
-                file.write(tags[t].get_text().split(' ')[0] + "," + nh + "," 
-                           + str(fips.get_county_fips(tags[t].get_text().split(' ')[0],state=nh)).strip() + "," + str(locale.latitude) 
-                           + "," + str(locale.longitude) + "," + tags[t].get_text().split(' ')[1] + "\n")
-                sleep(1)
+            for h in hold[0:-1]:
+                take = h.split('\n')
+                locale = geocoder.opencage(take[1] + co + "," + nh, key='')
+                file.write(take[1] + "," + nh + "," 
+                           + str(fips.get_county_fips(take[1],state=nh)).strip() 
+                           + "," + str(locale.latlng).strip('[]') + "," 
+                           + take[3].replace(',','').replace('–','0') + "," 
+                           + take[5].replace(',','').replace('–','0') + "\n")
             
                 
             file.close()
@@ -2857,43 +2813,46 @@ def nvScrape():
     try:
         #Grab and hold the information from the html inside of site_parse (making sure
         #to close the request from the page)
-        nvNews = 'https://www.livescience.com/nevada-coronavirus-updates.html'
-        nvClient = req(nvNews)
+        nvWiki = 'https://en.wikipedia.org/wiki/COVID-19_pandemic_in_Nevada'
+        nvClient = req(nvWiki)
         site_parse = soup(nvClient.read(), "lxml")
         nvClient.close()
         
         #Narrow down the parse to the section that is most pertinent 
-        tables = site_parse.find("div", {"itemprop": "articleBody"}).find('ul')
-        tags = tables.findAll('li')
+        tables = site_parse.find("div", {"class": "tp-container"}).findAll('tbody')        
         
         nv = "NEVADA"
         co = ' County'
         
         #CSV file name and header
-        csvfile = "COVID-19_cases_nvNews.csv"
-        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases\n"
+        csvfile = "COVID-19_cases_nvWiki.csv"
+        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths\n"
+        
+        #Hold all of the table's information into an easy to dissect list
+        hold = []    
+        for t in tables:
+                pull = t.findAll('tr')
+                for p in pull[2:-2]:
+                    take = p.get_text()
+                    hold.append(take)    
+
         
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (tags[0].get_text().split(' ')[1].strip()) == 'Clark':
+        if (hold[0].split('\n')[1]) == 'Carson City' and (hold[-1].split('\n')[1]) == 'White Pine':
     
             file = open(csvfile, "w")
             file.write(headers)
             
-            for t in range(0,(len(tags)-1)):
-                locale = liegen.geocode(tags[t].get_text().split(' ')[1].strip() + co + "," + nv)
-                catch_TimeOut(tags[t].get_text().split(' ')[1].strip() + co + "," + nv)
-                file.write(tags[t].get_text().split(' ')[1].strip() + "," + nv + "," 
-                           + str(fips.get_county_fips(tags[t].get_text().split(' ')[1].strip(),state=nv)).strip() + "," 
-                           + str(locale.latitude) + "," + str(locale.longitude) + ","
-                           + tags[t].get_text().split(' ')[0].strip().replace(',','') + "\n")
-                sleep(1)
-            file.write("White Pine" + "," + nv + "," 
-                       + str(fips.get_county_fips("White Pine",state=nv)).strip() + "," 
-                       + str(liegen.geocode("White Pine" + co + ", " + nv).latitude) + "," 
-                       + str(liegen.geocode("White Pine" + co + ", " + nv).longitude) + ","
-                       + tags[-1].get_text().split(' ')[0].strip().replace(',','') + "\n")
+            for h in hold:
+                take = h.split('\n')
+                locale = geocoder.opencage(take[1] + "," + nv, key='')
+                file.write(take[1] + "," + nv + "," + str(fips.get_county_fips(take[1],state=nv)).strip() + "," 
+                           + str(locale.latlng).strip('[]') + "," 
+                           + take[3].replace(',','').replace('–','0') + "," 
+                           + take[5].replace(',','').replace('–','0') + "\n")
+
             
             file.close()
              
@@ -3700,7 +3659,7 @@ def txScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if newHold.at[57, 'County'] == 'Anderson':
+        if newHold.at[58, 'County'] == 'Anderson':
             newHold.to_csv('COVID-19_cases_txgit.csv',index=False, header=True)
             counter += 1
             print("Texas scraper is complete.")
@@ -4593,7 +4552,7 @@ def wyScrape():
 
 def main():
     
-    path = ""
+    path = "C:/Users/Erwac/Desktop/COVID-19-Visual-Tool/Web Scraped Docs/US States"
     os.chdir(path)
     
     #Runs this on a 24 hour basis... Just comment out if running manually
