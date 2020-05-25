@@ -62,6 +62,10 @@ guam = holdWiki[12].split('\n')
 #North Mariana Islands
 mariana = holdWiki[37].split('\n')
 
+#Pull lat/long coordinates from open data source found:
+#https://data.healthcare.gov/dataset/Geocodes-USA-with-Counties/52wv-g36k
+usCounties = pd.read_csv("/Downloads/Geocodes_USA_with_Counties.csv")
+
 #Each state/ territory will have a scraper. Some will be combined
 #for a more efficient or easy to view map in the web app
 
@@ -152,44 +156,46 @@ def akScrape():
         #Skagway
         skway = hold[18].split('\n')
         skfips = fips.get_county_fips(skway[1], state = ak)
+        #Unorganized Boroughs
+        unorg = hold[19].split('\n')
         #Wrangell
-        wran = hold[19].split('\n')
+        wran = hold[20].split('\n')
         wfips = fips.get_county_fips(wran[1], state = ak)
         #Yakutat
-        yak = hold[20].split('\n')
+        yak = hold[21].split('\n')
         yafips = fips.get_county_fips(yak[1], state = ak)
         #Aleutians West Census Area
-        alWest = hold[21].split('\n')
+        alWest = hold[22].split('\n')
         awfips = fips.get_county_fips(alWest[1], state = ak)
         #Bethel Census Borough
-        bethel = hold[22].split('\n')
+        bethel = hold[23].split('\n')
         befips = fips.get_county_fips(bethel[1], state = ak)
         #Chugach Census Area
-        chugach = hold[23].split('\n')
+        chugach = hold[24].split('\n')
         chfips = "02261"
         #Copper River Census Area
-        copper = hold[24].split('\n')
+        copper = hold[25].split('\n')
         cufips = "0"
         #Dillingham Census Area
-        dill = hold[25].split('\n')
+        dill = hold[26].split('\n')
         dfips = fips.get_county_fips(dill[1], state = ak)
         #Hoonah-Angoon Census Area
-        hoon = hold[26].split('\n')
+        hoon = hold[27].split('\n')
         hofips = "0"
         #Kusilvak Census Area
-        kusil = hold[27].split('\n')
+        kusil = hold[28].split('\n')
         kvfips = fips.get_county_fips(kusil[1], state = ak)
         #Nome Census Area
-        nome = hold[28].split('\n')
+        nome = hold[29].split('\n')
         nofips = fips.get_county_fips(nome[1], state = ak)
         #Prince of Wales- Hyder Census Area
-        wales = hold[29].split('\n')
+        wales = hold[30].split('\n')
         wafips = fips.get_county_fips(wales[1], state = ak)
         #Southeast Fairbanks Census Area
-        seFair = hold[30].split('\n')
+        seFair = hold[31].split('\n')
         sefips = fips.get_county_fips(seFair[1], state = ak)
         #Yukon-Koyukuk Census Area
-        yukon = hold[31].split('\n')
+        yukon = hold[32].split('\n')
         yufips = fips.get_county_fips(yukon[1], state = ak)
         
         #Place it into another list. This will make it easier to write into file
@@ -213,6 +219,19 @@ def akScrape():
                    pfips, sfips, skfips, wfips, yafips, awfips, befips, chfips, 
                    cufips, dfips, hofips, kvfips, nofips, wafips, sefips, yufips]
         
+        #This list holds lat/long for each county
+        latlong=[]
+        latlong=[(55.0512443,-162.8916892),(61.2163129,-149.8948523),(58.7370341,-156.8753867),
+                 (63.878678,-149.650166),(64.8649039,-146.7751619),(59.0831232,-135.3430573),
+                 (58.3019496,-134.419734),(60.0968272,-151.788033),(55.489748,-131.011963),
+                 (57.5433765,-153.3574124),(58.3277109,-156.154765),(62.3402481,-149.4793288),
+                 (69.5335129,-153.8220681),(67.2385127,-159.9816347),(56.7512207,-133.4588406),
+                 (57.0524973,-135.3376124),(59.6226362,-135.4094368),(56.4708333,-132.3766667),
+                 (59.6391781,-139.3429439),(51.5672222,178.8776),(60.392415,-162.3134907),
+                 (64.00028,-150.00028),(64.00028,-150.00028),(59.9011107,-158.2016852),
+                 (58.064782,-135.6992375),(62.2002165,-163.764702),(65.0031061,-163.0930151),
+                 (55.5110315,-132.9986035),(63.8489123,-143.9873581),(65.2266005,-153.5472287)]
+        
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
@@ -223,7 +242,7 @@ def akScrape():
             
             for n in range(0,30):
                 file.write(str(akCounty[n]) + "," + ak + "," + str(fipsCnt[n]) + "," 
-                           + str(geocoder.opencage(container[n][1] + ", " + ak, key='').latlng).strip('[]') + "," 
+                           + str(latlong[n]).strip('()') + "," 
                            + str(container[n][3]) + "," + str(container[n][5]) + "," + str(container[n][7]) + "\n")
             
             file.close()
@@ -258,7 +277,7 @@ def alScrape():
         #Do note that as of 4/15/2020, the json continuously changes the first 
         #CNTYNAME attribute
         test = []
-        if(attr[0].get('attributes').get('CNTYNAME')) == 'Bullock':
+        if(attr[0].get('attributes').get('CNTYNAME')) == 'Autauga':
             test = True
         else:
             test = False
@@ -321,7 +340,7 @@ def arScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if arHold.at[77, 'County'] == 'Arkansas' and len(arHold.columns) == 8:
+        if arHold.at[78, 'County'] == 'Arkansas' and len(arHold.columns) == 8:
         
             arHold.to_csv('COVID-19_cases_ardoh.csv',index=False, header=True)
             counter += 1
@@ -453,6 +472,10 @@ def caScrape():
                 take = p.get_text()
                 hold.append(take)
         
+        #Grab Lat/Long from Data.gov public dataset for California counties
+        #Available at: https://catalog.data.gov/dataset/california-counties-fb7d5
+        coordCA = pd.read_csv("C:/Users/Erwac/Downloads/California_Counties.csv")
+        
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
@@ -463,9 +486,13 @@ def caScrape():
             
             for h in hold[:58]:
                 take = h.split('\n')
-                file.write(take[1].split('[')[0] + "," + ca + "," + str(fips.get_county_fips(take[1].split('[')[0], state = ca)).strip() 
-                + "," + str(geocoder.opencage(take[1].strip('[c]') + "," + ca, key='').latlng).strip('[]')  
-                + "," + take[3].replace(',','').strip('[e]') + "," + take[5].replace(',','') + "," + take[7].replace('–', '0').replace(',','').strip('[f]') + "\n")
+                file.write(take[1].split('[')[0] + "," + ca + "," 
+                           + str(fips.get_county_fips(take[1].split('[')[0], state = ca)).strip() + "," 
+                           + str(list(coordCA[coordCA['Name']==take[1].split('[')[0]].Latitude)[0]) + ","
+                           + str(list(coordCA[coordCA['Name']==take[1].split('[')[0]].Longitude)[0]) + "," 
+                           + take[3].replace(',','').strip('[e]') + "," 
+                           + take[5].replace(',','') + "," 
+                           + take[7].replace('–', '0').replace(',','').strip('[f]') + "\n")
                         
             file.close()
             
@@ -505,10 +532,13 @@ def coScrape():
         csvfile = "COVID-19_cases_coDOH.csv"
         headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths\n"
         
+        #Create dataframe that holds CO lat/long
+        coCty = usCounties.groupby('state').get_group('CO').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])
+        
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended          
-        if adamsTest == 'Adams' and outTest == 'Out of state':
+        if adamsTest == 'Adams' and outTest == '*Unknown or pending':
     
             file = open(csvfile, "w")
             file.write(headers)
@@ -516,9 +546,10 @@ def coScrape():
             for t in test1[1:46]:
                     pull = t.findAll('td')
                     file.write(pull[0].text + "," + co + "," + str(fips.get_county_fips(pull[0].text, state = co)).strip() + ","
-                               + str(geocoder.opencage(pull[0].text + "," + co, key='').latlng).strip('[]') 
-                               + "," + pull[1].text.replace(',','').strip() 
-                               + "," + pull[2].text.replace(',','').strip() + "\n")
+                               + str(list(coCty[coCty['county'] == pull[0].text].latitude.head(1))[0]) + ","
+                               + str(list(coCty[coCty['county'] == pull[0].text].longitude.head(1))[0]) + ","
+                               + pull[1].text.replace(',','').strip() + ","
+                               + pull[2].text.replace(',','').strip() + "\n")
             
 #            for t in test2[1:13]:
 #                    pull = t.findAll('td')
@@ -533,18 +564,13 @@ def coScrape():
                        + "," + test1[46].findAll('td')[1].text.strip().replace(',','').strip()
                        + "," + test1[46].findAll('td')[2].text.strip().replace(',','').strip() + "\n")
             
-            for t in test1[47:-3]:
+            for t in test1[47:-2]:
                     pull = t.findAll('td')
                     file.write(pull[0].text + "," + co + "," + str(fips.get_county_fips(pull[0].text, state = co)).strip() + ","
                                + str(geocoder.opencage(pull[0].text + "," + co, key='').latlng).strip('[]') 
                                + "," + pull[1].text.replace(',','').strip() 
                                + "," + pull[2].text.replace(',','').strip() + "\n")
             
-            file.write(test1[-3].find('td').text + "," + co + "," + str(fips.get_state_fips(co)).strip() + "," 
-                       + str(liegen.geocode(co).latitude) + "," + str(liegen.geocode(co).longitude) + "," 
-                       + test1[-3].findAll('td')[1].text.strip().replace(',','').strip() + "," 
-                       + test1[-3].findAll('td')[2].text.strip().replace(',','').strip() + "\n")
-            sleep(1)
             file.write(test1[-2].find('td').text + "," + co + "," + str(fips.get_state_fips(co)).strip() + "," 
                        + str(liegen.geocode(co).longitude) + "," + str(liegen.geocode(co).longitude) + "," 
                        + test1[-2].findAll('td')[1].text.strip().replace(',','').strip() + "," 
@@ -693,19 +719,19 @@ def deScrape():
         #Uses geocode API that grabs latitude and longitude. According to API's 
         #policy, you must use a sleep function to ensure that you are giving their
         #servers enough time 
-        kent = tables.findAll('th')[9].text.strip() + " County"
+        kent = tables.findAll('th')[13].text.strip() + " County"
         kentC = pull[0].text.strip().replace(',','')
         kentD = pull[1].text.strip().replace(',','')
         kentR = pull[2].text.strip().replace(',','')
         kLocale = liegen.geocode(kent + "," + de)
         sleep(1)
-        newCastle = tables.findAll('th')[10].text.strip() + " County"
+        newCastle = tables.findAll('th')[14].text.strip() + " County"
         newC = pull[4].text.strip().replace(',','')
         newD = pull[5].text.strip().replace(',','')
         newR = pull[6].text.strip().replace(',','')
         nLocale = liegen.geocode(newCastle + "," + de)
         sleep(1)
-        suss = tables.findAll('th')[11].text.strip() + " County"
+        suss = tables.findAll('th')[15].text.strip() + " County"
         sussC = pull[8].text.strip().replace(',','')
         sussD = pull[9].text.strip().replace(',','')
         sussR = pull[10].text.strip().replace(',','')
@@ -767,6 +793,281 @@ def flScrape():
                 take = p.get_text()
                 hold.append(take)
     
+        #Build a dictionary to hold the latitude/longitude values for 
+        #affiliated FL counties 
+        flCounties = {
+            "Alachua": {
+                    "lat": "29.813456",
+                    "lon": "-82.472049"
+                    },
+           "Baker": {
+                    "lat": "30.3931",
+                    "lon": "-82.3018"
+                    },
+            "Bay": {
+                    "lat": "30.1805",
+                    "lon": "-85.6846"
+                    },
+             "Bradford": {
+                     "lat": "29.9724",
+                     "lon": "-82.1714"
+                     },
+            "Brevard": {
+                    "lat": "28.2639",
+                    "lon": "-80.7214"
+                    },
+            "Broward": {
+                    "lat": "26.1901",
+                    "lon": "-80.3659"
+                    },
+            "Calhoun": {
+                    "lat": "30.3475",
+                    "lon": "-85.1894"
+                    },
+            "Charlotte": {
+                    "lat": "26.8946",
+                    "lon": "-81.9098"
+                    },
+            "Citrus": {
+                    "lat": "28.8849",
+                    "lon": "-82.5186"
+                    },
+            "Clay": {
+                    "lat": "29.9944",
+                    "lon": "-81.7787"
+                    },
+            "Collier": {
+                    "lat": "26.07",
+                    "lon": "-81.42"
+                    },
+            "Columbia": {
+                    "lat": "30.1813",
+                    "lon": "-82.6051"
+                    },
+            "DeSoto": {
+                    "lat": "27.2142",
+                    "lon": "-81.7787"
+                    },
+            "Dixie": {
+                    "lat": "29.5207",
+                    "lon": "-83.1649"
+                    },
+            "Duval": {
+                    "lat": "30.3501",
+                    "lon": "-81.6035"
+                    },
+            "Escambia": {
+                    "lat": "30.6389",
+                    "lon": "-87.341"
+                    },
+            "Flagler": {
+                    "lat": "29.4086",
+                    "lon": "-81.2519"
+                    },
+            "Franklin": {
+                    "lat": "29.7818",
+                    "lon": "-84.8568"
+                    },
+            "Gadsden": {
+                    "lat": "30.5563",
+                    "lon": "-84.6479"
+                    },
+            "Gilchrist": {
+                    "lat": "29.6871",
+                    "lon": "-82.8210"
+                    },
+            "Glades": {
+                    "lat": "26.9844",
+                    "lon": "-81.0755"
+                    },
+            "Gulf": {
+                    "lat": "29.80",
+                    "lon": "-85.355"
+                    },
+            "Hamilton": {
+                    "lat": "30.4756",
+                    "lon": "-82.95"
+                    },
+            "Hardee": {
+                    "lat": "27.45",
+                    "lon": "-81.82"
+                    },
+            "Hendry": {
+                    "lat": "26.61",
+                    "lon": "-81.0755"
+                    },
+            "Hernando": {
+                    "lat": "28.5579",
+                    "lon": "-82.4753"
+                    },
+            "Highlands": {
+                    "lat": "27.34",
+                    "lon": "-81.34"
+                    },
+            "Hillsborough": {
+                    "lat": "27.99",
+                    "lon": "-82.30"
+                    },
+            "Holmes": {
+                    "lat": "30.8741",
+                    "lon": "-85.81"
+                    },
+            "Indian River": {
+                    "lat": "27.6948",
+                    "lon": "-80.5438"
+                    },
+            "Jackson": {
+                    "lat": "30.7151",
+                    "lon": "-85.1894"
+                    },
+            "Jefferson": {
+                    "lat": "30.4312",
+                    "lon": "-83.8897"
+                    },
+            "Lafayette": {
+                    "lat": "30.030",
+                    "lon": "-83.207"
+                    },
+            "Lake": {
+                    "lat": "28.7028",
+                    "lon": "-81.7787"
+                    },
+            "Lee": {
+                    "lat": "26.663",
+                    "lon": "-81.9535"
+                    },
+            "Leon": {
+                    "lat": "30.49",
+                    "lon": "-84.1857"
+                    },
+            "Levy": {
+                    "lat": "29.3179",
+                    "lon": "-82.821"
+                    },
+            "Liberty": {
+                    "lat": "30.15",
+                    "lon": "-84.8568"
+                    },
+            "Madison": {
+                    "lat": "30.4586",
+                    "lon": "-83.50"
+                    },
+            "Manatee": {
+                    "lat": "27.4799",
+                    "lon": "-82.3452"
+                    },
+            "Marion": {
+                    "lat": "29.2788",
+                    "lon": "-82.1278"
+                    },
+            "Martin": {
+                    "lat": "27.08",
+                    "lon": "-80.41"
+                    },
+            "Miami-Dade": {
+                    "lat": "25.5516",
+                    "lon": "-80.6327"
+                    },
+            "Monroe": {
+                    "lat": "24.5557",
+                    "lon": "-81.7826"
+                    },
+            "Nassau": {
+                    "lat": "30.5927",
+                    "lon": "-81.8224"
+                    },
+            "Okaloosa": {
+                    "lat": "30.5773", 
+                    "lon": "-86.6611"
+                    },
+            "Okeechobee": {
+                    "lat": "27.3462",
+                    "lon": "-80.8987"
+                    },
+            "Orange": {
+                    "lat": "28.4845", 
+                    "lon": "-81.2519"
+                    },
+            "Osceola": {
+                    "lat": "28.102",
+                    "lon": "-81.075"
+                    },
+            "Palm Beach": {
+                    "lat": "26.6515", 
+                    "lon": "-80.2767"
+                    },
+            "Pasco": {
+                    "lat": "28.3232",
+                    "lon": "-82.4319"
+                    },
+            "Pinellas": {
+                    "lat": "27.8764",
+                    "lon": "-82.7779"
+                    },
+            "Polk": {
+                    "NAME": "Polk",
+                    "lat": "27.8617", 
+                    "lon": "-81.6912"
+                    },
+            "Putnam": {
+                    "lat": "29.6265",
+                    "lon": "-81.7787"
+                    },
+            "Santa Rosa": {
+                    "lat": "30.769", 
+                    "lon": "-86.982"
+                    },
+            "Sarasota": {
+                    "lat": "27.199",
+                    "lon": "-82.345"
+                    },
+            "Seminole": {
+                    "lat": "28.7132",
+                    "lon": "-81.2078"
+                    },
+            "St. Johns": {
+                    "lat": "29.9719",
+                    "lon": "-81.4279"
+                    },
+            "St. Lucie": {
+                    "lat": "27.3226",
+                    "lon": "-80.5438"
+                    }, 
+            "Sumter": {
+                    "lat": "28.6748",
+                    "lon": "-82.0843"
+                    },
+            "Suwannee": {
+                    "lat": "30.2485", 
+                    "lon": "-82.9932"
+                    },
+            "Taylor": {
+                    "lat": "30.0994",
+                    "lon": "-83.6774"
+                    },
+            "Union": {
+                    "lat": "30.0745",
+                    "lon": "-82.3452"
+                    },
+            "Volusia": {
+                    "lat": "29.028",
+                    "lon": "-81.075"
+                    },
+            "Wakulla": {
+                    "lat": "30.1302",
+                    "lon": "-84.3542"
+                    },
+            "Walton": {
+                    "lat": "30.564",
+                    "lon": "-86.175"
+                    },
+            "Washington": {
+                    "lat": "30.5487",
+                    "lon": "-85.6846"
+                    }
+            }
+        
+        
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
@@ -779,8 +1080,9 @@ def flScrape():
                 take = h.split('\n')
                 file.write(take[1] + "," + fl + "," 
                            + str(fips.get_county_fips(take[1], state = fl)).strip() + ","
-                           + str(geocoder.opencage(h.split('\n')[1] + "," + fl, key='').latlng).strip('[]') + "," 
-                           + take[3].replace(',','').replace('–','0') + "," 
+                           + flCounties.get(take[1]).get('lat') + ","
+                           + flCounties.get(take[1]).get('lon') + ","
+                           + take[3].replace(',','').replace(' ','').replace('–','0') + "," 
                            + take[5].replace(',','').replace('–','0') + "," 
                            + take[7].replace(',','').replace('–','0') +"\n")
             file.write(hold[69].split('\n')[1] + "," + fl + "," 
@@ -821,6 +1123,9 @@ def gaScrape():
         csvfile = "COVID-19_cases_gadoh.csv"
         headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths\n"
         
+        #Create dataframe that holds GA lat/long
+        gaCty = usCounties.groupby('state').get_group('GA').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])
+
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
@@ -829,11 +1134,40 @@ def gaScrape():
             file = open(csvfile, "w")
             file.write(headers)
             
-            for t in tables[5:164]:
+            for t in tables[5:95]:
                     pull = t.findAll('td')
-                    file.write(pull[0].text + ","+ ga + "," + str(fips.get_county_fips(pull[0].text, state = ga)).strip() + ","
-                               + str(geocoder.opencage(pull[0].text + " County" + "," + ga, key='').latlng).strip('[]')
-                               + "," + pull[1].text + "," + pull[2].text + "\n")
+                    file.write(pull[0].text + ","+ ga + "," 
+                               + str(fips.get_county_fips(pull[0].text, state = ga)).strip() + ","
+                               + str(list(gaCty[gaCty['county'] == pull[0].text].latitude.head(1))[0]) + ","
+                               + str(list(gaCty[gaCty['county'] == pull[0].text].longitude.head(1))[0]) + ","
+                               + pull[1].text + "," + pull[2].text + "\n")
+            
+            file.write(tables[95].find('td').text + ","+ ga + "," + str(fips.get_county_fips("McDuffie", state = ga)).strip() + ","
+                       + "33.5259" + "," + "82.5186" + "," 
+                       + tables[95].findAll('td')[1].text.strip() + "," 
+                       + tables[95].findAll('td')[2].text.strip() + "\n")
+            
+            for t in tables[96:155]:
+                    pull = t.findAll('td')
+                    file.write(pull[0].text + ","+ ga + "," 
+                               + str(fips.get_county_fips(pull[0].text, state = ga)).strip() + ","
+                               + str(list(gaCty[gaCty['county'] == pull[0].text].latitude.head(1))[0]) + ","
+                               + str(list(gaCty[gaCty['county'] == pull[0].text].longitude.head(1))[0]) + ","
+                               + pull[1].text + "," + pull[2].text + "\n")
+
+            file.write(tables[155].find('td').text + ","+ ga + "," + str(fips.get_county_fips("McIntosh", state = ga)).strip() + ","
+                       + "31.4748" + "," + "81.3839" + "," 
+                       + tables[155].findAll('td')[1].text.strip() + "," 
+                       + tables[155].findAll('td')[2].text.strip() + "\n")
+
+            for t in tables[156:164]:
+                    pull = t.findAll('td')
+                    file.write(pull[0].text + ","+ ga + "," 
+                               + str(fips.get_county_fips(pull[0].text, state = ga)).strip() + ","
+                               + str(list(gaCty[gaCty['county'] == pull[0].text].latitude.head(1))[0]) + ","
+                               + str(list(gaCty[gaCty['county'] == pull[0].text].longitude.head(1))[0]) + ","
+                               + pull[1].text + "," + pull[2].text + "\n")
+
             
             file.write(tables[164].find('td').text + ","+ ga + "," + str(fips.get_state_fips(ga)).strip() 
                        + "," + str(liegen.geocode(ga).latitude) + "," 
@@ -1021,6 +1355,9 @@ def idScrape():
                 take = p.get_text()
                 hold.append(take)
         
+        #Create dataframe that holds ID lat/long
+        idCty = usCounties.groupby('state').get_group('ID').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])
+
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
@@ -1032,7 +1369,8 @@ def idScrape():
             for h in hold[0:43]:
                 take = h.split('\n')
                 file.write(take[1] + "," + iD + "," + str(fips.get_county_fips(take[1],state=iD)).strip() + "," 
-                           + str(geocoder.opencage(take[1] + ", " + iD, key='').latlng).strip('[]') + "," 
+                           + str(list(idCty[idCty['county'] == take[1]].latitude.head(1))[0]) + "," 
+                           + str(list(idCty[idCty['county'] == take[1]].longitude.head(1))[0]) + ","                            
                            + take[3].replace(',','').replace('–','0') + "," 
                            + take[5].replace(',','').replace('–','0') + ","
                            + take[7].replace(',','').replace('–','0') + "\n")        
@@ -1074,39 +1412,53 @@ def ilScrape():
             for p in pull[2:]:
                 take = p.get_text()
                 hold.append(take)
+
+        #Create dataframe that holds IL lat/long
+        #ilCty = usCounties.groupby('state').get_group('IL').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])
         
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (hold[0].split('\n')[1]) == 'Adams' and (hold[98].split('\n')[1]) == 'Woodford':
+        if (hold[0].split('\n')[1]) == 'Adams' and (hold[101].split('\n')[1]) == 'Woodford':
         
             file = open(csvfile, "w")
             file.write(headers)
                         
-            for h in hold[0:15]:
+            for h in hold[0:19]:
                 take = h.split('\n')
                 file.write(take[1] + "," + il + "," 
                            + str(fips.get_county_fips(take[1], state=il)).strip() + ","
-                           + str(geocoder.opencage(h.split('\n')[1] + co + "," + il, key='').latlng).strip('[]') + "," 
-                           + take[3].replace(',','') + "," 
-                           + take[5].replace(',','') + "," 
-                           + take[7].replace(',','').replace('–','0') + "\n")
-            #Cook County has some values that needs fixing... use split to do so
-            file.write(hold[15].split('\n')[1] + "," + il + "," 
-                       + str(fips.get_county_fips(hold[15].split('\n')[1], il)).strip() + "," 
-                       + str(geocoder.opencage(hold[15].split('\n')[1], key='').latlng).strip('[]') + "," 
-                       + hold[15].split('\n')[3].replace(',','') + "," 
-                       + hold[15].split('\n')[5].replace(',','') + "," 
-                       + hold[15].split('\n')[7].replace(',','').split(']')[1].split('[')[0].strip() + "\n")
-            
-            for h in hold[16:99]:
-                take = h.split('\n')
-                file.write(take[1] + "," + il + "," 
-                           + str(fips.get_county_fips(take[1], state=il)).strip() + ","
-                           + str(geocoder.opencage(h.split('\n')[1] + co + "," + il, key='').latlng).strip('[]') + "," 
+                           + str(geocoder.opencage(take[1], key='').latlng).strip('[]') + "," 
                            + take[3].replace(',','').replace('–','0') + "," 
                            + take[5].replace(',','').replace('–','0') + "," 
                            + take[7].replace(',','').replace('–','0') + "\n")
+
+            file.write(hold[19].split('\n')[1] + "," + il + "," 
+                       + str(fips.get_county_fips('De Witt', il)).strip() + "," 
+                       + str(geocoder.opencage(hold[19].split('\n')[1], key='').latlng).strip('[]') + "," 
+                       + hold[19].split('\n')[3].replace(',','').replace('–','0') + "," 
+                       + hold[19].split('\n')[5].replace(',','').replace('–','0') + "," 
+                       + hold[19].split('\n')[7].replace(',','').replace('–','0') + "\n")
+        
+            for h in hold[20:102]:
+                take = h.split('\n')
+                file.write(take[1] + "," + il + "," 
+                           + str(fips.get_county_fips(take[1], state=il)).strip() + ","
+                           + str(geocoder.opencage(take[1], key='').latlng).strip('[]') + "," 
+                           + take[3].replace(',','').replace('–','0') + "," 
+                           + take[5].replace(',','').replace('–','0') + "," 
+                           + take[7].replace(',','').replace('–','0') + "\n")
+
+            
+#            for h in hold[25:102]:
+#                take = h.split('\n')
+#                file.write(take[1] + "," + il + "," 
+#                           + str(fips.get_county_fips(take[1], state=il)).strip() + ","
+#                           + str(list(ilCty[ilCty['county'] == take[1]].latitude.head(1))[0]) + "," 
+#                           + str(list(ilCty[ilCty['county'] == take[1]].longitude.head(1))[0]) + ","                            
+#                           + take[3].replace(',','').replace('–','0') + "," 
+#                           + take[5].replace(',','').replace('–','0') + "," 
+#                           + take[7].replace(',','').replace('–','0') + "\n")
     
             file.close()
             
@@ -1147,6 +1499,9 @@ def inScrape():
                 take = p.get_text()
                 hold.append(take)
     
+        #Create dataframe that holds IN lat/long
+        inCty = usCounties.groupby('state').get_group('IN').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])
+
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
@@ -1158,9 +1513,10 @@ def inScrape():
             for h in hold[0:92]:
                 take = h.split('\n')
                 file.write(take[1] + "," + inD + "," + str(fips.get_county_fips(take[1],state=inD)).strip() + ","
-                           + str(geocoder.opencage(take[1] + co + "," + inD, key='').latlng).strip('[]') 
-                           + "," + take[3].replace(',','').replace('–','0') 
-                           + "," + take[5].replace(',','').replace('–','0') + "\n")        
+                           + str(list(inCty[inCty['county'] == take[1]].latitude.head(1))[0]) + ","
+                           + str(list(inCty[inCty['county'] == take[1]].longitude.head(1))[0]) + ","                           
+                           + take[3].replace(',','').replace('–','0') + ","
+                           + take[5].replace(',','').replace('–','0') + "\n")        
             file.close()
             
             counter += 1
@@ -1172,24 +1528,24 @@ def inScrape():
         print(cl('Printed or exception raised for IN scraper.', 'green'))
         pass
     
-def ioScrape():
+def iaScrape():
     
     try:
         #Grab and hold the information from the html inside of site_parse (making sure
         #to close the request from the page)
-        ioWiki = 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Iowa'
-        ioClient = req(ioWiki)
-        site_parse = soup(ioClient.read(), "lxml")
-        ioClient.close()
+        iaWiki = 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Iowa'
+        iaClient = req(iaWiki)
+        site_parse = soup(iaClient.read(), "lxml")
+        iaClient.close()
         
         #Narrow down the parse to the section that is most pertinent 
         tables = site_parse.find("div", {"class": "tp-container"}).findAll('tbody')        
         
-        io = "IOWA"
+        ia = "IOWA"
         co = ' County'
         
         #CSV file name and header
-        csvfile = "COVID-19_cases_ioWiki.csv"
+        csvfile = "COVID-19_cases_iaWiki.csv"
         headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths,Recoveries\n"
           
         #Hold all of the table's information into an easy to dissect list
@@ -1199,7 +1555,10 @@ def ioScrape():
                 for p in pull[2:]:
                     take = p.get_text()
                     hold.append(take)
-             
+ 
+        #Create dataframe that holds IA lat/long
+        iaCty = usCounties.groupby('state').get_group('IA').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])
+            
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended        
@@ -1210,11 +1569,12 @@ def ioScrape():
         
             for h in hold[0:99]:
                 take = h.split('\n')
-                file.write(take[1] + "," + io + "," + str(fips.get_county_fips(take[1],state=io)).strip() + "," 
-                           + str(geocoder.opencage(take[1] + co + "," + io, key='').latlng).strip('[]') 
-                           + "," + take[3].replace(',','').replace('–','0') 
-                           + "," + take[5].replace(',','').replace('–','0')
-                           + "," + take[7].replace(',','').replace('–','0')+ "\n")
+                file.write(take[1] + "," + ia + "," + str(fips.get_county_fips(take[1],state=ia)).strip() + "," 
+                           + str(list(iaCty[iaCty['county'] == take[1]].latitude.head(1))[0]) + ","
+                           + str(list(iaCty[iaCty['county'] == take[1]].longitude.head(1))[0]) + ","
+                           + take[3].replace(',','').replace('–','0') + ","
+                           + take[5].replace(',','').replace('–','0') + ","
+                           + take[7].replace(',','').replace('–','0')+ "\n")
                 
             file.close()
             
@@ -1224,27 +1584,27 @@ def ioScrape():
             print(cl("ERROR: Must fix Iowa Scraper.", 'red'))
             
     except Exception:
-        print(cl('Printed or exception raised for IO scraper.', 'green'))
+        print(cl('Printed or exception raised for IA scraper.', 'green'))
         pass
 
-def kaScrape():
+def ksScrape():
     
     try:
         #Grab and hold the information from the html inside of site_parse (making sure
         #to close the request from the page)
-        kaWiki = 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Kansas'
-        kaClient = req(kaWiki)
-        site_parse = soup(kaClient.read(), "lxml")
-        kaClient.close()
+        ksWiki = 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Kansas'
+        ksClient = req(ksWiki)
+        site_parse = soup(ksClient.read(), "lxml")
+        ksClient.close()
         
         #Narrow down the parse to the section that is most pertinent 
         tables = site_parse.find("div", {"class": "tp-container"}).findAll('tbody')        
         
-        ka = "KANSAS"
+        ks = "KANSAS"
         co = ' County'
         
         #CSV file name and header
-        csvfile = "COVID-19_cases_kaWiki.csv"
+        csvfile = "COVID-19_cases_ksWiki.csv"
         headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths,Recoveries\n"
         
         #Hold all of the table's information into an easy to dissect list
@@ -1254,6 +1614,9 @@ def kaScrape():
                 for p in pull[2:]:
                     take = p.get_text()
                     hold.append(take)
+                    
+        #Create dataframe that holds KA lat/long
+        ksCty = usCounties.groupby('state').get_group('KS').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])
         
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
@@ -1265,8 +1628,9 @@ def kaScrape():
             
             for h in hold[0:-2]:
                 take = h.split('\n')
-                file.write(take[1] + "," + ka + "," + str(fips.get_county_fips(take[1],state=ka)).strip() + ","
-                           + str(geocoder.opencage(take[1] + co + "," + ka, key='').latlng).strip('[]') + "," 
+                file.write(take[1] + "," + ks + "," + str(fips.get_county_fips(take[1],state=ks)).strip() + ","
+                           + str(list(ksCty[ksCty['county'] == take[1]].latitude.head(1))[0]) + ","
+                           + str(list(ksCty[ksCty['county'] == take[1]].longitude.head(1))[0]) + "," 
                            + take[3].replace('–','0').replace(',','').split(' (')[0] + "," 
                            + take[5].replace('–','0').replace(',','').split('[')[0] + "," 
                            + take[7].replace('–','0').replace(',','').split('[')[0] + "\n")        
@@ -1278,7 +1642,7 @@ def kaScrape():
             print(cl("ERROR: Must fix Kansas scraper.", 'red'))
             
     except Exception:
-        print(cl('Printed or exception raised for KA scraper.', 'green'))
+        print(cl('Printed or exception raised for KS scraper.', 'green'))
         pass
     
 def kyScrape():
@@ -1363,7 +1727,7 @@ def laScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended    
-        if (hold[0].split('\n')[1]) == 'Acadia' and (hold[-3].split('\n')[1]) == 'Winn':
+        if (hold[0].split('\n')[1]) == 'Acadia' and (hold[-4].split('\n')[1]) == 'Winn':
                 
             file = open(csvfile, "w")
             file.write(headers)
@@ -1392,7 +1756,7 @@ def laScrape():
                            + lasalle[3].replace(',','').replace('–','0') + ","
                            + lasalle[5].replace(',','').replace('–','0') + "," 
                            + lasalle[7].replace(',','').replace('–','0') + "\n")
-            for h in hold[30:-2]:
+            for h in hold[30:-3]:
                 take = h.split('\n')
                 file.write(take[1] + "," + la + "," + str(fips.get_county_fips(take[1],state=la)).strip() + ","
                            + str(geocoder.opencage(take[1] + "," + la, key='').latlng).strip('[]') + "," 
@@ -1566,7 +1930,7 @@ def meScrape():
         meClient.close()
         
         #Narrow down the parse to the section that is most pertinent 
-        tables = site_parse.find("div", {"id": "Accordion1"}).findAll("td")[23:108]
+        tables = site_parse.find("div", {"id": "Accordion1"}).findAll("td")[43:128]
         
         me = "MAINE"
         co = ' County'
@@ -2269,51 +2633,136 @@ def moScrape():
     try:
         #Grab and hold the information from the html inside of site_parse (making sure
         #to close the request from the page)
-        moDOH = 'https://health.mo.gov/living/healthcondiseases/communicable/novel-coronavirus/results.php'
-        moClient = req(moDOH)
+        moWiki = 'https://en.wikipedia.org/wiki/COVID-19_pandemic_in_Missouri'
+        moClient = req(moWiki)
         site_parse = soup(moClient.read(), "lxml")
         moClient.close()
         
         #Narrow down the parse to the section that is most pertinent 
-        tables = site_parse.find("div", {"class": "panel-group"}).findAll('tr')
-    
+        tables = site_parse.find("div", {"class": "tp-container"}).findAll('tbody')        
+        
         mo = "MISSOURI"
         co = ' County'
         
         #CSV file name and header
-        csvfile = "COVID-19_cases_modoh.csv"
+        csvfile = "COVID-19_cases_moWiki.csv"
         headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths\n"
         
+        #Hold all of the table's information into an easy to dissect list
+        hold = []
+        for t in tables:
+                pull = t.findAll('tr')
+                for p in pull[2:]:
+                    take = p.get_text()
+                    hold.append(take)
+
+        #Create dataframe that holds MO lat/long
+        moCty = usCounties.groupby('state').get_group('MO').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])
+
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (tables[1].find('td').text) == 'Adair' and (tables[174].find('td').text) == 'TBD':
-        
+        if (hold[0].split('\n')[1]) == 'Adair' and (hold[-4].split('\n')[1]) == 'Wright':
+                    
             file = open(csvfile, "w")
             file.write(headers)
             
-            #Pull from the county case table
-            for t in tables[1:118]:
-                pull = t.findAll('td')
-                locale = geocoder.opencage(pull[0].text + co + "," + mo, key='')
-                file.write(pull[0].text + "," + mo + "," + str(fips.get_county_fips(pull[0].text, state=mo)).strip() + "," + str(locale.latlng).strip('[]')
-                            + "," + pull[1].text + "," + "" + "\n")
-                
-            file.write(tables[118].findAll('td')[0].text + "," + mo + "," + str(fips.get_state_fips(mo)).strip() + "," + str(geocoder.opencage(mo, key='').latlng).strip('[]')
-                       + "," + tables[118].findAll('td')[1].text + "," + "" + "\n")
+            for h in hold[0:31]:
+                take = h.split('\n')
+                file.write(take[1] + "," + mo + "," 
+                           + str(fips.get_county_fips(take[1],state=mo)).strip() + ","
+                           + str(list(moCty[moCty['county'] == take[1]].latitude.head(1))[0]) + "," 
+                           + str(list(moCty[moCty['county'] == take[1]].longitude.head(1))[0]) + "," 
+                           + take[3].replace(',','').strip() + ","
+                           + take[5].replace(',','').strip() + "\n")
             
-            #Pull from the county death table
-            for t in tables[138:174]:
-                pull = t.findAll('td')
-                locale = geocoder.opencage(pull[0].text + co + "," + mo, key='')
-                file.write(pull[0].text + "," + mo + "," + str(fips.get_county_fips(pull[0].text,state=mo)).strip() + "," + str(locale.latlng).strip('[]')
-                           + "," + "" + "," + pull[1].text + "\n")
-                
-    #        file.write(tables[164].findAll('td')[0].text + "," + mo + "," + str(fips.get_state_fips(mo)).strip() + "," + str(geocoder.opencage(mo, key='').latlng).strip('[]')
-    #                   + "," + "" + "," + tables[164].findAll('td')[1].text + "\n")
+            #DeKalb County
+            file.write(hold[31].split('\n')[1] + "," + mo + "," 
+                       + str(fips.get_county_fips(hold[31].split('\n')[1],state=mo)).strip() + ","
+                       + "39.85" + "," 
+                       + "-94.43" + "," 
+                       + hold[31].replace(',','').split('\n')[3].strip() + ","
+                       + hold[31].replace(',','').split('\n')[5].strip() + "\n")
+
+            for h in hold[32:51]:
+                take = h.split('\n')
+                file.write(take[1] + "," + mo + "," 
+                           + str(fips.get_county_fips(take[1],state=mo)).strip() + ","
+                           + str(list(moCty[moCty['county'] == take[1]].latitude.head(1))[0]) + "," 
+                           + str(list(moCty[moCty['county'] == take[1]].longitude.head(1))[0]) + "," 
+                           + take[3].replace(',','').strip() + ","
+                           + take[5].replace(',','').strip() + "\n")
+            
+            #Joplin City
+            file.write(hold[51].split('\n')[1] + "," + mo + "," 
+                       + str(fips.get_county_fips(hold[51].split('\n')[1],state=mo)).strip() + ","
+                       + "37.08" + "," 
+                       + "-94.51" + "," 
+                       + hold[51].split('\n')[3].replace(',','').strip() + ","
+                       + hold[51].split('\n')[5].replace(',','').strip() + "\n")
+
+            #Kansas City
+            file.write(hold[52].split('\n')[1] + "," + mo + "," 
+                       + str(fips.get_county_fips(hold[52].split('\n')[1],state=mo)).strip() + ","
+                       + "39.09" + "," 
+                       + "-94.57" + "," 
+                       + hold[52].split('\n')[3].replace(',','').strip() + ","
+                       + hold[52].split('\n')[5].replace(',','').strip() + "\n")
+
+            for h in hold[53:101]:
+                take = h.split('\n')
+                file.write(take[1] + "," + mo + "," 
+                           + str(fips.get_county_fips(take[1],state=mo)).strip() + ","
+                           + str(list(moCty[moCty['county'] == take[1]].latitude.head(1))[0]) + "," 
+                           + str(list(moCty[moCty['county'] == take[1]].longitude.head(1))[0]) + "," 
+                           + take[3].replace(',','').strip() + ","
+                           + take[5].replace(',','').strip() + "\n")
+
+            #St. Francois City
+            file.write(hold[101].split('\n')[1] + "," + mo + "," 
+                       + str(fips.get_county_fips(hold[101].split('\n')[1],state=mo)).strip() + ","
+                       + "37.78" + "," 
+                       + "-90.42" + "," 
+                       + hold[101].split('\n')[3].replace(',','').strip() + ","
+                       + hold[101].split('\n')[5].replace(',','').strip() + "\n")
+
+
+            #St. Louis City
+            file.write(hold[102].split('\n')[1] + "," + mo + "," 
+                       + str(fips.get_county_fips(hold[102].split('\n')[1],state=mo)).strip() + ","
+                       + "38.627" + "," 
+                       + "-90.197" + "," 
+                       + hold[102].split('\n')[3].replace(',','').strip() + ","
+                       + hold[102].split('\n')[5].replace(',','').strip() + "\n")
+
+            #St. Louis County
+            file.write(hold[103].split('\n')[1] + "," + mo + "," 
+                       + str(fips.get_county_fips(hold[103].split('\n')[1],state=mo)).strip() + ","
+                       + "38.64" + "," 
+                       + "-90.44" + "," 
+                       + hold[103].split('\n')[3].replace(',','').strip() + ","
+                       + hold[103].split('\n')[5].replace(',','').strip() + "\n")
+
+            #Ste. Genevieve County
+            file.write(hold[104].split('\n')[1] + "," + mo + "," 
+                       + str(fips.get_county_fips(hold[104].split('\n')[1],state=mo)).strip() + ","
+                       + "37.89" + "," 
+                       + "-90.20" + "," 
+                       + hold[104].split('\n')[3].replace(',','').strip() + ","
+                       + hold[104].split('\n')[5].replace(',','').strip() + "\n")
+
+            for h in hold[105:-3]:
+                take = h.split('\n')
+                file.write(take[1] + "," + mo + "," 
+                           + str(fips.get_county_fips(take[1],state=mo)).strip() + ","
+                           + str(list(moCty[moCty['county'] == take[1]].latitude.head(1))[0]) + "," 
+                           + str(list(moCty[moCty['county'] == take[1]].longitude.head(1))[0]) + "," 
+                           + take[3].replace(',','').strip() + ","
+                           + take[5].replace(',','').strip() + "\n")
+
             
             file.close()
-            
+        
             counter += 1
             print("Missouri scraper is complete.")
         else:
@@ -2382,6 +2831,9 @@ def msScrape():
         csvfile = "COVID-19_cases_msdoh.csv"
         headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths\n"
         
+        #Create dataframe that holds MO lat/long
+        msCty = usCounties.groupby('state').get_group('MS').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])
+        
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
@@ -2392,9 +2844,12 @@ def msScrape():
             
             for t in tables[:81]:
                 pull = t.findAll('td')
-                locale = geocoder.opencage(pull[0].text + co + "," + ms, key='')
-                file.write(pull[0].text + "," + ms + "," + str(fips.get_county_fips(pull[0].text, state=ms)).strip() + "," + str(locale.latlng).strip('[]') + "," 
-                           + pull[1].text.replace(' ','0') + "," + pull[2].text.replace(' ','0') + "\n")
+                file.write(pull[0].text + "," + ms + "," 
+                           + str(fips.get_county_fips(pull[0].text, state=ms)).strip() + "," 
+                           + str(list(msCty[msCty['county'] == pull[0].text].latitude.head(1))[0]) + ","
+                           + str(list(msCty[msCty['county'] == pull[0].text].longitude.head(1))[0]) + "," 
+                           + pull[1].text.replace(' ','0') + "," 
+                           + pull[2].text.replace(' ','0') + "\n")
             
             file.close()
             
@@ -2431,18 +2886,18 @@ def mtScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if tags[0].find('td').text == 'Beaverhead' and tags[30].find('td').text == 'Total':
+        if tags[0].find('td').text.strip() == 'Beaverhead' and tags[30].find('td').text.strip() == 'Total':
         
             file = open(csvfile, "w")
             file.write(headers)
             
             for t in tags[:30]:
                 pull = t.findAll("td")
-                locale = geocoder.opencage(pull[0].text + co + "," + mt, key='')
-                file.write(pull[0].text + "," + mt + "," 
-                           + str(fips.get_county_fips(pull[0].text, state=mt)).strip() 
+                locale = geocoder.opencage(pull[0].text.strip() + co + "," + mt, key='')
+                file.write(pull[0].text.strip() + "," + mt + "," 
+                           + str(fips.get_county_fips(pull[0].text.strip(), state=mt)).strip() 
                            + "," + str(locale.latlng).strip('[]') + "," 
-                           + pull[1].text + "," + pull[2].text.strip() + "\n")
+                           + pull[1].text.strip() + "," + pull[2].text.strip() + "\n")
                 
             file.close()
             
@@ -2459,44 +2914,57 @@ def ncScrape():
     try:
         #Grab and hold the information from the html inside of site_parse (making sure
         #to close the request from the page)
-        ncDOH = 'https://www.ncdhhs.gov/covid-19-case-count-nc#nc-counties-with-cases'
-        ncClient = req(ncDOH)
-        site_parse = soup(ncClient.read(), 'lxml')
+        ncWiki = 'https://en.wikipedia.org/wiki/COVID-19_pandemic_in_North_Carolina'
+        ncClient = req(ncWiki)
+        site_parse = soup(ncClient.read(), "lxml")
         ncClient.close()
         
         #Narrow down the parse to the section that is most pertinent 
-        tables = site_parse.findAll("tbody")[3]
-        tags = tables.findAll('tr')
-        
+        tables = site_parse.find("div", {"class": "tp-container"}).findAll('tbody')        
+    
         nc = "NORTH CAROLINA"
+        co = ' County'
         
         #CSV file name and header
-        csvfile = "COVID-19_cases_ncdoh.csv"
-        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths\n"
+        csvfile = "COVID-19_cases_ncWiki.csv"
+        headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths,Recoveries\n"
+        
+        #Hold all of the table's information into an easy to dissect list
+        hold = []
+        for t in tables:
+                pull = t.findAll('tr')
+                for p in pull[2:]:
+                    take = p.get_text()
+                    hold.append(take)
+    
+        #Pull lat/long coord from dataframe for NC
+        ncCty = usCounties.groupby('state').get_group('NC').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])
         
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (tags[0].find('td').text.strip('\n')) == 'Alamance County' and (tags[97].find('td').text.strip('\n')) == 'Yadkin County':
-        
+        if hold[0].split('\n')[1] == 'Alamance' and hold[-3].split('\n')[1] == 'Yancey':
+    
             file = open(csvfile, "w")
             file.write(headers)
             
-            for tag in tags:
-                pull = tag.findAll('td')
-                locale = geocoder.opencage(pull[0].text.strip('\n') + "," + nc, key='')
-                file.write(pull[0].text.strip('\n') + "," + nc + "," 
-                           + str(fips.get_county_fips(pull[0].text.strip('\n'), state = nc)).strip() + "," 
-                           + str(locale.latlng).strip('[]') + "," 
-                           + pull[1].text.replace(',','').strip('\n') + "," 
-                           + pull[2].text.replace(',','').strip('\n') + "\n")
+            for h in hold[0:-2]:
+#                locale = geocoder.opencage(h.split('\n')[1] + co + "," + nd, key='')
+                take = h.split('\n')
+                file.write(take[1] + "," + nd + "," 
+                           + str(fips.get_county_fips(take[1],state=nd)).strip() + "," 
+                           + str(list(ncCty[ncCty['county'] == take[1]].latitude.head(1))[0]) + "," 
+                           + str(list(ncCty[ncCty['county'] == take[1]].longitude.head(1))[0]) + "," 
+                           + take[3].replace(',','').replace('–','0') + ","
+                           + take[5].replace(',','').replace('–','0') + ","
+                           + take[7].replace(',','').replace('–','0') + "\n")
             
             file.close()
-        
+            
             counter += 1
             print("North Carolina scraper is complete.")
         else:
-            print(cl("ERROR: Must fix North Carolina scraper.", 'red'))
+            print(cl("ERROR: Must fix North Carolina Scraper.", 'red'))
 
     except Exception:
         print(cl('Printed or exception raised for NC scraper.', 'green'))
@@ -2908,7 +3376,10 @@ def nyScrape():
                 for p in pull[2:]:
                     take = p.get_text()
                     hold.append(take)
-         
+        
+        #Pull lat/long coordinates for NY from dataframe
+        nyCty = usCounties.groupby('state').get_group('NY').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])
+        
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended       
@@ -2919,10 +3390,10 @@ def nyScrape():
             
             for h in hold[0:-2]:
                 take = h.split('\n')
-                locale = geocoder.opencage(take[1].split('[')[0] + co + "," + ny, key='')
                 file.write(take[1].split('[')[0] + "," + ny + "," 
                            + str(fips.get_county_fips(take[1].split('[')[0],state=ny)).strip() + "," 
-                           + str(locale.latlng).strip('[]') + "," 
+                           + str(list(nyCty[nyCty['county'] == take[1]].latitude.head(1))[0]) + "," 
+                           + str(list(nyCty[nyCty['county'] == take[1]].longitude.head(1))[0]) + ","                            
                            + take[3].split('[')[0].replace(',','').replace('–','0') + "," 
                            + take[5].replace(',','').replace('–','0') + "," 
                            + take[7].replace(',','').replace('–','0') + "\n")
@@ -2986,6 +3457,9 @@ def ohScrape():
                     take = p.get_text()
                     hold.append(take)
         
+        #Pull lat/long coordinates for OH from dataframe
+        ohCty = usCounties.groupby('state').get_group('OH').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])
+
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
@@ -2996,9 +3470,10 @@ def ohScrape():
             
             for h in hold[0:-2]:
                 take = h.split('\n')
-                locale = geocoder.opencage(take[1] + co + "," + oh, key='')
-                file.write(take[1].split('[')[0] + "," + oh + "," + str(fips.get_county_fips(take[1],state=oh)).strip() + "," 
-                           + str(locale.latlng).strip('[]') + "," 
+                file.write(take[1].split('[')[0] + "," + oh + "," 
+                           + str(fips.get_county_fips(take[1],state=oh)).strip() + "," 
+                           + str(list(ohCty[ohCty['county'] == take[1]].latitude.head(1))[0]) + "," 
+                           + str(list(ohCty[ohCty['county'] == take[1]].longitude.head(1))[0]) + "," 
                            + take[3].replace(',','') + "," + take[5].replace(',','') + "\n")
             
             file.close()
@@ -3126,6 +3601,9 @@ def paScrape():
         csvfile = "COVID-19_cases_padoh.csv"
         headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths\n"
         
+        #Pull lat/long coordinates for PA from dataframe
+        paCty = usCounties.groupby('state').get_group('PA').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])
+
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
@@ -3136,9 +3614,10 @@ def paScrape():
             
             for tag in tags[1:]:
                 pull = tag.findAll('td')
-                locale = geocoder.opencage(pull[0].text.strip() + co + "," + pa, key='')
-                file.write(pull[0].text.strip() + "," + pa + "," + str(fips.get_county_fips(pull[0].text.strip(),state=pa)).strip() + "," 
-                           + str(locale.latlng).strip('[]') + "," 
+                file.write(pull[0].text.strip() + "," + pa + "," 
+                           + str(fips.get_county_fips(pull[0].text.strip(),state=pa)).strip() + "," 
+                           + str(list(paCty[paCty['county'] == pull[0].text.strip()].latitude.head(1))[0]) + "," 
+                           + str(list(paCty[paCty['county'] == pull[0].text.strip()].longitude.head(1))[0]) + "," 
                            + pull[1].text + "," + pull[3].text + "\n")
             
             file.close()
@@ -3469,7 +3948,10 @@ def scScrape():
                 for p in pull[2:]:
                     take = p.get_text()
                     hold.append(take)
-              
+        
+        #Pull lat/long coord from dataframe for SC
+        scCty = usCounties.groupby('state').get_group('SC').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])
+        
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
@@ -3480,9 +3962,11 @@ def scScrape():
             
             for h in hold[0:-2]:
                 take = h.split('\n')
-                locale = geocoder.opencage(take[1] + co + "," + sc, key='')
-                file.write(take[1] + "," + sc + "," + str(fips.get_county_fips(take[1],state=sc)).strip() 
-                           + "," + str(locale.latlng).strip('[]') + "," 
+#                locale = geocoder.opencage(take[1] + co + "," + sc, key='')
+                file.write(take[1] + "," + sc + "," 
+                           + str(fips.get_county_fips(take[1],state=sc)).strip() + ","
+                           + str(list(scCty[scCty['county'] == take[1]].latitude.head(1))[0]) + ","
+                           + str(list(scCty[scCty['county'] == take[1]].longitude.head(1))[0]) + "," 
                            + take[3].replace(',','') + "," 
                            + take[5].replace(',','') + "\n")
             
@@ -3524,7 +4008,10 @@ def sdScrape():
             for p in pull[2:]:
                 take = p.get_text()
                 hold.append(take)
-           
+        
+        #Pull lat/long coord from dataframe for SD
+        sdCty = usCounties.groupby('state').get_group('SD').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])        
+        
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended     
@@ -3533,15 +4020,36 @@ def sdScrape():
             file = open(csvfile, "w")
             file.write(headers)
             
-            for h in hold[0:-2]:
+            for h in hold[0:50]:
                 take = h.split('\n')
-                locale = geocoder.opencage(take[1] + co + "," + sd, key='')
-                file.write(take[1] + "," + sd + "," + str(fips.get_county_fips(take[1],state=sd)).strip() 
-                           + "," + str(locale.latlng).strip('[]') + "," 
+#                locale = geocoder.opencage(take[1] + co + "," + sd, key='')
+                file.write(take[1] + "," + sd + "," 
+                           + str(fips.get_county_fips(take[1],state=sd)).strip() + ","
+                           + str(list(sdCty[sdCty['county'] == take[1]].latitude.head(1))[0]) + "," 
+                           + str(list(sdCty[sdCty['county'] == take[1]].longitude.head(1))[0]) + ","                            
                            + take[3].replace(',','') + "," 
                            + take[5].replace(',','') + "," 
                            + take[7].replace(',','') + "\n")
             
+            file.write(hold[50].split('\n')[1] + "," + sd + "," 
+                       + str(fips.get_county_fips(hold[50].split('\n')[1],state=sd)).strip() + ","
+                       + "43.33" + "," 
+                       + "-102.55" + ","                            
+                       + hold[50].split('\n')[3].replace(',','') + "," 
+                       + hold[50].split('\n')[5].replace(',','') + "," 
+                       + hold[50].split('\n')[7].replace(',','') + "\n")
+            
+            for h in hold[51:-2]:
+                take = h.split('\n')
+#                locale = geocoder.opencage(take[1] + co + "," + sd, key='')
+                file.write(take[1] + "," + sd + "," 
+                           + str(fips.get_county_fips(take[1],state=sd)).strip() + ","
+                           + str(list(sdCty[sdCty['county'] == take[1]].latitude.head(1))[0]) + "," 
+                           + str(list(sdCty[sdCty['county'] == take[1]].longitude.head(1))[0]) + ","                            
+                           + take[3].replace(',','') + "," 
+                           + take[5].replace(',','') + "," 
+                           + take[7].replace(',','') + "\n")
+
             file.close()
             
             counter += 1
@@ -3580,7 +4088,10 @@ def tnScrape():
                 for p in pull[2:]:
                     take = p.get_text()
                     hold.append(take)    
-          
+                    
+        #Pull lat/long coord from dataframe for TN
+        tnCty = usCounties.groupby('state').get_group('TN').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])
+        
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended          
@@ -3589,15 +4100,36 @@ def tnScrape():
             file = open(csvfile, "w")
             file.write(headers)
             
-            for h in hold[0:-4]:
+            for h in hold[0:20]:
                 take = h.split('\n')
-                locale = geocoder.opencage(take[1].split('[')[0] + co + "," + tn, key='')
-                file.write(take[1].split('[')[0] + "," + tn + "," + str(fips.get_county_fips(take[1].split('[')[0],state=tn)).strip() + "," 
-                           + str(locale.latlng).strip('[]') +  "," 
+#                locale = geocoder.opencage(take[1].split('[')[0] + co + "," + tn, key='')
+                file.write(take[1] + "," + tn + "," 
+                           + str(fips.get_county_fips(take[1],state=tn)).strip() + "," 
+                           + str(list(tnCty[tnCty['county'] == take[1]].latitude.head(1))[0]) +  "," 
+                           + str(list(tnCty[tnCty['county'] == take[1]].longitude.head(1))[0]) +  "," 
                            + take[3].split('[')[0].replace(',','').replace('–','0') + "," 
                            + take[5].split('[')[0].replace(',','').replace('–','0') + "," 
                            + take[7].split('[')[0].replace(',','').replace('–','0') +"\n")
             
+            file.write(hold[20].split('\n')[1] + "," + tn + ","
+                      + str(fips.get_county_fips(hold[20].split('\n')[1],state=tn)).strip() + "," 
+                      + "35.97" + "," + "-85.8077" + ","
+                      + hold[20].split('\n')[3].replace(',','').replace('–','0') + ","
+                      + hold[20].split('\n')[5].replace(',','').replace('–','0') + ","
+                      + hold[20].split('\n')[7].replace(',','').replace('–','0') + "\n"
+                       )
+            
+            for h in hold[21:-4]:
+                take = h.split('\n')
+#                locale = geocoder.opencage(take[1].split('[')[0] + co + "," + tn, key='')
+                file.write(take[1] + "," + tn + "," 
+                           + str(fips.get_county_fips(take[1],state=tn)).strip() + "," 
+                           + str(list(tnCty[tnCty['county'] == take[1]].latitude.head(1))[0]) +  "," 
+                           + str(list(tnCty[tnCty['county'] == take[1]].longitude.head(1))[0]) +  "," 
+                           + take[3].split('[')[0].replace(',','').replace('–','0') + "," 
+                           + take[5].split('[')[0].replace(',','').replace('–','0') + "," 
+                           + take[7].split('[')[0].replace(',','').replace('–','0') +"\n")
+
             file.write(hold[-4].split('\n')[1].split('[')[0] + "," + tn +  "," 
                        + str(fips.get_state_fips(tn)).strip() + ","  
                        + str(geocoder.opencage(tn, key='').latlng).strip('[]') +","
@@ -3659,7 +4191,7 @@ def txScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if newHold.at[58, 'County'] == 'Anderson':
+        if newHold.at[59, 'County'] == 'Anderson':
             newHold.to_csv('COVID-19_cases_txgit.csv',index=False, header=True)
             counter += 1
             print("Texas scraper is complete.")
@@ -4193,7 +4725,7 @@ def vaScrape():
         
         #Now place all this into csv 
         #Create a check 
-        if len(head) == 5 and cnty[0].strip(' [a]') == 'County' and vaTab.at[0, 'County'] == 'Accomack':
+        if len(head) == 6 and cnty[0].strip(' [a]') == 'County' and vaTab.at[0, 'County'] == 'Accomack':
             vaTab.to_csv('COVID-19_cases_vaWiki.csv', index = False, header = True)
             counter += 1
             print("Virginia scraper is complete.")
@@ -4552,7 +5084,7 @@ def wyScrape():
 
 def main():
     
-    path = "C:/Users/Erwac/Desktop/COVID-19-Visual-Tool/Web Scraped Docs/US States"
+    path = ""
     os.chdir(path)
     
     #Runs this on a 24 hour basis... Just comment out if running manually
@@ -4575,8 +5107,8 @@ def main():
     idScrape()
     ilScrape()
     inScrape()
-    ioScrape()
-    kaScrape()
+    iaScrape()
+    ksScrape()
     kyScrape()
     laScrape()
     maScrape()
