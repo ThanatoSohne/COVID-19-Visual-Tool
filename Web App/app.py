@@ -32,8 +32,8 @@ states = [{'label': 'Alaska', 'value': 'AK'},
           {'label': 'Idaho', 'value': 'ID'},
           {'label': 'Illinois', 'value': 'IL'},
           {'label': 'Indiana', 'value': 'IN'},
-          {'label': 'Iowa', 'value': 'IO'},
-          {'label': 'Kansas', 'value': 'KA'},
+          {'label': 'Iowa', 'value': 'IA'},
+          {'label': 'Kansas', 'value': 'KS'},
           {'label': 'Kentucky', 'value': 'KY'},
           {'label': 'Louisiana', 'value': 'LA'},
           {'label': 'Massachusetts', 'value': 'MA'},
@@ -248,7 +248,7 @@ def aksub():
 # -------------------------ALABAMA CHOROPLETH MAP------------------------------#
 alDF = pd.read_csv(
     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_aldoh.csv',
-    dtype={'fips': str})
+    dtype={'fips': str},float_precision='round_trip')
 cleanAL = alDF.fillna(0)
 
 
@@ -662,7 +662,7 @@ def casub():
 # -------------------------COLORADO CHOROPLETH MAP------------------------------#
 coDF = pd.read_csv(
     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_coDOH.csv',
-    dtype={'fips': str})
+    dtype={'fips': str}, float_precision='round_trip')
 cleanCO = coDF.fillna(0)
 
 
@@ -1084,7 +1084,7 @@ def flsub():
 # -------------------------GEORGIA CHOROPLETH MAP------------------------------#
 gaDF = pd.read_csv(
     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_gadoh.csv',
-    dtype={'fips': str})
+    dtype={'fips': str}, float_precision='round_trip')
 cleanGA = gaDF.fillna(0)
 
 
@@ -1318,7 +1318,7 @@ def hisub():
 # ---------------------------IDAHO CHOROPLETH MAP------------------------------#
 idDF = pd.read_csv(
     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_idWiki.csv',
-    dtype={'fips': str})
+    dtype={'fips': str}, float_precision='round_trip')
 cleanID = idDF.fillna(0)
 
 
@@ -1534,7 +1534,7 @@ def ilsub():
 # ---------------------------INDIANA CHOROPLETH MAP------------------------------#
 inDF = pd.read_csv(
     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_inWiki.csv',
-    dtype={'fips': str})
+    dtype={'fips': str}, float_precision='round_trip')
 cleanIN = inDF.fillna(0)
 
 
@@ -1631,8 +1631,8 @@ def insub():
 
 # ---------------------------IOWA CHOROPLETH MAP------------------------------#
 ioDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ioWiki.csv',
-    dtype={'fips': str})
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_iaWiki.csv',
+    dtype={'fips': str}, float_precision='round_trip')
 cleanIO = ioDF.fillna(0)
 
 
@@ -1739,8 +1739,8 @@ def iosub():
 
 # ---------------------------KANSAS CHOROPLETH MAP------------------------------#
 kaDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_kaWiki.csv',
-    dtype={'fips': str})
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ksWiki.csv',
+    dtype={'fips': str}, float_precision='round_trip')
 cleanKA = kaDF.fillna(0)
 
 
@@ -2369,7 +2369,7 @@ def mesub():
 
 # ---------------------------MICHIGAN CHOROPLETH MAP------------------------------#
 miDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_midoh.csv',
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_miWiki.csv',
     dtype={'fips': str})
 cleanMI = miDF.fillna(0)
 
@@ -2565,8 +2565,8 @@ def mnsub():
 
 # ---------------------------MISSOURI CHOROPLETH MAP------------------------------#
 moDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_modoh.csv',
-    dtype={'fips': str})
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_moWiki.csv',
+    dtype={'fips': str}, float_precision='round_trip')
 cleanMO = moDF.fillna(0)
 
 
@@ -2664,7 +2664,7 @@ def mosub():
 # ---------------------------MISSISSIPPI CHOROPLETH MAP------------------------------#
 msDF = pd.read_csv(
     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_msdoh.csv',
-    dtype={'fips': str})
+    dtype={'fips': str}, float_precision='round_trip')
 cleanMS = msDF.fillna(0)
 
 
@@ -2859,8 +2859,8 @@ def mtsub():
 
 # ---------------------------NORTH CAROLINA CHOROPLETH MAP------------------------------#
 ncDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ncdoh.csv',
-    dtype={'fips': str})
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ncWiki.csv',
+    dtype={'fips': str}, float_precision='round_trip')
 cleanNC = ncDF.fillna(0)
 
 
@@ -3567,7 +3567,7 @@ def nvsub():
 # ---------------------------NEW YORK CHOROPLETH MAP-----------------------------#
 nyDF = pd.read_csv(
     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nydoh.csv',
-    dtype={'fips': str})
+    dtype={'fips': str}, float_precision='round_trip')
 cleanNY = nyDF.fillna(0)
 
 
@@ -3675,7 +3675,7 @@ def nysub():
 # ---------------------------OHIO CHOROPLETH MAP-----------------------------#
 ohDF = pd.read_csv(
     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ohWiki.csv',
-    dtype={'fips': str})
+    dtype={'fips': str}, float_precision='round_trip')
 cleanOH = ohDF.fillna(0)
 
 
@@ -3978,8 +3978,8 @@ def orsub():
 
 # ---------------------------PENNSYLVANIA CHOROPLETH MAP-----------------------------#
 paDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_padoh.csv',
-    dtype={'fips': str})
+    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_paWiki.csv',
+    dtype={'fips': str}, float_precision='round_trip')
 cleanPA = paDF.fillna(0)
 
 
@@ -3989,7 +3989,7 @@ def pamap():
 
     paFig = px.choropleth_mapbox(cleanPA, geojson=counties, locations='fips', color='Confirmed Cases',
                                  color_continuous_scale='sunset', range_color=(0, maxPA),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
+                                 hover_data=['County', 'Confirmed Cases','Deaths'],
                                  zoom=5.5, center={"lat": 40.896699, "lon": -77.838908},
                                  opacity=0.6, labels={"County": "County"})
 
@@ -4022,16 +4022,7 @@ def pasub():
     ),
         row=2, col=1
     )
-    paFIG.add_trace(go.Bar(
-        y=cleanPA['County'],
-        x=cleanPA['Deaths'],
-        name='Deaths',
-        orientation='h',
-        marker=dict(
-            color='rgba(160, 184, 152, 0.6)',
-            line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
-        )
-    ))
+
     paFIG.add_trace(
         go.Densitymapbox(lat=cleanPA.Latitude, lon=cleanPA.Longitude,
                          z=cleanPA['Confirmed Cases'], radius=25,
@@ -4042,8 +4033,8 @@ def pasub():
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Latitude", "Longitude", "Confirmed Cases","Deaths"
+                        ],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
@@ -4264,7 +4255,7 @@ def risub():
 # -----------------------SOUTH CAROLINA CHOROPLETH MAP----------------------------#
 scDF = pd.read_csv(
     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_scWiki.csv',
-    dtype={'fips': str})
+    dtype={'fips': str}, float_precision='round_trip')
 cleanSC = scDF.fillna(0)
 
 
@@ -4362,7 +4353,7 @@ def scsub():
 # -----------------------SOUTH DAKOTA CHOROPLETH MAP----------------------------#
 sdDF = pd.read_csv(
     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_sdWiki.csv',
-    dtype={'fips': str})
+    dtype={'fips': str}, float_precision='round_trip')
 cleanSD = sdDF.fillna(0)
 
 
@@ -4470,7 +4461,7 @@ def sdsub():
 # -----------------------TENNESSEE CHOROPLETH MAP----------------------------#
 tnDF = pd.read_csv(
     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_tnWiki.csv',
-    dtype={'fips': str})
+    dtype={'fips': str}, float_precision='round_trip')
 cleanTN = tnDF.fillna(0)
 
 
@@ -4559,7 +4550,7 @@ def tnsub():
         ),
         row=1, col=1
     )
-    njFIG.update_layout(
+    tnFIG.update_layout(
         mapbox_style="stamen-terrain",
         mapbox_center_lat=35.86,
         mapbox_center_lon=-85.88,
@@ -6346,9 +6337,9 @@ def build_map(value):
         return ilmap()
     elif value == 'IN':
         return inmap()
-    elif value == 'IO':
+    elif value == 'IA':
         return iomap()
-    elif value == 'KA':
+    elif value == 'KS':
         return kamap()
     elif value == 'KY':
         return kymap()
@@ -6455,9 +6446,9 @@ def build_tables(value):
         return ilsub()
     elif value == 'IN':
         return insub()
-    elif value == 'IO':
+    elif value == 'IA':
         return iosub()
-    elif value == 'KA':
+    elif value == 'KS':
         return kasub()
     elif value == 'KY':
         return kysub()
