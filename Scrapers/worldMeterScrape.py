@@ -42,10 +42,10 @@ for d in dataCont[8:]:
                + zbornak[5].replace(',','') + "," 
                + zbornak[6].replace(',','').strip('+') + "," 
                + zbornak[7].replace(',','') + "," 
-               + zbornak[8].replace(',','') + "," 
                + zbornak[9].replace(',','') + "," 
-               + zbornak[12].replace(',','') + ","
-               + zbornak[14].replace(',','') + "\n")
+               + zbornak[10].replace(',','') + "," 
+               + zbornak[13].replace(',','') + ","
+               + zbornak[15].replace(',','') + "\n")
     
 file.close()
 
