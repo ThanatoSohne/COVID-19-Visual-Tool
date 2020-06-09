@@ -64,7 +64,7 @@ mariana = holdWiki[37].split('\n')
 
 #Pull lat/long coordinates from open data source found:
 #https://data.healthcare.gov/dataset/Geocodes-USA-with-Counties/52wv-g36k
-usCounties = pd.read_csv("/Downloads/Geocodes_USA_with_Counties.csv")
+usCounties = pd.read_csv("Downloads/Geocodes_USA_with_Counties.csv")
 
 #Each state/ territory will have a scraper. Some will be combined
 #for a more efficient or easy to view map in the web app
@@ -221,16 +221,16 @@ def akScrape():
         
         #This list holds lat/long for each county
         latlong=[]
-        latlong=[(55.0512443,-162.8916892),(61.2163129,-149.8948523),(58.7370341,-156.8753867),
-                 (63.878678,-149.650166),(64.8649039,-146.7751619),(59.0831232,-135.3430573),
-                 (58.3019496,-134.419734),(60.0968272,-151.788033),(55.489748,-131.011963),
-                 (57.5433765,-153.3574124),(58.3277109,-156.154765),(62.3402481,-149.4793288),
-                 (69.5335129,-153.8220681),(67.2385127,-159.9816347),(56.7512207,-133.4588406),
-                 (57.0524973,-135.3376124),(59.6226362,-135.4094368),(56.4708333,-132.3766667),
-                 (59.6391781,-139.3429439),(51.5672222,178.8776),(60.392415,-162.3134907),
-                 (64.00028,-150.00028),(64.00028,-150.00028),(59.9011107,-158.2016852),
-                 (58.064782,-135.6992375),(62.2002165,-163.764702),(65.0031061,-163.0930151),
-                 (55.5110315,-132.9986035),(63.8489123,-143.9873581),(65.2266005,-153.5472287)]
+        latlong=[(55.051,-162.89),(61.21,-149.89),(58.737,-156.87),
+                 (63.87,-149.650),(64.86,-146.77),(59.083,-135.343),
+                 (58.301,-134.41),(60.096,-151.788),(55.48,-131.011),
+                 (57.54,-153.357),(58.32,-156.15),(62.34,-149.47),
+                 (69.53,-153.822),(67.23,-159.98),(56.75,-133.45),
+                 (57.052,-135.33),(59.62,-135.409),(56.47,-132.37),
+                 (59.63,-139.34),(51.567,178.87),(60.39,-162.313),
+                 (64.00028,-150.00028),(64.00028,-150.00028),(59.901,-158.201),
+                 (58.064,-135.69),(62.2002,-163.76),(65.0031,-163.093),
+                 (55.511,-132.998),(63.84,-143.98),(65.22,-153.54)]
         
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
@@ -474,7 +474,7 @@ def caScrape():
         
         #Grab Lat/Long from Data.gov public dataset for California counties
         #Available at: https://catalog.data.gov/dataset/california-counties-fb7d5
-        coordCA = pd.read_csv("C:/Users/Erwac/Downloads/California_Counties.csv")
+        coordCA = pd.read_csv("/Downloads/California_Counties.csv")
         
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
@@ -538,7 +538,7 @@ def coScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended          
-        if adamsTest == 'Adams' and outTest == '*Unknown or pending':
+        if adamsTest == 'Adams' and outTest == 'International':
     
             file = open(csvfile, "w")
             file.write(headers)
@@ -546,8 +546,8 @@ def coScrape():
             for t in test1[1:46]:
                     pull = t.findAll('td')
                     file.write(pull[0].text + "," + co + "," + str(fips.get_county_fips(pull[0].text, state = co)).strip() + ","
-                               + str(list(coCty[coCty['county'] == pull[0].text].latitude.head(1))[0]) + ","
-                               + str(list(coCty[coCty['county'] == pull[0].text].longitude.head(1))[0]) + ","
+                               + str(list(coCty[coCty['county'] == pull[0].text].latitude.round(decimals=2).head(1))[0]) + ","
+                               + str(list(coCty[coCty['county'] == pull[0].text].longitude.round(decimals=2).head(1))[0]) + ","
                                + pull[1].text.replace(',','').strip() + ","
                                + pull[2].text.replace(',','').strip() + "\n")
             
@@ -572,7 +572,7 @@ def coScrape():
                                + "," + pull[2].text.replace(',','').strip() + "\n")
             
             file.write(test1[-2].find('td').text + "," + co + "," + str(fips.get_state_fips(co)).strip() + "," 
-                       + str(liegen.geocode(co).longitude) + "," + str(liegen.geocode(co).longitude) + "," 
+                       + str(liegen.geocode(co).latitude) + "," + str(liegen.geocode(co).longitude) + "," 
                        + test1[-2].findAll('td')[1].text.strip().replace(',','').strip() + "," 
                        + test1[-2].findAll('td')[2].text.strip().replace(',','').strip() + "\n")
             sleep(1)
@@ -594,11 +594,11 @@ def ctScrape():
         url = 'https://data.ct.gov/api/views/bfnu-rgqt/rows.csv?accessType=DOWNLOAD'
         ctDOH = pd.read_csv(url)
         #Model the dataframe to get the latest counts and the counties needed
-        nazar = ctDOH.sort_values('DateUpdated', ascending = False).head(8)
+        nazar = ctDOH.sort_values('Date updated', ascending = False).head(8)
         #Insert a state column
         nazar.insert(2, 'State', 'CONNECTICUT')
         #Drop away trash columns
-        eth = nazar.drop(columns=['Cnty_cod','CaseRates','DateUpdated'])
+        eth = nazar.drop(columns=['County code','Total cases ','Date updated', 'Probable cases', 'Total case rate', 'Total deaths', 'Probable deaths'])
         #Add fips and geolocation to the table
         namen = eth['County']
         namen = namen.tolist()
@@ -627,8 +627,9 @@ def ctScrape():
             fipsCT = fips.get_county_fips(n, state = "CONNECTICUT")
             sophia.append(fipsCT)
         eth.insert(3, 'fips', sophia)
-        ctTab = eth.rename(columns = {'ConfirmedCases':'Confirmed Cases',
-                                      'HospitalizedCases':'Hospitalized'})
+        ctTab = eth.rename(columns = {'Confirmed cases':'Confirmed Cases',
+                                      'Hospitalized cases':'Hospitalized',
+                                      'Confirmed Deaths': 'Deaths'})
         ctCOV = ctTab.reindex(columns=['County','State','fips','Latitude',
                                        'Longitude','Confirmed Cases','Deaths',
                                        'Hospitalized'])
@@ -643,8 +644,6 @@ def ctScrape():
         if ctCoV.at[0,'County'] == 'Windham':
                         
             ctCoV.to_csv(csvfile,index=False,header=True)
-            
-            file.close()
             
             counter += 1
             print("Connecticut scraper is complete.")
@@ -1930,7 +1929,7 @@ def meScrape():
         meClient.close()
         
         #Narrow down the parse to the section that is most pertinent 
-        tables = site_parse.find("div", {"id": "Accordion1"}).findAll("td")[43:128]
+        tables = site_parse.find("div", {"id": "Accordion1"}).findAll("td")[67:152]
         
         me = "MAINE"
         co = ' County'
@@ -1951,138 +1950,138 @@ def meScrape():
         #servers enough time 
         andr = hold[0:5]
         anC = andr[0]
-        anCC = andr[1].replace('\xa0','')
-        anR = andr[2].replace('\xa0','')
-        anH = andr[3].replace('\xa0','')
-        anD = andr[4].replace('\xa0','')
+        anCC = andr[1].replace('\xa0','').replace(',','')
+        anR = andr[2].replace('\xa0','').replace(',','')
+        anH = andr[3].replace('\xa0','').replace(',','')
+        anD = andr[4].replace('\xa0','').replace(',','')
         anLocale = liegen.geocode(anC + co + "," + me)
         sleep(1)
         aroo = hold[5:10]
         arC = aroo[0]
-        arCC = aroo[1].replace('\xa0','')
-        arR = aroo[2].replace('\xa0','')
-        arH = aroo[3].replace('\xa0','')
-        arD = aroo[4].replace('\xa0','')
+        arCC = aroo[1].replace('\xa0','').replace(',','')
+        arR = aroo[2].replace('\xa0','').replace(',','')
+        arH = aroo[3].replace('\xa0','').replace(',','')
+        arD = aroo[4].replace('\xa0','').replace(',','')
         arLocale = liegen.geocode(arC + co + "," + me)
         sleep(1)
         cumb = hold[10:15]
         cumbC = cumb[0]
-        cumbCC = cumb[1].replace('\xa0','')
-        cumbR = cumb[2].replace('\xa0','')
-        cumbH = cumb[3].replace('\xa0','')
-        cumbD = cumb[4].replace('\xa0','')
+        cumbCC = cumb[1].replace('\xa0','').replace(',','')
+        cumbR = cumb[2].replace('\xa0','').replace(',','')
+        cumbH = cumb[3].replace('\xa0','').replace(',','')
+        cumbD = cumb[4].replace('\xa0','').replace(',','')
         cLocale = liegen.geocode(cumbC + co + "," + me)
         sleep(1)
         frank = hold[15:20]
         frC = frank[0]
-        frCC = frank[1].replace('\xa0','')
-        frR = frank[2].replace('\xa0','')
-        frH = frank[3].replace('\xa0','')
-        frD = frank[4].replace('\xa0','')
+        frCC = frank[1].replace('\xa0','').replace(',','')
+        frR = frank[2].replace('\xa0','').replace(',','')
+        frH = frank[3].replace('\xa0','').replace(',','')
+        frD = frank[4].replace('\xa0','').replace(',','')
         fLocale = liegen.geocode(frC + co + "," + me)
         sleep(1)
         hanc = hold[20:25]
         haC = hanc[0]
-        haCC = hanc[1].replace('\xa0','')
-        haR = hanc[2].replace('\xa0','')
-        haH = hanc[3].replace('\xa0','')
-        haD = hanc[4].replace('\xa0','')
+        haCC = hanc[1].replace('\xa0','').replace(',','')
+        haR = hanc[2].replace('\xa0','').replace(',','')
+        haH = hanc[3].replace('\xa0','').replace(',','')
+        haD = hanc[4].replace('\xa0','').replace(',','')
         hLocale = liegen.geocode(haC + co + "," + me)
         sleep(1)
         kenne = hold[25:30]
         keC = kenne[0]
-        keCC = kenne[1].replace('\xa0','')
-        keR = kenne[2].replace('\xa0','')
-        keH = kenne[3].replace('\xa0','')
-        keD = kenne[4].replace('\xa0','')
+        keCC = kenne[1].replace('\xa0','').replace(',','')
+        keR = kenne[2].replace('\xa0','').replace(',','')
+        keH = kenne[3].replace('\xa0','').replace(',','')
+        keD = kenne[4].replace('\xa0','').replace(',','')
         keLocale = liegen.geocode(keC + co + "," + me)
         sleep(1)
         knox = hold[30:35]
         knC = knox[0]
-        knCC = knox[1].replace('\xa0','')
-        knR = knox[2].replace('\xa0','')
-        knH = knox[3].replace('\xa0','')
-        knD = knox[4].replace('\xa0','')
+        knCC = knox[1].replace('\xa0','').replace(',','')
+        knR = knox[2].replace('\xa0','').replace(',','')
+        knH = knox[3].replace('\xa0','').replace(',','')
+        knD = knox[4].replace('\xa0','').replace(',','')
         knLocale = liegen.geocode(knC + co + "," + me)
         sleep(1)
         linc = hold[35:40]
         linC = linc[0]
-        linCC = linc[1].replace('\xa0','')
-        linR = linc[2].replace('\xa0','')
-        linH = linc[3].replace('\xa0','')
-        linD = linc[4].replace('\xa0','')
+        linCC = linc[1].replace('\xa0','').replace(',','')
+        linR = linc[2].replace('\xa0','').replace(',','')
+        linH = linc[3].replace('\xa0','').replace(',','')
+        linD = linc[4].replace('\xa0','').replace(',','')
         lLocale = liegen.geocode(linC + co + "," + me)
         sleep(1)
         ox = hold[40:45]
         oxC = ox[0]
-        oxCC = ox[1].replace('\xa0','')
-        oxR = ox[2].replace('\xa0','')
-        oxH = ox[3].replace('\xa0','')
-        oxD = ox[4].replace('\xa0','')
+        oxCC = ox[1].replace('\xa0','').replace(',','')
+        oxR = ox[2].replace('\xa0','').replace(',','')
+        oxH = ox[3].replace('\xa0','').replace(',','')
+        oxD = ox[4].replace('\xa0','').replace(',','')
         oxLocale = liegen.geocode(oxC + co + "," + me)
         sleep(1)
         peno = hold[45:50]
         penC = peno[0]
-        penCC = peno[1].replace('\xa0','')
-        penR = peno[2].replace('\xa0','')
-        penH = peno[3].replace('\xa0','')
-        penD = peno[4].replace('\xa0','')
+        penCC = peno[1].replace('\xa0','').replace(',','')
+        penR = peno[2].replace('\xa0','').replace(',','')
+        penH = peno[3].replace('\xa0','').replace(',','')
+        penD = peno[4].replace('\xa0','').replace(',','')
         peLocale = liegen.geocode(penC + co + "," + me)
         sleep(1)
         pisca = hold[50:55]
         piC = pisca[0]
-        piCC = pisca[1].replace('\xa0','')
-        piR = pisca[2].replace('\xa0','')
-        piH = pisca[3].replace('\xa0','')
-        piD = pisca[4].replace('\xa0','')
+        piCC = pisca[1].replace('\xa0','').replace(',','')
+        piR = pisca[2].replace('\xa0','').replace(',','')
+        piH = pisca[3].replace('\xa0','').replace(',','')
+        piD = pisca[4].replace('\xa0','').replace(',','')
         piLocale = liegen.geocode(piC + co + "," + me)
         sleep(1)
         saga = hold[55:60]
         sC = saga[0]
-        sCC = saga[1].replace('\xa0','')
-        sR = saga[2].replace('\xa0','')
-        sH = saga[3].replace('\xa0','')
-        sD = saga[4].replace('\xa0','')
+        sCC = saga[1].replace('\xa0','').replace(',','')
+        sR = saga[2].replace('\xa0','').replace(',','')
+        sH = saga[3].replace('\xa0','').replace(',','')
+        sD = saga[4].replace('\xa0','').replace(',','')
         saLocale = liegen.geocode(sC + co + "," + me)
         sleep(1)
         somer = hold[60:65]
         soC = somer[0]
-        soCC = somer[1].replace('\xa0','')
-        soR = somer[2].replace('\xa0','')
-        soH = somer[3].replace('\xa0','')
-        soD = somer[4].replace('\xa0','')
+        soCC = somer[1].replace('\xa0','').replace(',','')
+        soR = somer[2].replace('\xa0','').replace(',','')
+        soH = somer[3].replace('\xa0','').replace(',','')
+        soD = somer[4].replace('\xa0','').replace(',','')
         soLocale = liegen.geocode(soC + co + "," + me)
         sleep(1)
         waldo = hold[65:70]
         wdC = waldo[0]
-        wdCC = waldo[1].replace('\xa0','')
-        wdR = waldo[2].replace('\xa0','')
-        wdH = waldo[3].replace('\xa0','')
-        wdD = waldo[4].replace('\xa0','')
+        wdCC = waldo[1].replace('\xa0','').replace(',','')
+        wdR = waldo[2].replace('\xa0','').replace(',','')
+        wdH = waldo[3].replace('\xa0','').replace(',','')
+        wdD = waldo[4].replace('\xa0','').replace(',','')
         wdLocale = liegen.geocode(wdC + co + "," + me)
         sleep(1)
         wash = hold[70:75]
         wsC = wash[0]
-        wsCC = wash[1].replace('\xa0','')
-        wsR = wash[2].replace('\xa0','')
-        wsH = wash[3].replace('\xa0','')
-        wsD = wash[4].replace('\xa0','')
+        wsCC = wash[1].replace('\xa0','').replace(',','')
+        wsR = wash[2].replace('\xa0','').replace(',','')
+        wsH = wash[3].replace('\xa0','').replace(',','')
+        wsD = wash[4].replace('\xa0','').replace(',','')
         waLocale = liegen.geocode(wsC + co + "," + me)
         sleep(1)
         york = hold[75:80]
         yC = york[0]
-        yCC = york[1].replace('\xa0','')
-        yR = york[2].replace('\xa0','')
-        yH = york[3].replace('\xa0','')
-        yD = york[4].replace('\xa0','')
+        yCC = york[1].replace('\xa0','').replace(',','')
+        yR = york[2].replace('\xa0','').replace(',','')
+        yH = york[3].replace('\xa0','').replace(',','')
+        yD = york[4].replace('\xa0','').replace(',','')
         yoLocale = liegen.geocode(yC + co + "," + me)
         sleep(1)
         unk = hold[80:85]
         uC = unk[0]
-        uCC = unk[1].replace('\xa0','')
-        uR = unk[2].replace('\xa0','')
-        uH = unk[3].replace('\xa0','')
-        uD = unk[4].replace('\xa0','')
+        uCC = unk[1].replace('\xa0','').replace(',','')
+        uR = unk[2].replace('\xa0','').replace(',','')
+        uH = unk[3].replace('\xa0','').replace(',','')
+        uD = unk[4].replace('\xa0','').replace(',','')
         
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
@@ -2159,102 +2158,92 @@ def miScrape():
     try:
         #Grab and hold the information from the html inside of site_parse (making sure
         #to close the request from the page)
-        miDOH = 'https://www.michigan.gov/coronavirus/0,9753,7-406-98163_98173---,00.html'
-        miClient = req(miDOH)
+        miWiki = 'https://en.wikipedia.org/wiki/COVID-19_pandemic_in_Michigan'
+        miClient = req(miWiki)
         site_parse = soup(miClient.read(), "lxml")
         miClient.close()
         
         #Narrow down the parse to the section that is most pertinent 
-        tables = site_parse.find("div", {"class": "fullContent"}).find("tbody")
-        tags = tables.findAll('tr')
+        tables = site_parse.find("div", {"class": "tp-container"}).findAll('tbody')        
         
         mi = "MICHIGAN"
         co = ' County'
         
+        #Hold all of the table's information into an easy to dissect list for both 
+        #places
+        hold = []
+        for t in tables:
+                pull = t.findAll('tr')
+                for p in pull[2:]:
+                    take = p.get_text()
+                    hold.append(take)
+
+        
         #CSV file name and header
-        csvfile = "COVID-19_cases_midoh.csv"
+        csvfile = "COVID-19_cases_miWiki.csv"
         headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths\n"
         
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (tags[0].find('td').text.strip()) == 'Alcona' and (tags[83].find('td').text.strip()) == 'Out of State':
+        if (hold[0].split('\n')[1]) == 'Alcona' and (hold[-3].split('\n')[1]) == 'Out of State':
     
             file = open(csvfile, "w")
             file.write(headers)
                     
-            for tag in tags[0:20]:
-                pull = tag.findAll('td')
-                file.write(pull[0].text + "," + mi + "," 
-                           + str(fips.get_county_fips(pull[0].text,state=mi)).strip() + ","
-                           + str(geocoder.opencage(pull[0].text + co + "," + mi, key='').latlng).strip('[]') 
-                           + "," + pull[1].text.replace('\xa0','0') + "," + pull[2].text.replace('\xa0','0') + "\n")
-                
-            for tag in tags[21:73]:
-                pull = tag.findAll('td')
-                file.write(pull[0].text + "," + mi + "," 
-                           + str(fips.get_county_fips(pull[0].text,state=mi)).strip() + ","
-                           + str(geocoder.opencage(pull[0].text + co + "," + mi, key='').latlng).strip('[]') 
-                           + "," + pull[1].text.replace('\xa0','0') + "," + pull[2].text.replace('\xa0','0') + "\n")
-            
+            for h in hold[:76]:
+                take = h.split('\n')
+                file.write(take[1] + "," + mi + "," 
+                           + str(fips.get_county_fips(take[1],state=mi)).strip() + ","
+                           + str(geocoder.opencage(take[1] + co + "," + mi, key='').latlng).strip('[]') 
+                           + "," + take[3].replace(',','') + "," + take[5].replace(',','') + "\n")
+                            
             #St.Clair
-            file.write(tags[73].findAll('td')[0].text + "," + mi + "," + "26147" + ","
-                           + str(geocoder.opencage(tags[73].findAll('td')[0].text + co + "," + mi, key='').latlng).strip('[]') + "," 
-                           + tags[73].findAll('td')[1].text.replace('\xa0','0') + "," 
-                           + tags[73].findAll('td')[1].text.replace('\xa0','0') + "\n")
+            file.write(hold[76].split('\n')[1] + "," + mi + "," + "26147" + ","
+                           + str(geocoder.opencage(hold[76].split('\n')[1] + co + "," + mi, key='').latlng).strip('[]') + "," 
+                           + hold[76].split('\n')[3].replace(',','') + "," 
+                           + hold[76].split('\n')[5].replace(',','') + "\n")
             #St.Joseph
-            file.write(tags[74].findAll('td')[0].text + "," + mi + "," + "26149" + ","
-                           + str(geocoder.opencage(tags[74].findAll('td')[0].text + co + "," + mi, key='').latlng).strip('[]') + "," 
-                           + tags[74].findAll('td')[1].text.replace('\xa0','0') + "," 
-                           + tags[74].findAll('td')[1].text.replace('\xa0','0') + "\n")
+            file.write(hold[77].split('\n')[1] + "," + mi + "," + "26149" + ","
+                           + str(geocoder.opencage(hold[77].split('\n')[1] + co + "," + mi, key='').latlng).strip('[]') + "," 
+                           + hold[77].split('\n')[3].replace(',','') + "," 
+                           + hold[77].split('\n')[5].replace(',','') + "\n")
             
-            for tag in tags[75:78]:
-                pull = tag.findAll('td')
-                file.write(pull[0].text + "," + mi + "," 
-                           + str(fips.get_county_fips(pull[0].text,state=mi)).strip() + ","
-                           + str(geocoder.opencage(pull[0].text + co + "," + mi, key='').latlng).strip('[]') 
-                           + "," + pull[1].text.replace('\xa0','0') + "," + pull[2].text.replace('\xa0','0') + "\n")
-            
-            #Detroit City merged into Wayne county data
-            file.write(tags[78].findAll('td')[0].text + "," + mi + "," 
-                       + str(fips.get_county_fips(tags[78].findAll('td')[0].text,state=mi)).strip() + ","
-                       + str(geocoder.opencage(tags[78].findAll('td')[0].text + co + "," + mi, key='').latlng).strip('[]')+ "," 
-                       + str((int(tags[20].findAll('td')[1].text)) + (int(tags[78].findAll('td')[1].text))) + ","
-                       + str((int(tags[20].findAll('td')[2].text)) + (int(tags[78].findAll('td')[2].text))) + "\n")
-            
-            file.write(tags[79].findAll('td')[0].text + "," + mi + "," 
-                       + str(fips.get_county_fips(tags[79].findAll('td')[0].text,state=mi)).strip() + ","
-                       + str(geocoder.opencage(tags[79].findAll('td')[0].text + co + "," + mi, key='').latlng).strip('[]') + "," 
-                       + tags[79].findAll('td')[1].text.replace('\xa0','0') + "," 
-                       + tags[79].findAll('td')[1].text.replace('\xa0','0') + "\n")
-            
+            for h in hold[78:83]:
+                take = h.split('\n')
+                file.write(take[1] + "," + mi + "," 
+                           + str(fips.get_county_fips(take[1],state=mi)).strip() + ","
+                           + str(geocoder.opencage(take[1] + co + "," + mi, key='').latlng).strip('[]') 
+                           + "," + take[3].replace(',','') + "," + take[5].replace(',','') + "\n")
+
             file.write("MI Department of Corrections" + "," + mi + "," 
                        + str(fips.get_state_fips(mi)).strip() + "," 
-                       + str(liegen.geocode(mi).latitude) + "," 
-                       + str(liegen.geocode(mi).longitude) + "," 
-                       + tags[80].findAll('td')[1].text.strip() + "," 
-                       + tags[80].findAll('td')[2].text.strip() + "\n")
-            sleep(1)
+                       + '44.314' + "," 
+                       + '-85.602' + "," 
+                       + hold[83].split('\n')[3].replace(',','') + "," 
+                       + hold[83].split('\n')[5].replace(',','') + "\n")
+
             file.write("Federal Correctional Institute" + "," + mi + "," 
                        + str(fips.get_state_fips(mi)).strip() + "," 
-                       + str(liegen.geocode(mi).latitude) + "," 
-                       + str(liegen.geocode(mi).longitude) + "," 
-                       + tags[81].findAll('td')[1].text.strip() + "," 
-                       + tags[81].findAll('td')[2].text.strip() + "\n")
-            sleep(1)
-            file.write(tags[82].find('td').text.strip() + "," + mi + "," 
+                       + '44.314' + "," 
+                       + '-85.602' + "," 
+                       + hold[84].split('\n')[3].replace(',','') + "," 
+                       + hold[84].split('\n')[5].replace(',','') + "\n")
+            
+            #Unknown
+            file.write(hold[85].split('\n')[1] + "," + mi + "," 
                        + str(fips.get_state_fips(mi)).strip() + "," 
-                       + str(liegen.geocode(mi).latitude) + "," 
-                       + str(liegen.geocode(mi).longitude) + "," 
-                       + tags[82].findAll('td')[1].text.strip() + "," 
-                       + tags[82].findAll('td')[2].text.strip() + "\n")
-            sleep(1)
-            file.write(tags[83].find('td').text.strip() + "," + mi + "," 
+                       + '44.314' + "," 
+                       + '-85.602' + "," 
+                       + hold[85].split('\n')[3].replace(',','') + "," 
+                       + hold[85].split('\n')[5].replace(',','') + "\n")
+
+            file.write(hold[86].split('\n')[1] + "," + mi + "," 
                        + str(fips.get_state_fips(mi)).strip() + "," 
-                       + str(liegen.geocode(mi).latitude) + "," 
-                       + str(liegen.geocode(mi).longitude) + "," 
-                       + tags[83].findAll('td')[1].text.strip() + "," 
-                       + tags[83].findAll('td')[2].text.strip() + "\n")
+                       + '44.314' + "," 
+                       + '-85.602' + "," 
+                       + hold[86].split('\n')[3].replace(',','') + "," 
+                       + hold[86].split('\n')[5].replace(',','') + "\n")
             
             file.close()
             
@@ -2837,7 +2826,7 @@ def msScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (tables[0].find('td').text) == 'Adams' and (tables[80].find('td').text) == 'Yazoo':
+        if (tables[0].find('td').text) == 'Adams' and (tables[-2].find('td').text) == 'Yazoo':
         
             file = open(csvfile, "w")
             file.write(headers)
@@ -2886,12 +2875,12 @@ def mtScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if tags[0].find('td').text.strip() == 'Beaverhead' and tags[30].find('td').text.strip() == 'Total':
+        if tags[0].find('td').text.strip() == 'Beaverhead' and tags[-1].find('td').text.strip() == 'Total':
         
             file = open(csvfile, "w")
             file.write(headers)
             
-            for t in tags[:30]:
+            for t in tags[:-1]:
                 pull = t.findAll("td")
                 locale = geocoder.opencage(pull[0].text.strip() + co + "," + mt, key='')
                 file.write(pull[0].text.strip() + "," + mt + "," 
@@ -3585,21 +3574,28 @@ def paScrape():
     try:
         #Grab and hold the information from the html inside of site_parse (making sure
         #to close the request from the page)
-        paDOH = 'https://www.health.pa.gov/topics/disease/coronavirus/Pages/Cases.aspx'
-        paClient = req(paDOH)
+        paWiki = 'https://en.wikipedia.org/wiki/COVID-19_pandemic_in_Pennsylvania'
+        paClient = req(paWiki)
         site_parse = soup(paClient.read(), "lxml")
         paClient.close()
         
         #Narrow down the parse to the section that is most pertinent 
-        tables = site_parse.find("div", {"class": "ms-rtestate-field","style": "display:inline"}).find("div", {"style": "text-align:center;"}).find("table", {"class": "ms-rteTable-default"})
-        tags = tables.findAll('tr')
-        
+        tables = site_parse.find("div", {"class": "tp-container"}).findAll('tbody')        
+
         pa = "PENNSYLVANIA"
         co = ' County'
         
         #CSV file name and header
-        csvfile = "COVID-19_cases_padoh.csv"
+        csvfile = "COVID-19_cases_paWiki.csv"
         headers = "County,State,fips,Latitude,Longitude,Confirmed Cases,Deaths\n"
+        
+        #Hold all of the table's information into an easy to dissect list
+        hold = []
+        for t in tables:
+                pull = t.findAll('tr')
+                for p in pull[2:]:
+                    take = p.get_text()
+                    hold.append(take)        
         
         #Pull lat/long coordinates for PA from dataframe
         paCty = usCounties.groupby('state').get_group('PA').drop(columns=['zip','primary_city','type','world_region','country','decommissioned','estimated_population','notes'])
@@ -3607,18 +3603,19 @@ def paScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if (tags[1].find('td').text) == 'Adams' and (tags[67].find('td').text.strip()) == 'York':
+        if (hold[0].split('\n')[1]) == 'Adams' and (hold[-3].split('\n')[1]) == 'York':
         
             file = open(csvfile, "w")
             file.write(headers)
             
-            for tag in tags[1:]:
-                pull = tag.findAll('td')
-                file.write(pull[0].text.strip() + "," + pa + "," 
-                           + str(fips.get_county_fips(pull[0].text.strip(),state=pa)).strip() + "," 
-                           + str(list(paCty[paCty['county'] == pull[0].text.strip()].latitude.head(1))[0]) + "," 
-                           + str(list(paCty[paCty['county'] == pull[0].text.strip()].longitude.head(1))[0]) + "," 
-                           + pull[1].text + "," + pull[3].text + "\n")
+            for h in hold[:-2]:
+                take = h.split('\n')
+                file.write(take[1] + "," + pa + "," 
+                           + str(fips.get_county_fips(take[1],state=pa)).strip() + "," 
+                           + str(list(paCty[paCty['county'] == take[1]].latitude.head(1))[0]) + "," 
+                           + str(list(paCty[paCty['county'] == take[1]].longitude.head(1))[0]) + "," 
+                           + take[3].replace(',','') + "," 
+                           + take[5].replace(',','') + "\n")
             
             file.close()
             
@@ -4267,23 +4264,23 @@ def utScrape():
         
         #Broken into counties in lists
         counties = []
-        for t in bearTab[3:6]:
+        for t in bearTab[5:8]:
             take = t.text
             counties.append(take)
         cases = []
-        for t in bearTab[8:11]:
+        for t in bearTab[10:13]:
             take = t.text
             cases.append(take)
         khaus  = []
-        for t in bearTab[13:16]:
+        for t in bearTab[15:18]:
             take = t.text
             khaus.append(take)
         recov = []
-        for t in bearTab[18:21]:
+        for t in bearTab[20:23]:
             take = t.text
             recov.append(take)
         mort = []
-        for t in bearTab[23:26]:
+        for t in bearTab[25:28]:
             take = t.text
             mort.append(take)
         
@@ -5001,12 +4998,12 @@ def wvScrape():
         #Check to ensure the parsed and collected information is correct/ pertient.
         #If it is, then print to the CSV file whose name was created earlier
         #If not, then print out an error message so that the scraper can be mended
-        if hold[0].split('\n')[1] == 'Barbour' and hold[-3].split('\n')[1] == 'Wyoming':
+        if hold[0].split('\n')[1] == 'Barbour' and hold[-2].split('\n')[1] == 'Wyoming':
         
             file = open(csvfile, "w")
             file.write(headers)
             
-            for h in hold[0:-2]:
+            for h in hold[0:-1]:
                 take = h.split('\n')
                 locale = geocoder.opencage(take[1] + "," + wv, key='')
                 file.write(take[1] + "," + wv + "," + str(fips.get_county_fips(take[1],state=wv)).strip() + ","
