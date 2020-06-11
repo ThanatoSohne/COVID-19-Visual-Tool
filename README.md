@@ -33,6 +33,9 @@ of data to a wider audience.
 This project makes use of multiple types of visuals to better describe or showcase the overall spread and impact of COVID-19 around 
 the world.
 
+## Reports and Presentations
+###### * [Project Requirement Specifications](https://www.dropbox.com/s/mjf9wzc38cqfttg/Project_Requirement_Specifications.pdf?dl=0)
+
 ## Inner Mechanics
 There are multiple moving parts to this web app, both behind the scenes and displayed in the app itself.
 ###### Web Scraping
