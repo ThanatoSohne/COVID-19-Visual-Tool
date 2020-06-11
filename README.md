@@ -37,6 +37,10 @@ the world.
 ###### :anchor: [Project Requirement Specifications](https://www.dropbox.com/s/mjf9wzc38cqfttg/Project_Requirement_Specifications.pdf?dl=0)
 ###### :mag: [Use Case Diagram](https://www.dropbox.com/s/fdv2z3it79g38s6/Use_Case_Diagram.pdf?dl=0)
 ###### :hourglass_flowing_sand: [System/Data Flow Diagram](https://www.dropbox.com/s/caztsjp0ioccnpg/System_Flow.pdf?dl=0)
+###### :memo: [System/ Technical Design](https://www.dropbox.com/s/irtyzun17drusgg/System__Technical_Design.pdf?dl=0)
+###### :end: [Final Product Presentation](https://drive.google.com/file/d/1V-8RB7o4nKUAnf0npCBY0odmbdREjN3t/view?usp=sharing)
+###### :page_with_curl: [Final Product Report](https://www.dropbox.com/s/1k4w0zpmpccoiu6/ICSI499_Report_Team_10.pdf?dl=0)
+
 ## Inner Mechanics
 There are multiple moving parts to this web app, both behind the scenes and displayed in the app itself.
 ###### Web Scraping
