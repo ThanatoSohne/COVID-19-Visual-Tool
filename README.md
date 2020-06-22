@@ -1,4 +1,4 @@
-# COVID19VisTool: 
+# [COVID19VisTool](https://covid19-outbreak-vis.herokuapp.com/): 
 ## A Web App to Better Visualize the Impact of COVID-19 on Our Lives :earth_americas:
 
 The implementation and overall work for this web app is the byproduct of our 2020 Capstone project in the [CEAS Department](https://www.albany.edu/ceas) here 
