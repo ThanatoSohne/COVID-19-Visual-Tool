@@ -25,6 +25,9 @@ Finally, to the makers and maintainers of the Python libraries, outside platform
 - Mateo Vaquero Benjumea
 - Avinash Singh
 
+###### News/ Update Info
+As of 6/28/20, the web scraping code is obsolete and will be updated as soon as it has been reworked to better collect information from ever changing data and sites. We are also working on a page within the app to hold a table with info for testing sites based on state. 
+
 ## Abstract
 When it comes to understanding data of any kind, we tend to best conceptualize and understand this data with the 
 utilization of visuals. This is not just contained to the fields of computer science or mathematics seeing as its 
