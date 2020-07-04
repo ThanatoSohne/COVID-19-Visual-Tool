@@ -17,7 +17,7 @@ import xlrd
 
 
 # ----------------------Variables and Plots Held Here----------------------------------------------#
-# Dropdown menu options for state maps on page 2
+# Dropdown menu options for state tables on page 2
 states = [{'label': 'Alaska', 'value': 'AK'},
           {'label': 'Alabama', 'value': 'AL'},
           {'label': 'Arkansas', 'value': 'AR'},
@@ -84,6 +84,11 @@ oracle_country = [
 with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
     counties = json.load(response)
 
+#Dataframe of a combined csv of all COVID-19 case files
+usDF = pd.read_csv("https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/combined.csv",
+               dtype={"fips": str})
+
+usDF = usDF.fillna(0)
 
 # ---------------------------WORLD SCATTER GEO MAP----------------------------#
 def mundiScatter():
@@ -122,7 +127,7 @@ def aniGlobe():
     table.drop(holder, inplace=True)
     table = table.rename(columns={'dateRep': 'Date', 'cases': 'Cases', 'deaths': 'Deaths',
                                   'countriesAndTerritories': 'Countries/Territories',
-                                  'popData2018': 'Population', 'continentExp': 'Continent'})
+                                  'popData2019': 'Population', 'continentExp': 'Continent'})
     see = table['Date'].astype(str).str[:]
 
     blanche = px.scatter(table, x='Population', y='Cases', animation_frame=see,
@@ -133,34 +138,52 @@ def aniGlobe():
                           title="ECDC's Data Showing the Infected Cases Color Coded by Continent with Daily Deaths as Time Progressed")
     return blanche
 
+#--------------------------US CHOROPLETH MAP----------------------------------------------#
+def usMap():
+
+    usFig = px.choropleth_mapbox(usDF, geojson=counties, locations='fips', color='Confirmed Cases',
+                                 color_continuous_scale='rainbow',
+                                 range_color=(0, 10000),
+                                 hover_data=['County', 'State', 'Confirmed Cases', 'Deaths', 'Recoveries', 'Hospitalized'],
+                                 zoom=1.8, center = {"lat": 46.84, "lon": -122.147},
+                                 opacity=0.8)
+
+    usFig.update_layout(mapbox_style="satellite-streets",
+                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+    usFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+
+    return usFig
 
 # -------------------------ALASKA CHOROPLETH & SUBPLOT MAPS------------------------------#
-akDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_akWiki.csv',
-    dtype={'fips': str})
-cleanAK = akDF.fillna(0)
+# akDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_akWiki.csv',
+#     dtype={'fips': str})
+# cleanAK = akDF.fillna(0)
 
 
-def akmap():
-    # Used to round up to a proper max for the range_color function
-    maxAK = (math.ceil(cleanAK['Confirmed Cases'].max() / 50.0) * 50.0) + 150
 
-    akFig = px.choropleth_mapbox(cleanAK, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='aggrnyl',
-                                 range_color=(0, maxAK),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries', 'Latitude',
-                                             'Longitude'],
-                                 zoom=3, center={"lat": 63.860036, "lon": -150.255849},
-                                 opacity=0.6, labels={'County': 'Borough', 'Confirmed Cases': 'Confirmed Cases'})
-
-    akFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    akFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return akFig
+# def akmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxAK = (math.ceil(cleanAK['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     akFig = px.choropleth_mapbox(cleanAK, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='aggrnyl',
+#                                  range_color=(0, maxAK),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries', 'Latitude',
+#                                              'Longitude'],
+#                                  zoom=3, center={"lat": 63.86, "lon": -150.25},
+#                                  opacity=0.6, labels={'County': 'Borough', 'Confirmed Cases': 'Confirmed Cases'})
+#
+#     akFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     akFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return akFig
 
 
 # --SUBPLOT--#
 def aksub():
+    alaska = usDF.loc[usDF.State == 'ALASKA']
+
     akFIG = make_subplots(
         rows=2, cols=2,
         column_widths=[0.6, 0.6],
@@ -171,8 +194,8 @@ def aksub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     akFIG.add_trace(go.Bar(
-        y=cleanAK['County'],
-        x=cleanAK['Confirmed Cases'],
+        y=alaska['County'],
+        x=alaska['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -183,8 +206,8 @@ def aksub():
         row=2, col=1
     )
     akFIG.add_trace(go.Bar(
-        y=cleanAK['County'],
-        x=cleanAK['Deaths'],
+        y=alaska['County'],
+        x=alaska['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -194,8 +217,8 @@ def aksub():
     ))
 
     akFIG.add_trace(go.Bar(
-        y=cleanAK['County'],
-        x=cleanAK['Recoveries'],
+        y=alaska['County'],
+        x=alaska['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -205,8 +228,8 @@ def aksub():
     ))
 
     akFIG.add_trace(
-        go.Densitymapbox(lat=cleanAK.Latitude, lon=cleanAK.Longitude,
-                         z=cleanAK['Confirmed Cases'], radius=30,
+        go.Densitymapbox(lat=alaska.Latitude, lon=alaska.Longitude,
+                         z=alaska['Confirmed Cases'], radius=30,
                          showscale=False,
                          visible=True),
         row=2, col=2)
@@ -216,14 +239,14 @@ def aksub():
             header=dict(
                 values=["Borough", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths", "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='Overpass'),
                 align='left'
             ),
             cells=dict(
-                values=[cleanAK[k].tolist() for k in cleanAK.columns[:]],
+                values=[alaska[k].tolist() for k in alaska.columns[:]],
                 fill_color='black',
                 font=dict(color='white', size=12, family='Gravitas One'),
                 align="left")
@@ -234,7 +257,7 @@ def aksub():
         mapbox_style="stamen-terrain", mapbox_center_lon=-143.6,
         mapbox_center_lat=64.2,
         mapbox=dict(
-            zoom=3
+            zoom=2
         ),
         barmode='stack',
         height=800,
@@ -246,36 +269,37 @@ def aksub():
 
 
 # -------------------------ALABAMA CHOROPLETH MAP------------------------------#
-alDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_aldoh.csv',
-    dtype={'fips': str},float_precision='round_trip')
-cleanAL = alDF.fillna(0)
+# alDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_aldoh.csv',
+#     dtype={'fips': str},float_precision='round_trip')
+# cleanAL = alDF.fillna(0)
+#
+#
+# def almap():
+#     # Used to round up to a proper max for the range_color function
+#     maxAL = (math.ceil(cleanAL['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     # Leaving this here in case we will need it later
+#     # alfips = ['01001','01003','01005','01007','01009','01011','01013','01015','01017','01019','01021','01023','01025','01027','01029',
+#     #          '01031','01033','01035','01037','01039','01041','01043','01045','01047','01049','01051','01053','01055','01057','01059',
+#     #          '01061','01063','01065','01067','01069','01071','01073','01075','01077','01079','01081','01083','01085','01087','01089',
+#     #          '01091','01093','01095','01097','01099','01101','01103','01105','01107','01109','01111','01113','01117','01115','01119',
+#     #          '01121','01123','01125','01127','01129','01131','01133']
+#
+#     alFig = px.choropleth_mapbox(cleanAL, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale="viridis",
+#                                  range_color=(0, maxAL),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Latitude', 'Longitude'],
+#                                  zoom=5.5, center={"lat": 32.756, "lon": -86.84},
+#                                  opacity=0.6, labels={'Confirmed Cases': 'Confirmed Cases'}
+#                                  )
+#
+#     alFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     alFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return alFig
 
-
-def almap():
-    # Used to round up to a proper max for the range_color function
-    maxAL = (math.ceil(cleanAL['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    # Leaving this here in case we will need it later
-    # alfips = ['01001','01003','01005','01007','01009','01011','01013','01015','01017','01019','01021','01023','01025','01027','01029',
-    #          '01031','01033','01035','01037','01039','01041','01043','01045','01047','01049','01051','01053','01055','01057','01059',
-    #          '01061','01063','01065','01067','01069','01071','01073','01075','01077','01079','01081','01083','01085','01087','01089',
-    #          '01091','01093','01095','01097','01099','01101','01103','01105','01107','01109','01111','01113','01117','01115','01119',
-    #          '01121','01123','01125','01127','01129','01131','01133']
-
-    alFig = px.choropleth_mapbox(cleanAL, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale="viridis",
-                                 range_color=(0, maxAL),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Latitude', 'Longitude'],
-                                 zoom=5.5, center={"lat": 32.756902, "lon": -86.844513},
-                                 opacity=0.6, labels={'Confirmed Cases': 'Confirmed Cases'}
-                                 )
-
-    alFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    alFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return alFig
-
+alabama = usDF.loc[usDF.State == 'ALABAMA']
 
 # --SUBPLOT--#
 def alsub():
@@ -289,8 +313,8 @@ def alsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     alFIG.add_trace(go.Bar(
-        y=cleanAL['County'],
-        x=cleanAL['Confirmed Cases'],
+        y=alabama['County'],
+        x=alabama['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -301,8 +325,8 @@ def alsub():
         row=2, col=1
     )
     alFIG.add_trace(go.Bar(
-        y=cleanAL['County'],
-        x=cleanAL['Deaths'],
+        y=alabama['County'],
+        x=alabama['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -312,8 +336,8 @@ def alsub():
     ))
 
     alFIG.add_trace(
-        go.Densitymapbox(lat=cleanAL.Latitude, lon=cleanAL.Longitude,
-                         z=cleanAL['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=alabama.Latitude, lon=alabama.Longitude,
+                         z=alabama['Confirmed Cases'], radius=25,
                          showscale=False,
                          visible=True),
         row=2, col=2)
@@ -323,14 +347,14 @@ def alsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanAL[k].tolist() for k in cleanAL.columns[:]],
+                values=[alabama[k].tolist() for k in alabama.columns[:]],
                 fill_color='black',
                 font=dict(color='white', size=12, family='Gravitas One'),
                 align="left")
@@ -353,27 +377,28 @@ def alsub():
 
 
 # -------------------------ARKANSAS CHOROPLETH MAP------------------------------#
-arDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ardoh.csv',
-    dtype={'fips': str})
-cleanAR = arDF.fillna(0)
+# arDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ardoh.csv',
+#     dtype={'fips': str})
+# cleanAR = arDF.fillna(0)
+#
+#
+# def armap():
+#     # Used to round up to a proper max for the range_color function
+#     maxAR = (math.ceil(cleanAR['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     arFig = px.choropleth_mapbox(cleanAR, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='sunsetdark', range_color=(0, maxAR),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+#                                  zoom=5.5, center={"lat": 34.89, "lon": -92.43},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     arFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     arFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return arFig
 
-
-def armap():
-    # Used to round up to a proper max for the range_color function
-    maxAR = (math.ceil(cleanAR['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    arFig = px.choropleth_mapbox(cleanAR, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='sunsetdark', range_color=(0, maxAR),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=5.5, center={"lat": 34.899764, "lon": -92.439213},
-                                 opacity=0.6, labels={"County": "County"})
-
-    arFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    arFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return arFig
-
+arkansas = usDF.loc[usDF.State == 'Arkansas']
 
 # --SUBPLOT--#
 def arsub():
@@ -387,8 +412,8 @@ def arsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     arFIG.add_trace(go.Bar(
-        y=cleanAR['County'],
-        x=cleanAR['Confirmed Cases'],
+        y=arkansas['County'],
+        x=arkansas['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -399,8 +424,8 @@ def arsub():
         row=2, col=1
     )
     arFIG.add_trace(go.Bar(
-        y=cleanAR['County'],
-        x=cleanAR['Deaths'],
+        y=arkansas['County'],
+        x=arkansas['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -409,8 +434,8 @@ def arsub():
         )
     ))
     arFIG.add_trace(go.Bar(
-        y=cleanAR['County'],
-        x=cleanAR['Recoveries'],
+        y=arkansas['County'],
+        x=arkansas['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -420,8 +445,8 @@ def arsub():
     ))
 
     arFIG.add_trace(
-        go.Densitymapbox(lat=cleanAR.Latitude, lon=cleanAR.Longitude,
-                         z=cleanAR['Confirmed Cases'], radius=20,
+        go.Densitymapbox(lat=arkansas.Latitude, lon=arkansas.Longitude,
+                         z=arkansas['Confirmed Cases'], radius=20,
                          showscale=False,
                          visible=True),
         row=2, col=2)
@@ -431,14 +456,14 @@ def arsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed<br>Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths", "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='Overpass'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanAR[k].tolist() for k in cleanAR.columns[:]],
+                values=[arkansas[k].tolist() for k in arkansas.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -462,27 +487,28 @@ def arsub():
 
 
 # -------------------------ARIZONA CHOROPLETH MAP------------------------------#
-azDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_azWiki.csv',
-    dtype={'fips': str})
-cleanAZ = azDF.fillna(0)
+# azDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_azWiki.csv',
+#     dtype={'fips': str})
+# cleanAZ = azDF.fillna(0)
+#
+#
+# def azmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxAZ = (math.ceil(cleanAZ['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     azFig = px.choropleth_mapbox(cleanAZ, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='picnic', range_color=(0, maxAZ),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5.5, center={"lat": 34.333, "lon": -111.712},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     azFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     azFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return azFig
 
-
-def azmap():
-    # Used to round up to a proper max for the range_color function
-    maxAZ = (math.ceil(cleanAZ['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    azFig = px.choropleth_mapbox(cleanAZ, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='picnic', range_color=(0, maxAZ),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.5, center={"lat": 34.333217, "lon": -111.712983},
-                                 opacity=0.6, labels={"County": "County"})
-
-    azFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    azFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return azFig
-
+arizona = usDF.loc[usDF.State == 'ARIZONA']
 
 # --SUBPLOT--#
 def azsub():
@@ -496,8 +522,8 @@ def azsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     azFIG.add_trace(go.Bar(
-        y=cleanAZ['County'],
-        x=cleanAZ['Confirmed Cases'],
+        y=arizona['County'],
+        x=arizona['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -508,8 +534,8 @@ def azsub():
         row=2, col=1
     )
     azFIG.add_trace(go.Bar(
-        y=cleanAZ['County'],
-        x=cleanAZ['Deaths'],
+        y=arizona['County'],
+        x=arizona['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -518,8 +544,8 @@ def azsub():
         )
     ))
     azFIG.add_trace(
-        go.Densitymapbox(lat=cleanAZ.Latitude, lon=cleanAZ.Longitude,
-                         z=cleanAZ['Confirmed Cases'], radius=30,
+        go.Densitymapbox(lat=arizona.Latitude, lon=arizona.Longitude,
+                         z=arizona['Confirmed Cases'], radius=30,
                          showscale=False,
                          visible=True),
         row=2, col=2)
@@ -529,14 +555,14 @@ def azsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed<br>Cases",
-                        "Deaths"],
+                        "Deaths", "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='Overpass'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanAZ[k].tolist() for k in cleanAZ.columns[:]],
+                values=[arizona[k].tolist() for k in arizona.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -560,29 +586,30 @@ def azsub():
 
 
 # -------------------------CALIFORNIA CHOROPLETH MAP------------------------------#
-caDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_caWiki.csv',
-    dtype={'fips': str})
-cleanCA = caDF.fillna(0)
+# caDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_caWiki.csv',
+#     dtype={'fips': str})
+# cleanCA = caDF.fillna(0)
+#
+#
+# def camap():
+#     # Used to round up to a proper max for the range_color function
+#     maxCA = (math.ceil(cleanCA['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     caFig = px.choropleth_mapbox(cleanCA, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='mrybm', range_color=(0, maxCA),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+#                                  zoom=4.5, center={"lat": 37.86, "lon": -120.75},
+#                                  opacity=0.6, labels={"County": "County"},
+#                                  )
+#
+#     caFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     caFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     caFig.update_geos(fitbounds="locations")
+#     return caFig
 
-
-def camap():
-    # Used to round up to a proper max for the range_color function
-    maxCA = (math.ceil(cleanCA['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    caFig = px.choropleth_mapbox(cleanCA, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='mrybm', range_color=(0, maxCA),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=4.5, center={"lat": 37.863942, "lon": -120.753667},
-                                 opacity=0.6, labels={"County": "County"},
-                                 )
-
-    caFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    caFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    caFig.update_geos(fitbounds="locations")
-    return caFig
-
+cali = usDF.loc[usDF.State == 'CALIFORNIA']
 
 # --SUBPLOT--#
 def casub():
@@ -596,8 +623,8 @@ def casub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     caFIG.add_trace(go.Bar(
-        y=cleanCA['County'],
-        x=cleanCA['Confirmed Cases'],
+        y=cali['County'],
+        x=cali['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -608,8 +635,8 @@ def casub():
         row=2, col=1
     )
     caFIG.add_trace(go.Bar(
-        y=cleanCA['County'],
-        x=cleanCA['Deaths'],
+        y=cali['County'],
+        x=cali['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -618,8 +645,8 @@ def casub():
         )
     ))
     caFIG.add_trace(
-        go.Densitymapbox(lat=cleanCA.Latitude, lon=cleanCA.Longitude,
-                         z=cleanCA['Confirmed Cases'], radius=20,
+        go.Densitymapbox(lat=cali.Latitude, lon=cali.Longitude,
+                         z=cali['Confirmed Cases'], radius=20,
                          showscale=False, colorscale='rainbow',
                          visible=True),
         row=2, col=2)
@@ -629,14 +656,14 @@ def casub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed<br>Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths", "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanCA[k].tolist() for k in cleanCA.columns[:]],
+                values=[cali[k].tolist() for k in cali.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -660,27 +687,28 @@ def casub():
 
 
 # -------------------------COLORADO CHOROPLETH MAP------------------------------#
-coDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_coDOH.csv',
-    dtype={'fips': str}, float_precision='round_trip')
-cleanCO = coDF.fillna(0)
+# coDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_coDOH.csv',
+#     dtype={'fips': str}, float_precision='round_trip')
+# cleanCO = coDF.fillna(0)
+#
+#
+# def comap():
+#     # Used to round up to a proper max for the range_color function
+#     maxCO = (math.ceil(cleanCO['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     coFig = px.choropleth_mapbox(cleanCO, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='mint', range_color=(0, maxCO),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5, center={"lat": 39.055, "lon": -105.547},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     coFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     coFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return coFig
 
-
-def comap():
-    # Used to round up to a proper max for the range_color function
-    maxCO = (math.ceil(cleanCO['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    coFig = px.choropleth_mapbox(cleanCO, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='mint', range_color=(0, maxCO),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5, center={"lat": 39.055183, "lon": -105.547831},
-                                 opacity=0.6, labels={"County": "County"})
-
-    coFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    coFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return coFig
-
+colorado = usDF.loc[usDF.State == 'COLORADO']
 
 # --SUBPLOT--#
 def cosub():
@@ -694,8 +722,8 @@ def cosub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     coFIG.add_trace(go.Bar(
-        y=cleanCO['County'],
-        x=cleanCO['Confirmed Cases'],
+        y=colorado['County'],
+        x=colorado['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -706,8 +734,8 @@ def cosub():
         row=2, col=1
     )
     coFIG.add_trace(go.Bar(
-        y=cleanCO['County'],
-        x=cleanCO['Deaths'],
+        y=colorado['County'],
+        x=colorado['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -716,8 +744,8 @@ def cosub():
         )
     ))
     coFIG.add_trace(
-        go.Densitymapbox(lat=cleanCO.Latitude, lon=cleanCO.Longitude,
-                         z=cleanCO['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=colorado.Latitude, lon=colorado.Longitude,
+                         z=colorado['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -726,14 +754,14 @@ def cosub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanCO[k].tolist() for k in cleanCO.columns[:]],
+                values=[colorado[k].tolist() for k in colorado.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -757,27 +785,28 @@ def cosub():
 
 
 # -------------------------CONNECTICUT CHOROPLETH MAP------------------------------#
-ctDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ctDOH.csv',
-    dtype={'fips': str})
-cleanCT = ctDF.fillna(0)
+# ctDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ctDOH.csv',
+#     dtype={'fips': str})
+# cleanCT = ctDF.fillna(0)
+#
+#
+# def ctmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxCT = (math.ceil(cleanCT['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     ctFig = px.choropleth_mapbox(cleanCT, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='curl_r', range_color=(0, maxCT),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Hospitalized'],
+#                                  zoom=6.5, center={"lat": 41.647, "lon": -72.64},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     ctFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     ctFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return ctFig
 
-
-def ctmap():
-    # Used to round up to a proper max for the range_color function
-    maxCT = (math.ceil(cleanCT['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    ctFig = px.choropleth_mapbox(cleanCT, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='curl_r', range_color=(0, maxCT),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Hospitalized'],
-                                 zoom=6.5, center={"lat": 41.647811, "lon": -72.641075},
-                                 opacity=0.6, labels={"County": "County"})
-
-    ctFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    ctFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return ctFig
-
+connt = usDF.loc[usDF.State == 'CONNECTICUT']
 
 # --SUBPLOT--#
 def ctsub():
@@ -791,8 +820,8 @@ def ctsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     ctFIG.add_trace(go.Bar(
-        y=cleanCT['County'],
-        x=cleanCT['Confirmed Cases'],
+        y=connt['County'],
+        x=connt['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -803,8 +832,8 @@ def ctsub():
         row=2, col=1
     )
     ctFIG.add_trace(go.Bar(
-        y=cleanCT['County'],
-        x=cleanCT['Deaths'],
+        y=connt['County'],
+        x=connt['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -814,8 +843,8 @@ def ctsub():
     )
     )
     ctFIG.add_trace(go.Bar(
-        y=cleanCT['County'],
-        x=cleanCT['Hospitalized'],
+        y=connt['County'],
+        x=connt['Hospitalized'],
         name='Hospitalized',
         orientation='h',
         marker=dict(
@@ -826,8 +855,8 @@ def ctsub():
 
     )
     ctFIG.add_trace(
-        go.Densitymapbox(lat=cleanCT.Latitude, lon=cleanCT.Longitude,
-                         z=cleanCT['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=connt.Latitude, lon=connt.Longitude,
+                         z=connt['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -836,14 +865,14 @@ def ctsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases", "Deaths",
-                        "Hospitalized"],
+                        "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanCT[k].tolist() for k in cleanCT.columns[:]],
+                values=[connt[k].tolist() for k in connt.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -867,27 +896,28 @@ def ctsub():
 
 
 # -------------------------DELAWARE CHOROPLETH MAP------------------------------#
-deDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_deWiki.csv',
-    dtype={'fips': str})
-cleanDE = deDF.fillna(0)
+# deDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_deWiki.csv',
+#     dtype={'fips': str})
+# cleanDE = deDF.fillna(0)
+#
+#
+# def demap():
+#     # Used to round up to a proper max for the range_color function
+#     maxDE = (math.ceil(cleanDE['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     deFig = px.choropleth_mapbox(cleanDE, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='geyser', range_color=(0, maxDE),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+#                                  zoom=7.1, center={"lat": 39.051, "lon": -75.416},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     deFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     deFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return deFig
 
-
-def demap():
-    # Used to round up to a proper max for the range_color function
-    maxDE = (math.ceil(cleanDE['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    deFig = px.choropleth_mapbox(cleanDE, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='geyser', range_color=(0, maxDE),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=7.1, center={"lat": 39.051475, "lon": -75.416010},
-                                 opacity=0.6, labels={"County": "County"})
-
-    deFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    deFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return deFig
-
+dela = usDF.loc[usDF.State == 'DELAWARE']
 
 # --SUBPLOT--#
 def desub():
@@ -901,8 +931,8 @@ def desub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     deFIG.add_trace(go.Bar(
-        y=cleanDE['County'],
-        x=cleanDE['Confirmed Cases'],
+        y=dela['County'],
+        x=dela['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -913,8 +943,8 @@ def desub():
         row=2, col=1
     )
     deFIG.add_trace(go.Bar(
-        y=cleanDE['County'],
-        x=cleanDE['Deaths'],
+        y=dela['County'],
+        x=dela['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -923,8 +953,8 @@ def desub():
         )
     ))
     deFIG.add_trace(go.Bar(
-        y=cleanDE['County'],
-        x=cleanDE['Recoveries'],
+        y=dela['County'],
+        x=dela['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -933,8 +963,8 @@ def desub():
         )
     ))
     deFIG.add_trace(
-        go.Densitymapbox(lat=cleanDE.Latitude, lon=cleanDE.Longitude,
-                         z=cleanDE['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=dela.Latitude, lon=dela.Longitude,
+                         z=dela['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='rainbow',
                          visible=True),
         row=2, col=2)
@@ -943,14 +973,14 @@ def desub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanDE[k].tolist() for k in cleanDE.columns[:]],
+                values=[dela[k].tolist() for k in dela.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -974,27 +1004,28 @@ def desub():
 
 
 # -------------------------FLORIDA CHOROPLETH MAP------------------------------#
-flDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_flWiki.csv',
-    dtype={'fips': str})
-cleanFL = flDF.fillna(0)
+# flDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_flWiki.csv',
+#     dtype={'fips': str})
+# cleanFL = flDF.fillna(0)
+#
+#
+# def flmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxFL = (math.ceil(cleanFL['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     flFig = px.choropleth_mapbox(cleanFL, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='sunset', range_color=(0, maxFL),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+#                                  zoom=5.2, center={"lat": 28.311, "lon": -81.44},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     flFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     flFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return flFig
 
-
-def flmap():
-    # Used to round up to a proper max for the range_color function
-    maxFL = (math.ceil(cleanFL['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    flFig = px.choropleth_mapbox(cleanFL, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='sunset', range_color=(0, maxFL),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=5.2, center={"lat": 28.311684, "lon": -81.446706},
-                                 opacity=0.6, labels={"County": "County"})
-
-    flFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    flFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return flFig
-
+florida = usDF.loc[usDF.State == 'FLORIDA']
 
 # --SUBPLOT--#
 def flsub():
@@ -1008,8 +1039,8 @@ def flsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     flFIG.add_trace(go.Bar(
-        y=cleanFL['County'],
-        x=cleanFL['Confirmed Cases'],
+        y=florida['County'],
+        x=florida['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1020,8 +1051,8 @@ def flsub():
         row=2, col=1
     )
     flFIG.add_trace(go.Bar(
-        y=cleanFL['County'],
-        x=cleanFL['Deaths'],
+        y=florida['County'],
+        x=florida['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1030,8 +1061,8 @@ def flsub():
         )
     ))
     flFIG.add_trace(go.Bar(
-        y=cleanFL['County'],
-        x=cleanFL['Recoveries'],
+        y=florida['County'],
+        x=florida['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -1040,8 +1071,8 @@ def flsub():
         )
     ))
     flFIG.add_trace(
-        go.Densitymapbox(lat=cleanFL.Latitude, lon=cleanFL.Longitude,
-                         z=cleanFL['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=florida.Latitude, lon=florida.Longitude,
+                         z=florida['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='rainbow',
                          visible=True),
         row=2, col=2)
@@ -1050,14 +1081,14 @@ def flsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths", "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanFL[k].tolist() for k in cleanFL.columns[:]],
+                values=[florida[k].tolist() for k in florida.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1082,27 +1113,28 @@ def flsub():
 
 
 # -------------------------GEORGIA CHOROPLETH MAP------------------------------#
-gaDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_gadoh.csv',
-    dtype={'fips': str}, float_precision='round_trip')
-cleanGA = gaDF.fillna(0)
+# gaDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_gadoh.csv',
+#     dtype={'fips': str}, float_precision='round_trip')
+# cleanGA = gaDF.fillna(0)
+#
+#
+# def gamap():
+#     # Used to round up to a proper max for the range_color function
+#     maxGA = (math.ceil(cleanGA['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     gaFig = px.choropleth_mapbox(cleanGA, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='teal', range_color=(0, maxGA),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5.5, center={"lat": 32.69, "lon": -83.42},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     gaFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     gaFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return gaFig
 
-
-def gamap():
-    # Used to round up to a proper max for the range_color function
-    maxGA = (math.ceil(cleanGA['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    gaFig = px.choropleth_mapbox(cleanGA, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='teal', range_color=(0, maxGA),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.5, center={"lat": 32.699989, "lon": -83.427133},
-                                 opacity=0.6, labels={"County": "County"})
-
-    gaFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    gaFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return gaFig
-
+georgia = usDF.loc[usDF.State == 'GEORGIA']
 
 # --SUBPLOT--#
 def gasub():
@@ -1116,8 +1148,8 @@ def gasub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     gaFIG.add_trace(go.Bar(
-        y=cleanGA['County'],
-        x=cleanGA['Confirmed Cases'],
+        y=georgia['County'],
+        x=georgia['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1128,8 +1160,8 @@ def gasub():
         row=2, col=1
     )
     gaFIG.add_trace(go.Bar(
-        y=cleanGA['County'],
-        x=cleanGA['Deaths'],
+        y=georgia['County'],
+        x=georgia['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1138,8 +1170,8 @@ def gasub():
         )
     ))
     gaFIG.add_trace(
-        go.Densitymapbox(lat=cleanGA.Latitude, lon=cleanGA.Longitude,
-                         z=cleanGA['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=georgia.Latitude, lon=georgia.Longitude,
+                         z=georgia['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='rainbow',
                          visible=True),
         row=2, col=2)
@@ -1148,14 +1180,14 @@ def gasub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanGA[k].tolist() for k in cleanGA.columns[:]],
+                values=[georgia[k].tolist() for k in georgia.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1196,28 +1228,29 @@ def gasub():
 # gmFig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 # gmFig.show()
 # -------------------------HAWAI'I CHOROPLETH MAP------------------------------#
-hiDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_hidoh.csv',
-    dtype={'fips': str})
-cleanHI = hiDF.fillna(0)
+# hiDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_hidoh.csv',
+#     dtype={'fips': str})
+# cleanHI = hiDF.fillna(0)
+#
+#
+# def himap():
+#     # Used to round up to a proper max for the range_color function
+#     maxHI = (math.ceil(cleanHI['Total Cases'].max() / 50.0) * 50.0) + 150
+#
+#     hiFig = px.choropleth_mapbox(cleanHI, geojson=counties, locations='fips', color='Total Cases',
+#                                  color_continuous_scale='magma_r', range_color=(0, maxHI),
+#                                  hover_data=['County', 'Total Cases', 'Deaths', 'Released from Isolation',
+#                                              'Hospitalization'],
+#                                  zoom=5.7, center={"lat": 20.906, "lon": -157.027},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     hiFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     hiFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return hiFig
 
-
-def himap():
-    # Used to round up to a proper max for the range_color function
-    maxHI = (math.ceil(cleanHI['Total Cases'].max() / 50.0) * 50.0) + 150
-
-    hiFig = px.choropleth_mapbox(cleanHI, geojson=counties, locations='fips', color='Total Cases',
-                                 color_continuous_scale='magma_r', range_color=(0, maxHI),
-                                 hover_data=['County', 'Total Cases', 'Deaths', 'Released from Isolation',
-                                             'Hospitalization'],
-                                 zoom=5.7, center={"lat": 20.906635, "lon": -157.027297},
-                                 opacity=0.6, labels={"County": "County"})
-
-    hiFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    hiFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return hiFig
-
+hawaii = usDF.loc[usDF.State == 'HAWAII']
 
 # --SUBPLOT--#
 def hisub():
@@ -1231,9 +1264,9 @@ def hisub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     hiFIG.add_trace(go.Bar(
-        y=cleanHI['County'],
-        x=cleanHI['Total Cases'],
-        name='Total Cases',
+        y=hawaii['County'],
+        x=hawaii['Confirmed Cases'],
+        name='Confirmed Cases',
         orientation='h',
         marker=dict(
             color='rgba(255, 128, 168, 0.6)',
@@ -1243,8 +1276,8 @@ def hisub():
         row=2, col=1
     )
     hiFIG.add_trace(go.Bar(
-        y=cleanHI['County'],
-        x=cleanHI['Deaths'],
+        y=hawaii['County'],
+        x=hawaii['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1253,9 +1286,9 @@ def hisub():
         )
     ))
     hiFIG.add_trace(go.Bar(
-        y=cleanHI['County'],
-        x=cleanHI['Released from Isolation'],
-        name='Released from Isolation',
+        y=hawaii['County'],
+        x=hawaii['Recoveries'],
+        name='Recoveries',
         orientation='h',
         marker=dict(
             color='rgba(95, 107, 106, 0.6)',
@@ -1263,9 +1296,9 @@ def hisub():
         )
     ))
     hiFIG.add_trace(go.Bar(
-        y=cleanHI['County'],
-        x=cleanHI['Hospitalization'],
-        name='Required Hospitalization',
+        y=hawaii['County'],
+        x=hawaii['Hospitalized'],
+        name='Hospitalized',
         orientation='h',
         marker=dict(
             color='rgba(208, 217, 50, 0.6)',
@@ -1273,8 +1306,8 @@ def hisub():
         )
     ))
     hiFIG.add_trace(
-        go.Densitymapbox(lat=cleanHI.Latitude, lon=cleanHI.Longitude,
-                         z=cleanHI['Total Cases'], radius=25,
+        go.Densitymapbox(lat=hawaii.Latitude, lon=hawaii.Longitude,
+                         z=hawaii['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='rainbow',
                          visible=True),
         row=2, col=2)
@@ -1282,16 +1315,16 @@ def hisub():
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Total Cases",
-                        "Deaths", "Recoveries", "Released from Isolation",
-                        "Required Hospitalization", "Pending"],
+                        "Latitude", "Longitude", "Confirmed Cases",
+                        "Deaths", "Recoveries",
+                        "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanHI[k].tolist() for k in cleanHI.columns[:]],
+                values=[hawaii[k].tolist() for k in hawaii.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1316,27 +1349,28 @@ def hisub():
 
 
 # ---------------------------IDAHO CHOROPLETH MAP------------------------------#
-idDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_idWiki.csv',
-    dtype={'fips': str}, float_precision='round_trip')
-cleanID = idDF.fillna(0)
+# idDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_idWiki.csv',
+#     dtype={'fips': str}, float_precision='round_trip')
+# cleanID = idDF.fillna(0)
+#
+#
+# def idmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxID = (math.ceil(cleanID['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     idFig = px.choropleth_mapbox(cleanID, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='plotly3', range_color=(0, maxID),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=4.9, center={"lat": 45.570, "lon": -115.131},
+#                                  opacity=0.55, labels={"County": "County"})
+#
+#     idFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     idFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return idFig
 
-
-def idmap():
-    # Used to round up to a proper max for the range_color function
-    maxID = (math.ceil(cleanID['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    idFig = px.choropleth_mapbox(cleanID, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='plotly3', range_color=(0, maxID),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=4.9, center={"lat": 45.570854, "lon": -115.131137},
-                                 opacity=0.55, labels={"County": "County"})
-
-    idFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    idFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return idFig
-
+idaho = usDF.loc[usDF.State == 'IDAHO']
 
 # --SUBPLOT--#
 def idsub():
@@ -1350,8 +1384,8 @@ def idsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     idFIG.add_trace(go.Bar(
-        y=cleanID['County'],
-        x=cleanID['Confirmed Cases'],
+        y=idaho['County'],
+        x=idaho['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1362,8 +1396,8 @@ def idsub():
         row=2, col=1
     )
     idFIG.add_trace(go.Bar(
-        y=cleanID['County'],
-        x=cleanID['Deaths'],
+        y=idaho['County'],
+        x=idaho['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1371,19 +1405,9 @@ def idsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    idFIG.add_trace(go.Bar(
-        y=cleanID['County'],
-        x=cleanID['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(252, 186, 3, 0.6)',
-            line=dict(color='rgba(252, 186, 3, 1.0)', width=3)
-        )
-    ))
     idFIG.add_trace(
-        go.Densitymapbox(lat=cleanID.Latitude, lon=cleanID.Longitude,
-                         z=cleanID['Confirmed Cases'], radius=30,
+        go.Densitymapbox(lat=idaho.Latitude, lon=idaho.Longitude,
+                         z=idaho['Confirmed Cases'], radius=30,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -1392,14 +1416,14 @@ def idsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanID[k].tolist() for k in cleanID.columns[:]],
+                values=[idaho[k].tolist() for k in idaho.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1424,27 +1448,28 @@ def idsub():
 
 
 # ---------------------------ILLINOIS CHOROPLETH MAP------------------------------#
-ilDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ilWiki.csv',
-    dtype={'fips': str})
-cleanIL = ilDF.fillna(0)
+# ilDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ilNews.csv',
+#     dtype={'fips': str})
+# cleanIL = ilDF.fillna(0)
+#
+#
+# def ilmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxIL = (math.ceil(cleanIL['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     ilFig = px.choropleth_mapbox(cleanIL, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='plasma_r', range_color=(0, maxIL),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+#                                  zoom=5.3, center={"lat": 40.019, "lon": -88.3000},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     ilFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     ilFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return ilFig
 
-
-def ilmap():
-    # Used to round up to a proper max for the range_color function
-    maxIL = (math.ceil(cleanIL['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    ilFig = px.choropleth_mapbox(cleanIL, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='plasma_r', range_color=(0, maxIL),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=5.3, center={"lat": 40.0190, "lon": -88.3000},
-                                 opacity=0.6, labels={"County": "County"})
-
-    ilFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    ilFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return ilFig
-
+illinois = usDF.loc[usDF.State == 'ILLINOIS']
 
 # --SUBPLOT--#
 def ilsub():
@@ -1458,8 +1483,8 @@ def ilsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     ilFIG.add_trace(go.Bar(
-        y=cleanIL['County'],
-        x=cleanIL['Confirmed Cases'],
+        y=illinois['County'],
+        x=illinois['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1470,8 +1495,8 @@ def ilsub():
         row=2, col=1
     )
     ilFIG.add_trace(go.Bar(
-        y=cleanIL['County'],
-        x=cleanIL['Deaths'],
+        y=illinois['County'],
+        x=illinois['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1480,8 +1505,8 @@ def ilsub():
         )
     ))
     ilFIG.add_trace(go.Bar(
-        y=cleanIL['County'],
-        x=cleanIL['Recoveries'],
+        y=illinois['County'],
+        x=illinois['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -1490,8 +1515,8 @@ def ilsub():
         )
     ))
     ilFIG.add_trace(
-        go.Densitymapbox(lat=cleanIL.Latitude, lon=cleanIL.Longitude,
-                         z=cleanIL['Confirmed Cases'], radius=35,
+        go.Densitymapbox(lat=illinois.Latitude, lon=illinois.Longitude,
+                         z=illinois['Confirmed Cases'], radius=35,
                          showscale=False, colorscale='rainbow',
                          visible=True),
         row=2, col=2)
@@ -1500,14 +1525,14 @@ def ilsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths", "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanIL[k].tolist() for k in cleanIL.columns[:]],
+                values=[illinois[k].tolist() for k in illinois.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1532,27 +1557,28 @@ def ilsub():
 
 
 # ---------------------------INDIANA CHOROPLETH MAP------------------------------#
-inDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_inWiki.csv',
-    dtype={'fips': str}, float_precision='round_trip')
-cleanIN = inDF.fillna(0)
+# inDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_inWiki.csv',
+#     dtype={'fips': str}, float_precision='round_trip')
+# cleanIN = inDF.fillna(0)
+#
+#
+# def inmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxIN = (math.ceil(cleanIN['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     inFig = px.choropleth_mapbox(cleanIN, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='ylgnbu', range_color=(0, maxIN),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5.4, center={"lat": 40.013, "lon": -86.208},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     inFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     inFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
+#     return inFig
 
-
-def inmap():
-    # Used to round up to a proper max for the range_color function
-    maxIN = (math.ceil(cleanIN['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    inFig = px.choropleth_mapbox(cleanIN, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='ylgnbu', range_color=(0, maxIN),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.4, center={"lat": 40.013050, "lon": -86.208909},
-                                 opacity=0.6, labels={"County": "County"})
-
-    inFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    inFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
-    return inFig
-
+indiana = usDF.loc[usDF.State == 'INDIANA']
 
 # --SUBPLOT--#
 def insub():
@@ -1566,8 +1592,8 @@ def insub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     inFIG.add_trace(go.Bar(
-        y=cleanIN['County'],
-        x=cleanIN['Confirmed Cases'],
+        y=indiana['County'],
+        x=indiana['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1578,8 +1604,8 @@ def insub():
         row=2, col=1
     )
     inFIG.add_trace(go.Bar(
-        y=cleanIN['County'],
-        x=cleanIN['Deaths'],
+        y=indiana['County'],
+        x=indiana['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1588,8 +1614,8 @@ def insub():
         )
     ))
     inFIG.add_trace(
-        go.Densitymapbox(lat=cleanIN.Latitude, lon=cleanIN.Longitude,
-                         z=cleanIN['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=indiana.Latitude, lon=indiana.Longitude,
+                         z=indiana['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='rainbow',
                          visible=True),
         row=2, col=2)
@@ -1598,14 +1624,14 @@ def insub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanIN[k].tolist() for k in cleanIN.columns[:]],
+                values=[indiana[k].tolist() for k in indiana.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1630,27 +1656,28 @@ def insub():
 
 
 # ---------------------------IOWA CHOROPLETH MAP------------------------------#
-ioDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_iaWiki.csv',
-    dtype={'fips': str}, float_precision='round_trip')
-cleanIO = ioDF.fillna(0)
+# ioDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_iaWiki.csv',
+#     dtype={'fips': str}, float_precision='round_trip')
+# cleanIO = ioDF.fillna(0)
+#
+#
+# def iomap():
+#     # Used to round up to a proper max for the range_color function
+#     maxIO = (math.ceil(cleanIO['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     ioFig = px.choropleth_mapbox(cleanIO, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='rdpu', range_color=(0, maxIO),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+#                                  zoom=5.3, center={"lat": 42.074, "lon": -93.50},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     ioFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     ioFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
+#     return ioFig
 
-
-def iomap():
-    # Used to round up to a proper max for the range_color function
-    maxIO = (math.ceil(cleanIO['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    ioFig = px.choropleth_mapbox(cleanIO, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='rdpu', range_color=(0, maxIO),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=5.3, center={"lat": 42.074622, "lon": -93.500036},
-                                 opacity=0.6, labels={"County": "County"})
-
-    ioFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    ioFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
-    return ioFig
-
+iowa = usDF.loc[usDF.State == 'IOWA']
 
 # --SUBPLOT--#
 def iosub():
@@ -1664,8 +1691,8 @@ def iosub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     ioFIG.add_trace(go.Bar(
-        y=cleanIO['County'],
-        x=cleanIO['Confirmed Cases'],
+        y=iowa['County'],
+        x=iowa['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1676,8 +1703,8 @@ def iosub():
         row=2, col=1
     )
     ioFIG.add_trace(go.Bar(
-        y=cleanIO['County'],
-        x=cleanIO['Deaths'],
+        y=iowa['County'],
+        x=iowa['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1686,8 +1713,8 @@ def iosub():
         )
     ))
     ioFIG.add_trace(go.Bar(
-        y=cleanIO['County'],
-        x=cleanIO['Recoveries'],
+        y=iowa['County'],
+        x=iowa['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -1696,8 +1723,8 @@ def iosub():
         )
     ))
     ioFIG.add_trace(
-        go.Densitymapbox(lat=cleanIO.Latitude, lon=cleanIO.Longitude,
-                         z=cleanIO['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=iowa.Latitude, lon=iowa.Longitude,
+                         z=iowa['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -1706,14 +1733,14 @@ def iosub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths", "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanIO[k].tolist() for k in cleanIO.columns[:]],
+                values=[iowa[k].tolist() for k in iowa.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1738,27 +1765,28 @@ def iosub():
 
 
 # ---------------------------KANSAS CHOROPLETH MAP------------------------------#
-kaDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ksWiki.csv',
-    dtype={'fips': str}, float_precision='round_trip')
-cleanKA = kaDF.fillna(0)
+# kaDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ksWiki.csv',
+#     dtype={'fips': str}, float_precision='round_trip')
+# cleanKA = kaDF.fillna(0)
+#
+#
+# def kamap():
+#     # Used to round up to a proper max for the range_color function
+#     maxKA = (math.ceil(cleanKA['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     kaFig = px.choropleth_mapbox(cleanKA, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='darkmint', range_color=(0, maxKA),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+#                                  zoom=5, center={"lat": 38.541, "lon": -98.42},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     kaFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     kaFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
+#     return kaFig
 
-
-def kamap():
-    # Used to round up to a proper max for the range_color function
-    maxKA = (math.ceil(cleanKA['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    kaFig = px.choropleth_mapbox(cleanKA, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='darkmint', range_color=(0, maxKA),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=5, center={"lat": 38.541749, "lon": -98.428791},
-                                 opacity=0.6, labels={"County": "County"})
-
-    kaFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    kaFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
-    return kaFig
-
+kansas = usDF.loc[usDF.State == 'KANSAS']
 
 # --SUBPLOT--#
 def kasub():
@@ -1772,8 +1800,8 @@ def kasub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     kaFIG.add_trace(go.Bar(
-        y=cleanKA['County'],
-        x=cleanKA['Confirmed Cases'],
+        y=kansas['County'],
+        x=kansas['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1784,8 +1812,8 @@ def kasub():
         row=2, col=1
     )
     kaFIG.add_trace(go.Bar(
-        y=cleanKA['County'],
-        x=cleanKA['Deaths'],
+        y=kansas['County'],
+        x=kansas['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1794,8 +1822,8 @@ def kasub():
         )
     ))
     kaFIG.add_trace(go.Bar(
-        y=cleanKA['County'],
-        x=cleanKA['Recoveries'],
+        y=kansas['County'],
+        x=kansas['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -1804,8 +1832,8 @@ def kasub():
         )
     ))
     kaFIG.add_trace(
-        go.Densitymapbox(lat=cleanKA.Latitude, lon=cleanKA.Longitude,
-                         z=cleanKA['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=kansas.Latitude, lon=kansas.Longitude,
+                         z=kansas['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -1814,14 +1842,14 @@ def kasub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths", "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanKA[k].tolist() for k in cleanKA.columns[:]],
+                values=[kansas[k].tolist() for k in kansas.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1846,28 +1874,29 @@ def kasub():
 
 
 # ---------------------------KENTUCKY CHOROPLETH MAP------------------------------#
-kyDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_kyNews.csv',
-    dtype={'fips': str})
-cleanKY = kyDF.fillna(0)
+# kyDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_kyNews.csv',
+#     dtype={'fips': str})
+# cleanKY = kyDF.fillna(0)
+#
+#
+# def kymap():
+#     # Used to round up to a proper max for the range_color function
+#     maxKY = (math.ceil(cleanKY['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     kyFig = px.choropleth_mapbox(cleanKY, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='twilight', range_color=(0, maxKY),
+#                                  color_continuous_midpoint=maxKY / 2,
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5.5, center={"lat": 37.526, "lon": -85.29},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     kyFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     kyFig.update_layout(margin={"r": 90, "t": 0, "l": 90, "b": 0})
+#     return kyFig
 
-
-def kymap():
-    # Used to round up to a proper max for the range_color function
-    maxKY = (math.ceil(cleanKY['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    kyFig = px.choropleth_mapbox(cleanKY, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='twilight', range_color=(0, maxKY),
-                                 color_continuous_midpoint=maxKY / 2,
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.5, center={"lat": 37.526671, "lon": -85.290470},
-                                 opacity=0.6, labels={"County": "County"})
-
-    kyFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    kyFig.update_layout(margin={"r": 90, "t": 0, "l": 90, "b": 0})
-    return kyFig
-
+kentucky = usDF.loc[usDF.State == 'KENTUCKY']
 
 # --SUBPLOT--#
 def kysub():
@@ -1881,8 +1910,8 @@ def kysub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     kyFIG.add_trace(go.Bar(
-        y=cleanKY['County'],
-        x=cleanKY['Confirmed Cases'],
+        y=kentucky['County'],
+        x=kentucky['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1893,8 +1922,8 @@ def kysub():
         row=2, col=1
     )
     kyFIG.add_trace(go.Bar(
-        y=cleanKY['County'],
-        x=cleanKY['Deaths'],
+        y=kentucky['County'],
+        x=kentucky['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1903,8 +1932,8 @@ def kysub():
         )
     ))
     kyFIG.add_trace(
-        go.Densitymapbox(lat=cleanKY.Latitude, lon=cleanKY.Longitude,
-                         z=cleanKY['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=kentucky.Latitude, lon=kentucky.Longitude,
+                         z=kentucky['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='rainbow',
                          visible=True),
         row=2, col=2)
@@ -1913,14 +1942,14 @@ def kysub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanKY[k].tolist() for k in cleanKY.columns[:]],
+                values=[kentucky[k].tolist() for k in kentucky.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1945,27 +1974,28 @@ def kysub():
 
 
 # ---------------------------LOUISIANA CHOROPLETH MAP------------------------------#
-laDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_laWiki.csv',
-    dtype={'fips': str})
-cleanLA = laDF.fillna(0)
+# laDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_laWiki.csv',
+#     dtype={'fips': str})
+# cleanLA = laDF.fillna(0)
+#
+#
+# def lamap():
+#     # Used to round up to a proper max for the range_color function
+#     maxLA = (math.ceil(cleanLA['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     laFig = px.choropleth_mapbox(cleanLA, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='bluyl', range_color=(0, maxLA),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+#                                  zoom=5.6, center={"lat": 31.22, "lon": -92.381},
+#                                  opacity=0.6, labels={"County": "Parish"})
+#
+#     laFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     laFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
+#     return laFig
 
-
-def lamap():
-    # Used to round up to a proper max for the range_color function
-    maxLA = (math.ceil(cleanLA['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    laFig = px.choropleth_mapbox(cleanLA, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='bluyl', range_color=(0, maxLA),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=5.6, center={"lat": 31.220691, "lon": -92.381019},
-                                 opacity=0.6, labels={"County": "Parish"})
-
-    laFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    laFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
-    return laFig
-
+louis = usDF.loc[usDF.State == 'LOUISIANA']
 
 # --SUBPLOT--#
 def lasub():
@@ -1979,8 +2009,8 @@ def lasub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     laFIG.add_trace(go.Bar(
-        y=cleanLA['County'],
-        x=cleanLA['Confirmed Cases'],
+        y=louis['County'],
+        x=louis['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1991,8 +2021,8 @@ def lasub():
         row=2, col=1
     )
     laFIG.add_trace(go.Bar(
-        y=cleanLA['County'],
-        x=cleanLA['Deaths'],
+        y=louis['County'],
+        x=louis['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2001,8 +2031,8 @@ def lasub():
         )
     ))
     laFIG.add_trace(go.Bar(
-        y=cleanLA['County'],
-        x=cleanLA['Recoveries'],
+        y=louis['County'],
+        x=louis['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -2011,8 +2041,8 @@ def lasub():
         )
     ))
     laFIG.add_trace(
-        go.Densitymapbox(lat=cleanLA.Latitude, lon=cleanLA.Longitude,
-                         z=cleanLA['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=louis.Latitude, lon=louis.Longitude,
+                         z=louis['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -2021,14 +2051,14 @@ def lasub():
             header=dict(
                 values=["Parish", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanLA[k].tolist() for k in cleanLA.columns[:]],
+                values=[louis[k].tolist() for k in louis.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2053,27 +2083,28 @@ def lasub():
 
 
 # ---------------------------MASSACHUSETTS CHOROPLETH MAP------------------------------#
-maDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_maWiki.csv',
-    dtype={'fips': str})
-cleanMA = maDF.fillna(0)
+# maDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_maWiki.csv',
+#     dtype={'fips': str})
+# cleanMA = maDF.fillna(0)
+#
+#
+# def mamap():
+#     # Used to round up to a proper max for the range_color function
+#     maxMA = (math.ceil(cleanMA['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     maFig = px.choropleth_mapbox(cleanMA, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='brwnyl', range_color=(0, maxMA),
+#                                  hover_data=['County', 'Confirmed Cases','Deaths'],
+#                                  zoom=6.3, center={"lat": 42.35, "lon": -72.062},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     maFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     maFig.update_layout(margin={"r": 0, "t": 90, "l": 90, "b": 0})
+#     return maFig
 
-
-def mamap():
-    # Used to round up to a proper max for the range_color function
-    maxMA = (math.ceil(cleanMA['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    maFig = px.choropleth_mapbox(cleanMA, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='brwnyl', range_color=(0, maxMA),
-                                 hover_data=['County', 'Confirmed Cases','Deaths'],
-                                 zoom=6.3, center={"lat": 42.357952, "lon": -72.062769},
-                                 opacity=0.6, labels={"County": "County"})
-
-    maFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    maFig.update_layout(margin={"r": 0, "t": 90, "l": 90, "b": 0})
-    return maFig
-
+mass = usDF.loc[usDF.State == 'MASSACHUSETTS']
 
 # --SUBPLOT--#
 def masub():
@@ -2087,8 +2118,8 @@ def masub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     maFIG.add_trace(go.Bar(
-        y=cleanMA['County'],
-        x=cleanMA['Confirmed Cases'],
+        y=mass['County'],
+        x=mass['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2099,8 +2130,8 @@ def masub():
         row=2, col=1
     )
     maFIG.add_trace(go.Bar(
-        y=cleanMA['County'],
-        x=cleanMA['Deaths'],
+        y=mass['County'],
+        x=mass['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2109,8 +2140,8 @@ def masub():
         )
     ))
     maFIG.add_trace(
-        go.Densitymapbox(lat=cleanMA.Latitude, lon=cleanMA.Longitude,
-                         z=cleanMA['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=mass.Latitude, lon=mass.Longitude,
+                         z=mass['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -2118,14 +2149,15 @@ def masub():
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases","Deaths"],
+                        "Latitude", "Longitude", "Confirmed Cases","Deaths",
+                        "Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanMA[k].tolist() for k in cleanMA.columns[:]],
+                values=[mass[k].tolist() for k in mass.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2150,27 +2182,28 @@ def masub():
 
 
 # ---------------------------MARYLAND CHOROPLETH MAP------------------------------#
-mdDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_mdWiki.csv',
-    dtype={'fips': str})
-cleanMD = mdDF.fillna(0)
+# mdDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_mdWiki.csv',
+#     dtype={'fips': str})
+# cleanMD = mdDF.fillna(0)
+#
+#
+# def mdmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxMD = (math.ceil(cleanMD['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     mdFig = px.choropleth_mapbox(cleanMD, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='purpor', range_color=(0, maxMD),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=6.4, center={"lat": 39.026, "lon": -76.80},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     mdFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     mdFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return mdFig
 
-
-def mdmap():
-    # Used to round up to a proper max for the range_color function
-    maxMD = (math.ceil(cleanMD['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    mdFig = px.choropleth_mapbox(cleanMD, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='purpor', range_color=(0, maxMD),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=6.4, center={"lat": 39.026261, "lon": -76.808917},
-                                 opacity=0.6, labels={"County": "County"})
-
-    mdFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    mdFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return mdFig
-
+mary = usDF.loc[usDF.State == 'MARYLAND']
 
 # --SUBPLOT--#
 def mdsub():
@@ -2184,8 +2217,8 @@ def mdsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     mdFIG.add_trace(go.Bar(
-        y=cleanMD['County'],
-        x=cleanMD['Confirmed Cases'],
+        y=mary['County'],
+        x=mary['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2196,8 +2229,8 @@ def mdsub():
         row=2, col=1
     )
     mdFIG.add_trace(go.Bar(
-        y=cleanMD['County'],
-        x=cleanMD['Deaths'],
+        y=mary['County'],
+        x=mary['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2206,8 +2239,8 @@ def mdsub():
         )
     ))
     mdFIG.add_trace(
-        go.Densitymapbox(lat=cleanMD.Latitude, lon=cleanMD.Longitude,
-                         z=cleanMD['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=mary.Latitude, lon=mary.Longitude,
+                         z=mary['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -2216,14 +2249,14 @@ def mdsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanMD[k].tolist() for k in cleanMD.columns[:]],
+                values=[mary[k].tolist() for k in mary.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2248,29 +2281,30 @@ def mdsub():
 
 
 # ---------------------------MAINE CHOROPLETH MAP------------------------------#
-meDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_meDDS.csv',
-    dtype={'fips': str})
-cleanME = meDF.fillna(0)
-neuME = cleanME[
-    ['County', 'State', 'fips', 'Latitude', 'Longitude', 'Confirmed Cases', 'Deaths', 'Recoveries', 'Hospitalizations']]
+# meDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_meDDS.csv',
+#     dtype={'fips': str})
+# cleanME = meDF.fillna(0)
+# neuME = cleanME[
+#     ['County', 'State', 'fips', 'Latitude', 'Longitude', 'Confirmed Cases', 'Deaths', 'Recoveries', 'Hospitalizations']]
+#
+#
+# def memap():
+#     # Used to round up to a proper max for the range_color function
+#     maxME = (math.ceil(neuME['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     meFig = px.choropleth_mapbox(neuME, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='emrld', range_color=(0, maxME),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries', 'Hospitalizations'],
+#                                  zoom=5.6, center={"lat": 45.27, "lon": -69.202},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     meFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     meFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return meFig
 
-
-def memap():
-    # Used to round up to a proper max for the range_color function
-    maxME = (math.ceil(neuME['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    meFig = px.choropleth_mapbox(neuME, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='emrld', range_color=(0, maxME),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries', 'Hospitalizations'],
-                                 zoom=5.6, center={"lat": 45.274323, "lon": -69.202765},
-                                 opacity=0.6, labels={"County": "County"})
-
-    meFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    meFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return meFig
-
+maine = usDF.loc[usDF.State == 'MAINE']
 
 # --SUBPLOT--#
 def mesub():
@@ -2284,8 +2318,8 @@ def mesub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     meFIG.add_trace(go.Bar(
-        y=cleanME['County'],
-        x=cleanME['Confirmed Cases'],
+        y=maine['County'],
+        x=maine['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2296,8 +2330,8 @@ def mesub():
         row=2, col=1
     )
     meFIG.add_trace(go.Bar(
-        y=cleanME['County'],
-        x=cleanME['Deaths'],
+        y=maine['County'],
+        x=maine['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2306,8 +2340,8 @@ def mesub():
         )
     ))
     meFIG.add_trace(go.Bar(
-        y=cleanME['County'],
-        x=cleanME['Recoveries'],
+        y=maine['County'],
+        x=maine['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -2316,9 +2350,9 @@ def mesub():
         )
     ))
     meFIG.add_trace(go.Bar(
-        y=cleanME['County'],
-        x=cleanME['Hospitalizations'],
-        name='Hospitalizations',
+        y=maine['County'],
+        x=maine['Hospitalized'],
+        name='Hospitalized',
         orientation='h',
         marker=dict(
             color='rgba(201, 76, 34, 0.6)',
@@ -2326,8 +2360,8 @@ def mesub():
         )
     ))
     meFIG.add_trace(
-        go.Densitymapbox(lat=cleanME.Latitude, lon=cleanME.Longitude,
-                         z=cleanME['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=maine.Latitude, lon=maine.Longitude,
+                         z=maine['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -2336,14 +2370,14 @@ def mesub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries", "Hospitalizations"],
+                        "Deaths", "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanME[k].tolist() for k in cleanME.columns[:]],
+                values=[maine[k].tolist() for k in maine.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2368,27 +2402,28 @@ def mesub():
 
 
 # ---------------------------MICHIGAN CHOROPLETH MAP------------------------------#
-miDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_miWiki.csv',
-    dtype={'fips': str})
-cleanMI = miDF.fillna(0)
+# miDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_miWiki.csv',
+#     dtype={'fips': str})
+# cleanMI = miDF.fillna(0)
+#
+#
+# def mimap():
+#     # Used to round up to a proper max for the range_color function
+#     maxMI = (math.ceil(cleanMI['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     miFig = px.choropleth_mapbox(cleanMI, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='spectral_r', range_color=(0, maxMI),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5.2, center={"lat": 44.48, "lon": -84.746},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     miFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     miFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return miFig
 
-
-def mimap():
-    # Used to round up to a proper max for the range_color function
-    maxMI = (math.ceil(cleanMI['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    miFig = px.choropleth_mapbox(cleanMI, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='spectral_r', range_color=(0, maxMI),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.2, center={"lat": 44.488022, "lon": -84.746015},
-                                 opacity=0.6, labels={"County": "County"})
-
-    miFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    miFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return miFig
-
+mich = usDF.loc[usDF.State == 'MICHIGAN']
 
 # --SUBPLOT--#
 def misub():
@@ -2402,8 +2437,8 @@ def misub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     miFIG.add_trace(go.Bar(
-        y=cleanMI['County'],
-        x=cleanMI['Confirmed Cases'],
+        y=mich['County'],
+        x=mich['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2414,8 +2449,8 @@ def misub():
         row=2, col=1
     )
     miFIG.add_trace(go.Bar(
-        y=cleanMI['County'],
-        x=cleanMI['Deaths'],
+        y=mich['County'],
+        x=mich['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2424,8 +2459,8 @@ def misub():
         )
     ))
     miFIG.add_trace(
-        go.Densitymapbox(lat=cleanMI.Latitude, lon=cleanMI.Longitude,
-                         z=cleanMI['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=mich.Latitude, lon=mich.Longitude,
+                         z=mich['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='rainbow',
                          visible=True),
         row=2, col=2)
@@ -2434,14 +2469,14 @@ def misub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanMI[k].tolist() for k in cleanMI.columns[:]],
+                values=[mich[k].tolist() for k in mich.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2466,27 +2501,28 @@ def misub():
 
 
 # ---------------------------MINNESOTA CHOROPLETH MAP------------------------------#
-mnDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_mndoh.csv',
-    dtype={'fips': str}, encoding='latin_1')
-cleanMN = mnDF.fillna(0)
+# mnDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_mndoh.csv',
+#     dtype={'fips': str}, encoding='latin_1')
+# cleanMN = mnDF.fillna(0)
+#
+#
+# def mnmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxMN = (math.ceil(cleanMN['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     mnFig = px.choropleth_mapbox(cleanMN, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='tealgrn_r', range_color=(0, maxMN),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5.2, center={"lat": 46.44, "lon": -93.36},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     mnFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     mnFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return mnFig
 
-
-def mnmap():
-    # Used to round up to a proper max for the range_color function
-    maxMN = (math.ceil(cleanMN['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    mnFig = px.choropleth_mapbox(cleanMN, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='tealgrn_r', range_color=(0, maxMN),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.2, center={"lat": 46.441920, "lon": -93.361527},
-                                 opacity=0.6, labels={"County": "County"})
-
-    mnFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    mnFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return mnFig
-
+minnie = usDF.loc[usDF.State == 'MINNESOTA']
 
 # --SUBPLOT--#
 def mnsub():
@@ -2500,8 +2536,8 @@ def mnsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     mnFIG.add_trace(go.Bar(
-        y=cleanMN['County'],
-        x=cleanMN['Confirmed Cases'],
+        y=minnie['County'],
+        x=minnie['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2512,8 +2548,8 @@ def mnsub():
         row=2, col=1
     )
     mnFIG.add_trace(go.Bar(
-        y=cleanMN['County'],
-        x=cleanMN['Deaths'],
+        y=minnie['County'],
+        x=minnie['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2522,8 +2558,8 @@ def mnsub():
         )
     ))
     mnFIG.add_trace(
-        go.Densitymapbox(lat=cleanMN.Latitude, lon=cleanMN.Longitude,
-                         z=cleanMN['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=minnie.Latitude, lon=minnie.Longitude,
+                         z=minnie['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -2532,14 +2568,14 @@ def mnsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanMN[k].tolist() for k in cleanMN.columns[:]],
+                values=[minnie[k].tolist() for k in minnie.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2564,27 +2600,28 @@ def mnsub():
 
 
 # ---------------------------MISSOURI CHOROPLETH MAP------------------------------#
-moDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_moWiki.csv',
-    dtype={'fips': str}, float_precision='round_trip')
-cleanMO = moDF.fillna(0)
+# moDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_moWiki.csv',
+#     dtype={'fips': str}, float_precision='round_trip')
+# cleanMO = moDF.fillna(0)
+#
+#
+# def momap():
+#     # Used to round up to a proper max for the range_color function
+#     maxMO = (math.ceil(cleanMO['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     moFig = px.choropleth_mapbox(cleanMO, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='temps', range_color=(0, maxMO),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5.5, center={"lat": 38.46, "lon": -92.574},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     moFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     moFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return moFig
 
-
-def momap():
-    # Used to round up to a proper max for the range_color function
-    maxMO = (math.ceil(cleanMO['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    moFig = px.choropleth_mapbox(cleanMO, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='temps', range_color=(0, maxMO),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.5, center={"lat": 38.462767, "lon": -92.574534},
-                                 opacity=0.6, labels={"County": "County"})
-
-    moFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    moFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return moFig
-
+miss = usDF.loc[usDF.State == 'MISSOURI']
 
 # --SUBPLOT--#
 def mosub():
@@ -2598,8 +2635,8 @@ def mosub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     moFIG.add_trace(go.Bar(
-        y=cleanMO['County'],
-        x=cleanMO['Confirmed Cases'],
+        y=miss['County'],
+        x=miss['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2610,8 +2647,8 @@ def mosub():
         row=2, col=1
     )
     moFIG.add_trace(go.Bar(
-        y=cleanMO['County'],
-        x=cleanMO['Deaths'],
+        y=miss['County'],
+        x=miss['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2620,8 +2657,8 @@ def mosub():
         )
     ))
     moFIG.add_trace(
-        go.Densitymapbox(lat=cleanMO.Latitude, lon=cleanMO.Longitude,
-                         z=cleanMO['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=miss.Latitude, lon=miss.Longitude,
+                         z=miss['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -2630,14 +2667,14 @@ def mosub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanMO[k].tolist() for k in cleanMO.columns[:]],
+                values=[miss[k].tolist() for k in miss.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2662,27 +2699,28 @@ def mosub():
 
 
 # ---------------------------MISSISSIPPI CHOROPLETH MAP------------------------------#
-msDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_msdoh.csv',
-    dtype={'fips': str}, float_precision='round_trip')
-cleanMS = msDF.fillna(0)
+# msDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_msdoh.csv',
+#     dtype={'fips': str}, float_precision='round_trip')
+# cleanMS = msDF.fillna(0)
+#
+#
+# def msmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxMS = (math.ceil(cleanMS['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     msFig = px.choropleth_mapbox(cleanMS, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='balance', range_color=(0, maxMS),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5.5, center={"lat": 32.94, "lon": -89.702},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     msFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     msFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return msFig
 
-
-def msmap():
-    # Used to round up to a proper max for the range_color function
-    maxMS = (math.ceil(cleanMS['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    msFig = px.choropleth_mapbox(cleanMS, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='balance', range_color=(0, maxMS),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.5, center={"lat": 32.940921, "lon": -89.702028},
-                                 opacity=0.6, labels={"County": "County"})
-
-    msFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    msFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return msFig
-
+missRiver = usDF.loc[usDF.State == 'MISSISSIPPI']
 
 # --SUBPLOT--#
 def mssub():
@@ -2696,8 +2734,8 @@ def mssub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     msFIG.add_trace(go.Bar(
-        y=cleanMS['County'],
-        x=cleanMS['Confirmed Cases'],
+        y=missRiver['County'],
+        x=missRiver['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2708,8 +2746,8 @@ def mssub():
         row=2, col=1
     )
     msFIG.add_trace(go.Bar(
-        y=cleanMS['County'],
-        x=cleanMS['Deaths'],
+        y=missRiver['County'],
+        x=missRiver['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2718,8 +2756,8 @@ def mssub():
         )
     ))
     msFIG.add_trace(
-        go.Densitymapbox(lat=cleanMS.Latitude, lon=cleanMS.Longitude,
-                         z=cleanMS['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=missRiver.Latitude, lon=missRiver.Longitude,
+                         z=missRiver['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -2735,7 +2773,7 @@ def mssub():
                 align="left"
             ),
             cells=dict(
-                values=[cleanMS[k].tolist() for k in cleanMS.columns[:]],
+                values=[missRiver[k].tolist() for k in missRiver.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2760,27 +2798,28 @@ def mssub():
 
 
 # ---------------------------MONTANA CHOROPLETH MAP------------------------------#
-mtDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_mtdoh.csv',
-    dtype={'fips': str})
-cleanMT = mtDF.fillna(0)
+# mtDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_mtdoh.csv',
+#     dtype={'fips': str})
+# cleanMT = mtDF.fillna(0)
+#
+#
+# def mtmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxMT = (math.ceil(cleanMT['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     mtFig = px.choropleth_mapbox(cleanMT, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='sunset_r', range_color=(0, maxMT),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5, center={"lat": 47.072, "lon": -109.39},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     mtFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     mtFig.update_layout(margin={"r": 0, "t": 100, "l": 0, "b": 0})
+#     return mtFig
 
-
-def mtmap():
-    # Used to round up to a proper max for the range_color function
-    maxMT = (math.ceil(cleanMT['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    mtFig = px.choropleth_mapbox(cleanMT, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='sunset_r', range_color=(0, maxMT),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5, center={"lat": 47.072205, "lon": -109.398931},
-                                 opacity=0.6, labels={"County": "County"})
-
-    mtFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    mtFig.update_layout(margin={"r": 0, "t": 100, "l": 0, "b": 0})
-    return mtFig
-
+montana = usDF.loc[usDF.State == 'MONTANA']
 
 # --SUBPLOT--#
 def mtsub():
@@ -2794,8 +2833,8 @@ def mtsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     mtFIG.add_trace(go.Bar(
-        y=cleanMT['County'],
-        x=cleanMT['Confirmed Cases'],
+        y=montana['County'],
+        x=montana['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2806,8 +2845,8 @@ def mtsub():
         row=2, col=1
     )
     mtFIG.add_trace(go.Bar(
-        y=cleanMT['County'],
-        x=cleanMT['Deaths'],
+        y=montana['County'],
+        x=montana['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2816,8 +2855,8 @@ def mtsub():
         )
     ))
     mtFIG.add_trace(
-        go.Densitymapbox(lat=cleanMT.Latitude, lon=cleanMT.Longitude,
-                         z=cleanMT['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=montana.Latitude, lon=montana.Longitude,
+                         z=montana['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -2826,14 +2865,14 @@ def mtsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanMT[k].tolist() for k in cleanMT.columns[:]],
+                values=[montana[k].tolist() for k in montana.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2858,27 +2897,28 @@ def mtsub():
 
 
 # ---------------------------NORTH CAROLINA CHOROPLETH MAP------------------------------#
-ncDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ncWiki.csv',
-    dtype={'fips': str}, float_precision='round_trip')
-cleanNC = ncDF.fillna(0)
+# ncDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ncWiki.csv',
+#     dtype={'fips': str}, float_precision='round_trip')
+# cleanNC = ncDF.fillna(0)
+#
+#
+# def ncmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxNC = (math.ceil(cleanNC['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     ncFig = px.choropleth_mapbox(cleanNC, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='delta', range_color=(0, maxNC),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5.5, center={"lat": 35.591, "lon": -78.979},
+#                                  opacity=0.7, labels={"County": "County"})
+#
+#     ncFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     ncFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return ncFig
 
-
-def ncmap():
-    # Used to round up to a proper max for the range_color function
-    maxNC = (math.ceil(cleanNC['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    ncFig = px.choropleth_mapbox(cleanNC, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='delta', range_color=(0, maxNC),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.5, center={"lat": 35.591409, "lon": -78.979338},
-                                 opacity=0.7, labels={"County": "County"})
-
-    ncFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    ncFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return ncFig
-
+norCar = usDF.loc[usDF.State == 'NORTH CAROLINA']
 
 # --SUBPLOT--#
 def ncsub():
@@ -2892,8 +2932,8 @@ def ncsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     ncFIG.add_trace(go.Bar(
-        y=cleanNC['County'],
-        x=cleanNC['Confirmed Cases'],
+        y=norCar['County'],
+        x=norCar['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2904,8 +2944,8 @@ def ncsub():
         row=2, col=1
     )
     ncFIG.add_trace(go.Bar(
-        y=cleanNC['County'],
-        x=cleanNC['Deaths'],
+        y=norCar['County'],
+        x=norCar['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2914,8 +2954,8 @@ def ncsub():
         )
     ))
     ncFIG.add_trace(
-        go.Densitymapbox(lat=cleanNC.Latitude, lon=cleanNC.Longitude,
-                         z=cleanNC['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=norCar.Latitude, lon=norCar.Longitude,
+                         z=norCar['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -2924,14 +2964,14 @@ def ncsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanNC[k].tolist() for k in cleanNC.columns[:]],
+                values=[norCar[k].tolist() for k in norCar.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2956,27 +2996,28 @@ def ncsub():
 
 
 # ---------------------------NORTH DAKOTA CHOROPLETH MAP------------------------------#
-ndDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ndWiki.csv',
-    dtype={'fips': str})
-cleanND = ndDF.fillna(0)
+# ndDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ndWiki.csv',
+#     dtype={'fips': str})
+# cleanND = ndDF.fillna(0)
+#
+#
+# def ndmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxND = (math.ceil(cleanND['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     ndFig = px.choropleth_mapbox(cleanND, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='tealrose', range_color=(0, maxND),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+#                                  zoom=5.7, center={"lat": 47.52, "lon": -100.445},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     ndFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     ndFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return ndFig
 
-
-def ndmap():
-    # Used to round up to a proper max for the range_color function
-    maxND = (math.ceil(cleanND['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    ndFig = px.choropleth_mapbox(cleanND, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='tealrose', range_color=(0, maxND),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=5.7, center={"lat": 47.528438, "lon": -100.445038},
-                                 opacity=0.6, labels={"County": "County"})
-
-    ndFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    ndFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return ndFig
-
+norDar = usDF.loc[usDF.State == 'NORTH DAKOTA']
 
 # --SUBPLOT--#
 def ndsub():
@@ -2990,8 +3031,8 @@ def ndsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     ndFIG.add_trace(go.Bar(
-        y=cleanND['County'],
-        x=cleanND['Confirmed Cases'],
+        y=norDar['County'],
+        x=norDar['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3002,8 +3043,8 @@ def ndsub():
         row=2, col=1
     )
     ndFIG.add_trace(go.Bar(
-        y=cleanND['County'],
-        x=cleanND['Deaths'],
+        y=norDar['County'],
+        x=norDar['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3012,8 +3053,8 @@ def ndsub():
         )
     ))
     ndFIG.add_trace(go.Bar(
-        y=cleanND['County'],
-        x=cleanND['Recoveries'],
+        y=norDar['County'],
+        x=norDar['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -3022,8 +3063,8 @@ def ndsub():
         )
     ))
     ndFIG.add_trace(
-        go.Densitymapbox(lat=cleanND.Latitude, lon=cleanND.Longitude,
-                         z=cleanND['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=norDar.Latitude, lon=norDar.Longitude,
+                         z=norDar['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='rainbow',
                          visible=True),
         row=2, col=2)
@@ -3031,7 +3072,8 @@ def ndsub():
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases"
+                        "Latitude", "Longitude", "Confirmed Cases",
+                        "Deaths","Recoveries","Hospitalized"
                         ],
                 line_color='darkslategray',
                 fill_color='grey',
@@ -3039,7 +3081,7 @@ def ndsub():
                 align="left"
             ),
             cells=dict(
-                values=[cleanND[k].tolist() for k in cleanND.columns[:]],
+                values=[norDar[k].tolist() for k in norDar.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3064,27 +3106,28 @@ def ndsub():
 
 
 # ---------------------------NEBRASKA CHOROPLETH MAP------------------------------#
-neDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_neWiki.csv',
-    dtype={'fips': str})
-cleanNE = neDF.fillna(0)
+# neDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_neWiki.csv',
+#     dtype={'fips': str})
+# cleanNE = neDF.fillna(0)
+#
+#
+# def nemap():
+#     # Used to round up to a proper max for the range_color function
+#     maxNE = (math.ceil(cleanNE['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     neFig = px.choropleth_mapbox(cleanNE, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='teal', range_color=(0, maxNE),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5.7, center={"lat": 41.52, "lon": -99.81},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     neFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     neFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return neFig
 
-
-def nemap():
-    # Used to round up to a proper max for the range_color function
-    maxNE = (math.ceil(cleanNE['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    neFig = px.choropleth_mapbox(cleanNE, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='teal', range_color=(0, maxNE),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.7, center={"lat": 41.527111, "lon": -99.810728},
-                                 opacity=0.6, labels={"County": "County"})
-
-    neFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    neFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return neFig
-
+neb = usDF.loc[usDF.State == 'NEBRASKA']
 
 # --SUBPLOT--#
 def nesub():
@@ -3098,8 +3141,8 @@ def nesub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     neFIG.add_trace(go.Bar(
-        y=cleanNE['County'],
-        x=cleanNE['Confirmed Cases'],
+        y=neb['County'],
+        x=neb['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3110,8 +3153,8 @@ def nesub():
         row=2, col=1
     )
     neFIG.add_trace(go.Bar(
-        y=cleanNE['County'],
-        x=cleanNE['Deaths'],
+        y=neb['County'],
+        x=neb['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3120,8 +3163,8 @@ def nesub():
         )
     ))
     neFIG.add_trace(
-        go.Densitymapbox(lat=cleanNE.Latitude, lon=cleanNE.Longitude,
-                         z=cleanNE['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=neb.Latitude, lon=neb.Longitude,
+                         z=neb['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -3130,14 +3173,14 @@ def nesub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanNE[k].tolist() for k in cleanNE.columns[:]],
+                values=[neb[k].tolist() for k in neb.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3162,27 +3205,28 @@ def nesub():
 
 
 # ---------------------------NEW HAMPSHIRE CHOROPLETH MAP-----------------------------#
-nhDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nhWiki.csv',
-    dtype={'fips': str})
-cleanNH = nhDF.fillna(0)
+# nhDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nhWiki.csv',
+#     dtype={'fips': str})
+# cleanNH = nhDF.fillna(0)
+#
+#
+# def nhmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxNH = (math.ceil(cleanNH['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     nhFig = px.choropleth_mapbox(cleanNH, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='phase', range_color=(0, maxNH),
+#                                  hover_data=['County', 'Confirmed Cases','Deaths'],
+#                                  zoom=6, center={"lat": 43.98, "lon": -71.46},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     nhFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     nhFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return nhFig
 
-
-def nhmap():
-    # Used to round up to a proper max for the range_color function
-    maxNH = (math.ceil(cleanNH['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    nhFig = px.choropleth_mapbox(cleanNH, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='phase', range_color=(0, maxNH),
-                                 hover_data=['County', 'Confirmed Cases','Deaths'],
-                                 zoom=6, center={"lat": 43.989517, "lon": -71.469112},
-                                 opacity=0.6, labels={"County": "County"})
-
-    nhFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    nhFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return nhFig
-
+newHam = usDF.loc[usDF.State == 'NEW HAMPSHIRE']
 
 # --SUBPLOT--#
 def nhsub():
@@ -3196,8 +3240,8 @@ def nhsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     nhFIG.add_trace(go.Bar(
-        y=cleanNH['County'],
-        x=cleanNH['Confirmed Cases'],
+        y=newHam['County'],
+        x=newHam['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3208,8 +3252,8 @@ def nhsub():
         row=2, col=1
     )
     nhFIG.add_trace(go.Bar(
-        y=cleanNH['County'],
-        x=cleanNH['Deaths'],
+        y=newHam['County'],
+        x=newHam['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3218,8 +3262,8 @@ def nhsub():
         )
     ))
     nhFIG.add_trace(
-        go.Densitymapbox(lat=cleanNH.Latitude, lon=cleanNH.Longitude,
-                         z=cleanNH['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=newHam.Latitude, lon=newHam.Longitude,
+                         z=newHam['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -3227,7 +3271,8 @@ def nhsub():
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases","Deaths"
+                        "Latitude", "Longitude", "Confirmed Cases",
+                        "Deaths","Recoveries","Hospitalized"
                         ],
                 line_color='darkslategray',
                 fill_color='grey',
@@ -3235,7 +3280,7 @@ def nhsub():
                 align="left"
             ),
             cells=dict(
-                values=[cleanNH[k].tolist() for k in cleanNH.columns[:]],
+                values=[newHam[k].tolist() for k in newHam.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3260,27 +3305,28 @@ def nhsub():
 
 
 # ---------------------------NEW JERSEY CHOROPLETH MAP-----------------------------#
-njDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_njWiki.csv',
-    dtype={'fips': str})
-cleanNJ = njDF.fillna(0)
+# njDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_njWiki.csv',
+#     dtype={'fips': str})
+# cleanNJ = njDF.fillna(0)
+#
+#
+# def njmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxNJ = (math.ceil(cleanNJ['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     njFig = px.choropleth_mapbox(cleanNJ, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='curl', range_color=(0, maxNJ),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+#                                  zoom=6.2, center={"lat": 40.267, "lon": -74.41},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     njFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     njFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
+#     return njFig
 
-
-def njmap():
-    # Used to round up to a proper max for the range_color function
-    maxNJ = (math.ceil(cleanNJ['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    njFig = px.choropleth_mapbox(cleanNJ, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='curl', range_color=(0, maxNJ),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=6.2, center={"lat": 40.267895, "lon": -74.412674},
-                                 opacity=0.6, labels={"County": "County"})
-
-    njFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    njFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
-    return njFig
-
+jersey = usDF.loc[usDF.State == 'NEW JERSEY']
 
 # --SUBPLOT--#
 def njsub():
@@ -3294,8 +3340,8 @@ def njsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     njFIG.add_trace(go.Bar(
-        y=cleanNJ['County'],
-        x=cleanNJ['Confirmed Cases'],
+        y=jersey['County'],
+        x=jersey['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3306,8 +3352,8 @@ def njsub():
         row=2, col=1
     )
     njFIG.add_trace(go.Bar(
-        y=cleanNJ['County'],
-        x=cleanNJ['Deaths'],
+        y=jersey['County'],
+        x=jersey['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3316,8 +3362,8 @@ def njsub():
         )
     ))
     njFIG.add_trace(go.Bar(
-        y=cleanNJ['County'],
-        x=cleanNJ['Recoveries'],
+        y=jersey['County'],
+        x=jersey['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -3326,8 +3372,8 @@ def njsub():
         )
     ))
     njFIG.add_trace(
-        go.Densitymapbox(lat=cleanNJ.Latitude, lon=cleanNJ.Longitude,
-                         z=cleanNJ['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=jersey.Latitude, lon=jersey.Longitude,
+                         z=jersey['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -3336,14 +3382,14 @@ def njsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths", "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanNJ[k].tolist() for k in cleanNJ.columns[:]],
+                values=[jersey[k].tolist() for k in jersey.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3368,27 +3414,28 @@ def njsub():
 
 
 # ---------------------------NEW MEXICO CHOROPLETH MAP-----------------------------#
-nmDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nmWiki.csv',
-    dtype={'fips': str})
-cleanNM = nmDF.fillna(0)
+# nmDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nmWiki.csv',
+#     dtype={'fips': str})
+# cleanNM = nmDF.fillna(0)
+#
+#
+# def nmmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxNM = (math.ceil(cleanNM['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     nmFig = px.choropleth_mapbox(cleanNM, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='purp_r', range_color=(0, maxNM),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5.3, center={"lat": 34.48, "lon": -106.06},
+#                                  opacity=0.7, labels={"County": "County"})
+#
+#     nmFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     nmFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
+#     return nmFig
 
-
-def nmmap():
-    # Used to round up to a proper max for the range_color function
-    maxNM = (math.ceil(cleanNM['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    nmFig = px.choropleth_mapbox(cleanNM, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='purp_r', range_color=(0, maxNM),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.3, center={"lat": 34.481461, "lon": -106.059789},
-                                 opacity=0.7, labels={"County": "County"})
-
-    nmFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    nmFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
-    return nmFig
-
+newMex = usDF.loc[usDF.State == 'NEW MEXICO']
 
 # --SUBPLOT--#
 def nmsub():
@@ -3402,8 +3449,8 @@ def nmsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     nmFIG.add_trace(go.Bar(
-        y=cleanNM['County'],
-        x=cleanNM['Confirmed Cases'],
+        y=newMex['County'],
+        x=newMex['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3414,8 +3461,8 @@ def nmsub():
         row=2, col=1
     )
     nmFIG.add_trace(go.Bar(
-        y=cleanNM['County'],
-        x=cleanNM['Deaths'],
+        y=newMex['County'],
+        x=newMex['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3424,8 +3471,8 @@ def nmsub():
         )
     ))
     nmFIG.add_trace(
-        go.Densitymapbox(lat=cleanNM.Latitude, lon=cleanNM.Longitude,
-                         z=cleanNM['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=newMex.Latitude, lon=newMex.Longitude,
+                         z=newMex['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -3435,14 +3482,14 @@ def nmsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanNM[k].tolist() for k in cleanNM.columns[:]],
+                values=[newMex[k].tolist() for k in newMex.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3467,27 +3514,28 @@ def nmsub():
 
 
 # ---------------------------NEVADA CHOROPLETH MAP-----------------------------#
-nvDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nvWiki.csv',
-    dtype={'fips': str})
-cleanNV = nvDF.fillna(0)
+# nvDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nvWiki.csv',
+#     dtype={'fips': str})
+# cleanNV = nvDF.fillna(0)
+#
+#
+# def nvmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxNV = (math.ceil(cleanNV['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     nvFig = px.choropleth_mapbox(cleanNV, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='curl', range_color=(0, maxNV),
+#                                  hover_data=['County', 'Confirmed Cases','Deaths'],
+#                                  zoom=5, center={"lat": 38.502, "lon": -117.023},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     nvFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     nvFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return nvFig
 
-
-def nvmap():
-    # Used to round up to a proper max for the range_color function
-    maxNV = (math.ceil(cleanNV['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    nvFig = px.choropleth_mapbox(cleanNV, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='curl', range_color=(0, maxNV),
-                                 hover_data=['County', 'Confirmed Cases','Deaths'],
-                                 zoom=5, center={"lat": 38.502032, "lon": -117.023060},
-                                 opacity=0.6, labels={"County": "County"})
-
-    nvFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    nvFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return nvFig
-
+nevada = usDF.loc[usDF.State == 'NEVADA']
 
 # --SUBPLOT--#
 def nvsub():
@@ -3501,8 +3549,8 @@ def nvsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     nvFIG.add_trace(go.Bar(
-        y=cleanNV['County'],
-        x=cleanNV['Confirmed Cases'],
+        y=nevada['County'],
+        x=nevada['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3513,8 +3561,8 @@ def nvsub():
         row=2, col=1
     )
     nvFIG.add_trace(go.Bar(
-        y=cleanNV['County'],
-        x=cleanNV['Deaths'],
+        y=nevada['County'],
+        x=nevada['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3523,8 +3571,8 @@ def nvsub():
         )
     ))
     nvFIG.add_trace(
-        go.Densitymapbox(lat=cleanNV.Latitude, lon=cleanNV.Longitude,
-                         z=cleanNV['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=nevada.Latitude, lon=nevada.Longitude,
+                         z=nevada['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -3532,7 +3580,8 @@ def nvsub():
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases"
+                        "Latitude", "Longitude", "Confirmed Cases",
+                        "Deaths","Recoveries","Hospitalized"
                         ],
                 line_color='darkslategray',
                 fill_color='grey',
@@ -3540,7 +3589,7 @@ def nvsub():
                 align="left"
             ),
             cells=dict(
-                values=[cleanNV[k].tolist() for k in cleanNV.columns[:]],
+                values=[nevada[k].tolist() for k in nevada.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3565,27 +3614,28 @@ def nvsub():
 
 
 # ---------------------------NEW YORK CHOROPLETH MAP-----------------------------#
-nyDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nydoh.csv',
-    dtype={'fips': str}, float_precision='round_trip')
-cleanNY = nyDF.fillna(0)
+# nyDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_nydoh.csv',
+#     dtype={'fips': str}, float_precision='round_trip')
+# cleanNY = nyDF.fillna(0)
+#
+#
+# def nymap():
+#     # Used to round up to a proper max for the range_color function
+#     maxNY = (math.ceil(cleanNY['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     nyFig = px.choropleth_mapbox(cleanNY, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='geyser', range_color=(0, maxNY),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+#                                  zoom=5.3, center={"lat": 42.91, "lon": -75.52},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     nyFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     nyFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return nyFig
 
-
-def nymap():
-    # Used to round up to a proper max for the range_color function
-    maxNY = (math.ceil(cleanNY['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    nyFig = px.choropleth_mapbox(cleanNY, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='geyser', range_color=(0, maxNY),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=5.3, center={"lat": 42.917153, "lon": -75.519960},
-                                 opacity=0.6, labels={"County": "County"})
-
-    nyFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    nyFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return nyFig
-
+newYork = usDF.loc[usDF.State == 'NEW YORK']
 
 # --SUBPLOT--#
 def nysub():
@@ -3599,8 +3649,8 @@ def nysub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     nyFIG.add_trace(go.Bar(
-        y=cleanNY['County'],
-        x=cleanNY['Confirmed Cases'],
+        y=newYork['County'],
+        x=newYork['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3611,8 +3661,8 @@ def nysub():
         row=2, col=1
     )
     nyFIG.add_trace(go.Bar(
-        y=cleanNY['County'],
-        x=cleanNY['Deaths'],
+        y=newYork['County'],
+        x=newYork['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3621,8 +3671,8 @@ def nysub():
         )
     ))
     nyFIG.add_trace(go.Bar(
-        y=cleanNY['County'],
-        x=cleanNY['Recoveries'],
+        y=newYork['County'],
+        x=newYork['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -3631,8 +3681,8 @@ def nysub():
         )
     ))
     nyFIG.add_trace(
-        go.Densitymapbox(lat=cleanNY.Latitude, lon=cleanNY.Longitude,
-                         z=cleanNY['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=newYork.Latitude, lon=newYork.Longitude,
+                         z=newYork['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -3641,14 +3691,14 @@ def nysub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths", "Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanNY[k].tolist() for k in cleanNY.columns[:]],
+                values=[newYork[k].tolist() for k in newYork.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3673,27 +3723,28 @@ def nysub():
 
 
 # ---------------------------OHIO CHOROPLETH MAP-----------------------------#
-ohDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ohWiki.csv',
-    dtype={'fips': str}, float_precision='round_trip')
-cleanOH = ohDF.fillna(0)
+# ohDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ohWiki.csv',
+#     dtype={'fips': str}, float_precision='round_trip')
+# cleanOH = ohDF.fillna(0)
+#
+#
+# def ohmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxOH = (math.ceil(cleanOH['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     ohFig = px.choropleth_mapbox(cleanOH, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='tealrose', range_color=(0, maxOH),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5.7, center={"lat": 40.30, "lon": -82.701},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     ohFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     ohFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return ohFig
 
-
-def ohmap():
-    # Used to round up to a proper max for the range_color function
-    maxOH = (math.ceil(cleanOH['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    ohFig = px.choropleth_mapbox(cleanOH, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='tealrose', range_color=(0, maxOH),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.7, center={"lat": 40.300325, "lon": -82.700806},
-                                 opacity=0.6, labels={"County": "County"})
-
-    ohFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    ohFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return ohFig
-
+ohio = usDF.loc[usDF.State == 'OHIO']
 
 # --SUBPLOT--#
 def ohsub():
@@ -3707,8 +3758,8 @@ def ohsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     ohFIG.add_trace(go.Bar(
-        y=cleanOH['County'],
-        x=cleanOH['Confirmed Cases'],
+        y=ohio['County'],
+        x=ohio['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3719,8 +3770,8 @@ def ohsub():
         row=2, col=1
     )
     ohFIG.add_trace(go.Bar(
-        y=cleanOH['County'],
-        x=cleanOH['Deaths'],
+        y=ohio['County'],
+        x=ohio['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3729,8 +3780,8 @@ def ohsub():
         )
     ))
     ohFIG.add_trace(
-        go.Densitymapbox(lat=cleanOH.Latitude, lon=cleanOH.Longitude,
-                         z=cleanOH['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=ohio.Latitude, lon=ohio.Longitude,
+                         z=ohio['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -3739,14 +3790,14 @@ def ohsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanOH[k].tolist() for k in cleanOH.columns[:]],
+                values=[ohio[k].tolist() for k in ohio.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3771,27 +3822,28 @@ def ohsub():
 
 
 # ---------------------------OKLAHOMA CHOROPLETH MAP-----------------------------#
-okDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_okdoh.csv',
-    dtype={'fips': str})
-cleanOK = okDF.fillna(0)
+# okDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_okdoh.csv',
+#     dtype={'fips': str})
+# cleanOK = okDF.fillna(0)
+#
+#
+# def okmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxOK = (math.ceil(cleanOK['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     okFig = px.choropleth_mapbox(cleanOK, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='haline', range_color=(0, maxOK),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+#                                  zoom=5.5, center={"lat": 35.73, "lon": -97.38},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     okFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     okFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return okFig
 
-
-def okmap():
-    # Used to round up to a proper max for the range_color function
-    maxOK = (math.ceil(cleanOK['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    okFig = px.choropleth_mapbox(cleanOK, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='haline', range_color=(0, maxOK),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=5.5, center={"lat": 35.732412, "lon": -97.386798},
-                                 opacity=0.6, labels={"County": "County"})
-
-    okFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    okFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return okFig
-
+okie = usDF.loc[usDF.State == 'Oklahoma']
 
 # --SUBPLOT--#
 def oksub():
@@ -3805,8 +3857,8 @@ def oksub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     okFIG.add_trace(go.Bar(
-        y=cleanOK['County'],
-        x=cleanOK['Confirmed Cases'],
+        y=okie['County'],
+        x=okie['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3817,8 +3869,8 @@ def oksub():
         row=2, col=1
     )
     okFIG.add_trace(go.Bar(
-        y=cleanOK['County'],
-        x=cleanOK['Deaths'],
+        y=okie['County'],
+        x=okie['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3827,8 +3879,8 @@ def oksub():
         )
     ))
     okFIG.add_trace(go.Bar(
-        y=cleanOK['County'],
-        x=cleanOK['Recoveries'],
+        y=okie['County'],
+        x=okie['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -3837,8 +3889,8 @@ def oksub():
         )
     ))
     okFIG.add_trace(
-        go.Densitymapbox(lat=cleanOK.Latitude, lon=cleanOK.Longitude,
-                         z=cleanOK['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=okie.Latitude, lon=okie.Longitude,
+                         z=okie['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -3847,14 +3899,14 @@ def oksub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths", "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanOK[k].tolist() for k in cleanOK.columns[:]],
+                values=[okie[k].tolist() for k in okie.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3879,27 +3931,28 @@ def oksub():
 
 
 # ---------------------------OREGON CHOROPLETH MAP-----------------------------#
-orDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ordoh.csv',
-    dtype={'fips': str})
-cleanOR = orDF.fillna(0)
+# orDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_ordoh.csv',
+#     dtype={'fips': str})
+# cleanOR = orDF.fillna(0)
+#
+#
+# def ormap():
+#     # Used to round up to a proper max for the range_color function
+#     maxOR = (math.ceil(cleanOR['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     orFig = px.choropleth_mapbox(cleanOR, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='redor', range_color=(0, maxOR),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5.3, center={"lat": 43.94, "lon": -120.605},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     orFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     orFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return orFig
 
-
-def ormap():
-    # Used to round up to a proper max for the range_color function
-    maxOR = (math.ceil(cleanOR['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    orFig = px.choropleth_mapbox(cleanOR, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='redor', range_color=(0, maxOR),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.3, center={"lat": 43.940439, "lon": -120.605284},
-                                 opacity=0.6, labels={"County": "County"})
-
-    orFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    orFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return orFig
-
+grimm = usDF.loc[usDF.State == 'OREGON']
 
 # --SUBPLOT--#
 def orsub():
@@ -3913,8 +3966,8 @@ def orsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     orFIG.add_trace(go.Bar(
-        y=cleanOR['County'],
-        x=cleanOR['Confirmed Cases'],
+        y=grimm['County'],
+        x=grimm['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3925,8 +3978,8 @@ def orsub():
         row=2, col=1
     )
     orFIG.add_trace(go.Bar(
-        y=cleanOR['County'],
-        x=cleanOR['Deaths'],
+        y=grimm['County'],
+        x=grimm['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3935,8 +3988,8 @@ def orsub():
         )
     ))
     orFIG.add_trace(
-        go.Densitymapbox(lat=cleanOR.Latitude, lon=cleanOR.Longitude,
-                         z=cleanOR['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=grimm.Latitude, lon=grimm.Longitude,
+                         z=grimm['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -3945,14 +3998,14 @@ def orsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanOR[k].tolist() for k in cleanOR.columns[:]],
+                values=[grimm[k].tolist() for k in grimm.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3977,27 +4030,28 @@ def orsub():
 
 
 # ---------------------------PENNSYLVANIA CHOROPLETH MAP-----------------------------#
-paDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_paWiki.csv',
-    dtype={'fips': str}, float_precision='round_trip')
-cleanPA = paDF.fillna(0)
+# paDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_paWiki.csv',
+#     dtype={'fips': str}, float_precision='round_trip')
+# cleanPA = paDF.fillna(0)
+#
+#
+# def pamap():
+#     # Used to round up to a proper max for the range_color function
+#     maxPA = (math.ceil(cleanPA['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     paFig = px.choropleth_mapbox(cleanPA, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='sunset', range_color=(0, maxPA),
+#                                  hover_data=['County', 'Confirmed Cases','Deaths'],
+#                                  zoom=5.5, center={"lat": 40.89, "lon": -77.84},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     paFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     paFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return paFig
 
-
-def pamap():
-    # Used to round up to a proper max for the range_color function
-    maxPA = (math.ceil(cleanPA['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    paFig = px.choropleth_mapbox(cleanPA, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='sunset', range_color=(0, maxPA),
-                                 hover_data=['County', 'Confirmed Cases','Deaths'],
-                                 zoom=5.5, center={"lat": 40.896699, "lon": -77.838908},
-                                 opacity=0.6, labels={"County": "County"})
-
-    paFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    paFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return paFig
-
+penn = usDF.loc[usDF.State == 'PENNSYLVANIA']
 
 # --SUBPLOT--#
 def pasub():
@@ -4011,8 +4065,8 @@ def pasub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     paFIG.add_trace(go.Bar(
-        y=cleanPA['County'],
-        x=cleanPA['Confirmed Cases'],
+        y=penn['County'],
+        x=penn['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4024,8 +4078,8 @@ def pasub():
     )
 
     paFIG.add_trace(
-        go.Densitymapbox(lat=cleanPA.Latitude, lon=cleanPA.Longitude,
-                         z=cleanPA['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=penn.Latitude, lon=penn.Longitude,
+                         z=penn['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -4033,7 +4087,8 @@ def pasub():
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases","Deaths"
+                        "Latitude", "Longitude", "Confirmed Cases",
+                        "Deaths","Recoveries","Hospitalized"
                         ],
                 line_color='darkslategray',
                 fill_color='grey',
@@ -4041,7 +4096,7 @@ def pasub():
                 align="left"
             ),
             cells=dict(
-                values=[cleanPA[k].tolist() for k in cleanPA.columns[:]],
+                values=[penn[k].tolist() for k in penn.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4067,27 +4122,28 @@ def pasub():
 
 ##---------------------------PUERTO RICO CHOROPLETH MAP-----------------------------#
 
-prDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_prWiki.csv',
-    encoding='Latin-1', dtype={'fips': str})
-cleanPR = prDF.fillna(0)
+# prDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_prWiki.csv',
+#     encoding='Latin-1', dtype={'fips': str})
+# cleanPR = prDF.fillna(0)
+#
+#
+# def prmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxPR = (math.ceil(cleanPR['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     prFig = px.choropleth_mapbox(cleanPR, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='sunset', range_color=(0, maxPR),
+#                                  hover_data=['County', 'Confirmed Cases'],
+#                                  zoom=6, center={"lat": 18.193, "lon": -66.45},
+#                                  opacity=0.6, labels={"County": "Municipality"})
+#
+#     prFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     prFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return prFig
 
-
-def prmap():
-    # Used to round up to a proper max for the range_color function
-    maxPR = (math.ceil(cleanPR['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    prFig = px.choropleth_mapbox(cleanPR, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='sunset', range_color=(0, maxPR),
-                                 hover_data=['County', 'Confirmed Cases'],
-                                 zoom=6, center={"lat": 18.192825, "lon": -66.448568},
-                                 opacity=0.6, labels={"County": "Municipality"})
-
-    prFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    prFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return prFig
-
+pRico = usDF.loc[usDF.State == 'PUERTO RICO']
 
 # --SUBPLOT--#
 def prsub():
@@ -4101,8 +4157,8 @@ def prsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     prFIG.add_trace(go.Bar(
-        y=cleanPR['County'],
-        x=cleanPR['Confirmed Cases'],
+        y=pRico['County'],
+        x=pRico['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4114,8 +4170,8 @@ def prsub():
     )
 
     prFIG.add_trace(
-        go.Densitymapbox(lat=cleanPR.Latitude, lon=cleanPR.Longitude,
-                         z=cleanPR['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=pRico.Latitude, lon=pRico.Longitude,
+                         z=pRico['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -4123,14 +4179,15 @@ def prsub():
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases"],
+                        "Latitude", "Longitude", "Confirmed Cases",
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanPR[k].tolist() for k in cleanPR.columns[:]],
+                values=[pRico[k].tolist() for k in pRico.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4155,27 +4212,28 @@ def prsub():
 
 
 # -----------------------RHODE ISLAND CHOROPLETH MAP----------------------------#
-riDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_riNews.csv',
-    dtype={'fips': str})
-cleanRI = riDF.fillna(0)
+# riDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_riNews.csv',
+#     dtype={'fips': str})
+# cleanRI = riDF.fillna(0)
+#
+#
+# def rimap():
+#     # Used to round up to a proper max for the range_color function
+#     maxRI = (math.ceil(cleanRI['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     riFig = px.choropleth_mapbox(cleanRI, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='phase', range_color=(0, maxRI),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=7.5, center={"lat": 41.64, "lon": -71.52},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     riFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     riFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return riFig
 
-
-def rimap():
-    # Used to round up to a proper max for the range_color function
-    maxRI = (math.ceil(cleanRI['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    riFig = px.choropleth_mapbox(cleanRI, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='phase', range_color=(0, maxRI),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=7.5, center={"lat": 41.640049, "lon": -71.524728},
-                                 opacity=0.6, labels={"County": "County"})
-
-    riFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    riFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return riFig
-
+rhode = usDF.loc[usDF.State == 'RHODE ISLAND']
 
 # --SUBPLOT--#
 def risub():
@@ -4189,8 +4247,8 @@ def risub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     riFIG.add_trace(go.Bar(
-        y=cleanRI['County'],
-        x=cleanRI['Confirmed Cases'],
+        y=rhode['County'],
+        x=rhode['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4201,8 +4259,8 @@ def risub():
         row=2, col=1
     )
     riFIG.add_trace(go.Bar(
-        y=cleanRI['County'],
-        x=cleanRI['Deaths'],
+        y=rhode['County'],
+        x=rhode['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -4211,8 +4269,8 @@ def risub():
         )
     ))
     riFIG.add_trace(
-        go.Densitymapbox(lat=cleanRI.Latitude, lon=cleanRI.Longitude,
-                         z=cleanRI['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=rhode.Latitude, lon=rhode.Longitude,
+                         z=rhode['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -4221,14 +4279,14 @@ def risub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanRI[k].tolist() for k in cleanRI.columns[:]],
+                values=[rhode[k].tolist() for k in rhode.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4253,27 +4311,28 @@ def risub():
 
 
 # -----------------------SOUTH CAROLINA CHOROPLETH MAP----------------------------#
-scDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_scWiki.csv',
-    dtype={'fips': str}, float_precision='round_trip')
-cleanSC = scDF.fillna(0)
+# scDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_scWiki.csv',
+#     dtype={'fips': str}, float_precision='round_trip')
+# cleanSC = scDF.fillna(0)
+#
+#
+# def scmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxSC = (math.ceil(cleanSC['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     scFig = px.choropleth_mapbox(cleanSC, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='tealgrn', range_color=(0, maxSC),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=6, center={"lat": 33.87, "lon": -80.86},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     scFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     scFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return scFig
 
-
-def scmap():
-    # Used to round up to a proper max for the range_color function
-    maxSC = (math.ceil(cleanSC['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    scFig = px.choropleth_mapbox(cleanSC, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='tealgrn', range_color=(0, maxSC),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=6, center={"lat": 33.877856, "lon": -80.864605},
-                                 opacity=0.6, labels={"County": "County"})
-
-    scFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    scFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return scFig
-
+southCar = usDF.loc[usDF.State == 'SOUTH CAROLINA']
 
 # --SUBPLOT--#
 def scsub():
@@ -4287,8 +4346,8 @@ def scsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     scFIG.add_trace(go.Bar(
-        y=cleanSC['County'],
-        x=cleanSC['Confirmed Cases'],
+        y=southCar['County'],
+        x=southCar['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4299,8 +4358,8 @@ def scsub():
         row=2, col=1
     )
     scFIG.add_trace(go.Bar(
-        y=cleanSC['County'],
-        x=cleanSC['Deaths'],
+        y=southCar['County'],
+        x=southCar['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -4309,8 +4368,8 @@ def scsub():
         )
     ))
     scFIG.add_trace(
-        go.Densitymapbox(lat=cleanSC.Latitude, lon=cleanSC.Longitude,
-                         z=cleanSC['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=southCar.Latitude, lon=southCar.Longitude,
+                         z=southCar['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -4319,14 +4378,14 @@ def scsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanSC[k].tolist() for k in cleanSC.columns[:]],
+                values=[southCar[k].tolist() for k in southCar.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4351,27 +4410,28 @@ def scsub():
 
 
 # -----------------------SOUTH DAKOTA CHOROPLETH MAP----------------------------#
-sdDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_sdWiki.csv',
-    dtype={'fips': str}, float_precision='round_trip')
-cleanSD = sdDF.fillna(0)
+# sdDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_sdWiki.csv',
+#     dtype={'fips': str}, float_precision='round_trip')
+# cleanSD = sdDF.fillna(0)
+#
+#
+# def sdmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxSD = (math.ceil(cleanSD['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     sdFig = px.choropleth_mapbox(cleanSD, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='cividis', range_color=(0, maxSD),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+#                                  zoom=5.3, center={"lat": 44.57, "lon": -100.29},
+#                                  opacity=0.6)
+#
+#     sdFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     sdFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return sdFig
 
-
-def sdmap():
-    # Used to round up to a proper max for the range_color function
-    maxSD = (math.ceil(cleanSD['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    sdFig = px.choropleth_mapbox(cleanSD, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='cividis', range_color=(0, maxSD),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=5.3, center={"lat": 44.576328, "lon": -100.291920},
-                                 opacity=0.6)
-
-    sdFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    sdFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return sdFig
-
+southDak = usDF.loc[usDF.State == 'SOUTH DAKOTA']
 
 # --SUBPLOT--#
 def sdsub():
@@ -4385,8 +4445,8 @@ def sdsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     sdFIG.add_trace(go.Bar(
-        y=cleanSD['County'],
-        x=cleanSD['Confirmed Cases'],
+        y=southDak['County'],
+        x=southDak['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4397,8 +4457,8 @@ def sdsub():
         row=2, col=1
     )
     sdFIG.add_trace(go.Bar(
-        y=cleanSD['County'],
-        x=cleanSD['Deaths'],
+        y=southDak['County'],
+        x=southDak['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -4407,8 +4467,8 @@ def sdsub():
         )
     ))
     sdFIG.add_trace(go.Bar(
-        y=cleanSD['County'],
-        x=cleanSD['Recoveries'],
+        y=southDak['County'],
+        x=southDak['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -4417,8 +4477,8 @@ def sdsub():
         )
     ))
     sdFIG.add_trace(
-        go.Densitymapbox(lat=cleanSD.Latitude, lon=cleanSD.Longitude,
-                         z=cleanSD['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=southDak.Latitude, lon=southDak.Longitude,
+                         z=southDak['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -4427,14 +4487,14 @@ def sdsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths", "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanSD[k].tolist() for k in cleanSD.columns[:]],
+                values=[southDak[k].tolist() for k in southDak.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4459,27 +4519,28 @@ def sdsub():
 
 
 # -----------------------TENNESSEE CHOROPLETH MAP----------------------------#
-tnDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_tnWiki.csv',
-    dtype={'fips': str}, float_precision='round_trip')
-cleanTN = tnDF.fillna(0)
+# tnDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_tnWiki.csv',
+#     dtype={'fips': str}, float_precision='round_trip')
+# cleanTN = tnDF.fillna(0)
+#
+#
+# def tnmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxTN = (math.ceil(cleanTN['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     tnFig = px.choropleth_mapbox(cleanTN, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='matter', range_color=(0, maxTN),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+#                                  zoom=5.7, center={"lat": 35.86, "lon": -85.88},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     tnFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     tnFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return tnFig
 
-
-def tnmap():
-    # Used to round up to a proper max for the range_color function
-    maxTN = (math.ceil(cleanTN['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    tnFig = px.choropleth_mapbox(cleanTN, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='matter', range_color=(0, maxTN),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=5.7, center={"lat": 35.866924, "lon": -85.881291},
-                                 opacity=0.6, labels={"County": "County"})
-
-    tnFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    tnFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return tnFig
-
+tenn = usDF.loc[usDF.State == 'TENNESSEE']
 
 # --SUBPLOT--#
 def tnsub():
@@ -4493,8 +4554,8 @@ def tnsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     tnFIG.add_trace(go.Bar(
-        y=cleanTN['County'],
-        x=cleanTN['Confirmed Cases'],
+        y=tenn['County'],
+        x=tenn['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4505,8 +4566,8 @@ def tnsub():
         row=2, col=1
     )
     tnFIG.add_trace(go.Bar(
-        y=cleanTN['County'],
-        x=cleanTN['Deaths'],
+        y=tenn['County'],
+        x=tenn['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -4515,8 +4576,8 @@ def tnsub():
         )
     ))
     tnFIG.add_trace(go.Bar(
-        y=cleanTN['County'],
-        x=cleanTN['Recoveries'],
+        y=tenn['County'],
+        x=tenn['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -4525,8 +4586,8 @@ def tnsub():
         )
     ))
     tnFIG.add_trace(
-        go.Densitymapbox(lat=cleanTN.Latitude, lon=cleanTN.Longitude,
-                         z=cleanTN['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=tenn.Latitude, lon=tenn.Longitude,
+                         z=tenn['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -4535,14 +4596,14 @@ def tnsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths", "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanTN[k].tolist() for k in cleanTN.columns[:]],
+                values=[tenn[k].tolist() for k in tenn.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4567,27 +4628,28 @@ def tnsub():
 
 
 # -----------------------TEXAS CHOROPLETH MAP----------------------------#
-txDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_txgit.csv',
-    dtype={'fips': str})
-cleanTX = txDF.fillna(0)
+# txDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_txgit.csv',
+#     dtype={'fips': str})
+# cleanTX = txDF.fillna(0)
+#
+#
+# def txmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxTX = (math.ceil(cleanTX['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     txFig = px.choropleth_mapbox(cleanTX, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='agsunset', range_color=(0, maxTX),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+#                                  zoom=4, center={"lat": 31.36, "lon": -99.16},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     txFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     txFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return txFig
 
-
-def txmap():
-    # Used to round up to a proper max for the range_color function
-    maxTX = (math.ceil(cleanTX['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    txFig = px.choropleth_mapbox(cleanTX, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='agsunset', range_color=(0, maxTX),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=4, center={"lat": 31.364552, "lon": -99.161239},
-                                 opacity=0.6, labels={"County": "County"})
-
-    txFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    txFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return txFig
-
+texas = usDF.loc[usDF.State == 'Texas']
 
 # --SUBPLOT--#
 def txsub():
@@ -4601,8 +4663,8 @@ def txsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     txFIG.add_trace(go.Bar(
-        y=cleanTX['County'],
-        x=cleanTX['Confirmed Cases'],
+        y=texas['County'],
+        x=texas['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4613,8 +4675,8 @@ def txsub():
         row=2, col=1
     )
     txFIG.add_trace(go.Bar(
-        y=cleanTX['County'],
-        x=cleanTX['Deaths'],
+        y=texas['County'],
+        x=texas['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -4623,8 +4685,8 @@ def txsub():
         )
     ))
     txFIG.add_trace(go.Bar(
-        y=cleanTX['County'],
-        x=cleanTX['Recoveries'],
+        y=texas['County'],
+        x=texas['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -4633,8 +4695,8 @@ def txsub():
         )
     ))
     txFIG.add_trace(
-        go.Densitymapbox(lat=cleanTX.Latitude, lon=cleanTX.Longitude,
-                         z=cleanTX['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=texas.Latitude, lon=texas.Longitude,
+                         z=texas['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -4643,14 +4705,14 @@ def txsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths", "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanTX[k].tolist() for k in cleanTX.columns[:]],
+                values=[texas[k].tolist() for k in texas.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4675,29 +4737,30 @@ def txsub():
 
 
 # -----------------------UTAH CHOROPLETH MAP----------------------------#
-utDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_utNews.csv',
-    dtype={'fips': str})
-cleanUT = utDF.fillna(0)
-cleanUT = cleanUT[
-    ['County', 'State', 'fips', 'Latitude', 'Longitude', 'Confirmed Cases', 'Deaths', 'Recoveries', 'Hospitalizations']]
+# utDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_utNews.csv',
+#     dtype={'fips': str})
+# cleanUT = utDF.fillna(0)
+# cleanUT = cleanUT[
+#     ['County', 'State', 'fips', 'Latitude', 'Longitude', 'Confirmed Cases', 'Deaths', 'Recoveries', 'Hospitalizations']]
+#
+#
+# def utmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxUT = (math.ceil(cleanUT['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     utFig = px.choropleth_mapbox(cleanUT, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='tealrose', range_color=(0, maxUT),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries', 'Hospitalizations'],
+#                                  zoom=5.2, center={"lat": 39.32, "lon": -111.68},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     utFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     utFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return utFig
 
-
-def utmap():
-    # Used to round up to a proper max for the range_color function
-    maxUT = (math.ceil(cleanUT['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    utFig = px.choropleth_mapbox(cleanUT, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='tealrose', range_color=(0, maxUT),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries', 'Hospitalizations'],
-                                 zoom=5.2, center={"lat": 39.323777, "lon": -111.678222},
-                                 opacity=0.6, labels={"County": "County"})
-
-    utFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    utFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return utFig
-
+utah = usDF.loc[usDF.State == 'UTAH']
 
 # --SUBPLOT--#
 def utsub():
@@ -4711,8 +4774,8 @@ def utsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     utFIG.add_trace(go.Bar(
-        y=cleanUT['County'],
-        x=cleanUT['Confirmed Cases'],
+        y=utah['County'],
+        x=utah['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4723,8 +4786,8 @@ def utsub():
         row=2, col=1
     )
     utFIG.add_trace(go.Bar(
-        y=cleanUT['County'],
-        x=cleanUT['Deaths'],
+        y=utah['County'],
+        x=utah['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -4733,8 +4796,8 @@ def utsub():
         )
     ))
     utFIG.add_trace(go.Bar(
-        y=cleanUT['County'],
-        x=cleanUT['Recoveries'],
+        y=utah['County'],
+        x=utah['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -4743,8 +4806,8 @@ def utsub():
         )
     ))
     utFIG.add_trace(go.Bar(
-        y=cleanUT['County'],
-        x=cleanUT['Hospitalizations'],
+        y=utah['County'],
+        x=utah['Hospitalized'],
         name='Hospitalizations',
         orientation='h',
         marker=dict(
@@ -4753,8 +4816,8 @@ def utsub():
         )
     ))
     utFIG.add_trace(
-        go.Densitymapbox(lat=cleanUT.Latitude, lon=cleanUT.Longitude,
-                         z=cleanUT['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=utah.Latitude, lon=utah.Longitude,
+                         z=utah['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -4763,14 +4826,14 @@ def utsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries", "Hospitalizations"],
+                        "Deaths", "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanUT[k].tolist() for k in cleanUT.columns[:]],
+                values=[utah[k].tolist() for k in utah.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4795,27 +4858,28 @@ def utsub():
 
 
 # -----------------------VIRGINIA CHOROPLETH MAP----------------------------#
-vaDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_vaWiki.csv',
-    dtype={'fips': str})
-cleanVA = vaDF.fillna(0)
+# vaDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_vaWiki.csv',
+#     dtype={'fips': str})
+# cleanVA = vaDF.fillna(0)
+#
+#
+# def vamap():
+#     # Used to round up to a proper max for the range_color function
+#     maxVA = (math.ceil(cleanVA['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     vaFig = px.choropleth_mapbox(cleanVA, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='matter', range_color=(0, maxVA),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Hospitalizations'],
+#                                  zoom=5.3, center={"lat": 37.51, "lon": -78.67},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     vaFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     vaFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return vaFig
 
-
-def vamap():
-    # Used to round up to a proper max for the range_color function
-    maxVA = (math.ceil(cleanVA['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    vaFig = px.choropleth_mapbox(cleanVA, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='matter', range_color=(0, maxVA),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Hospitalizations'],
-                                 zoom=5.3, center={"lat": 37.510857, "lon": -78.666367},
-                                 opacity=0.6, labels={"County": "County"})
-
-    vaFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    vaFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return vaFig
-
+virg = usDF.loc[usDF.State == 'VIRGINIA']
 
 # --SUBPLOT--#
 def vasub():
@@ -4829,8 +4893,8 @@ def vasub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     vaFIG.add_trace(go.Bar(
-        y=cleanVA['County'],
-        x=cleanVA['Confirmed Cases'],
+        y=virg['County'],
+        x=virg['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4841,8 +4905,8 @@ def vasub():
         row=2, col=1
     )
     vaFIG.add_trace(go.Bar(
-        y=cleanVA['County'],
-        x=cleanVA['Deaths'],
+        y=virg['County'],
+        x=virg['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -4851,8 +4915,8 @@ def vasub():
         )
     ))
     vaFIG.add_trace(go.Bar(
-        y=cleanVA['County'],
-        x=cleanVA['Hospitalizations'],
+        y=virg['County'],
+        x=virg['Hospitalized'],
         name='Hospitalizations',
         orientation='h',
         marker=dict(
@@ -4861,8 +4925,8 @@ def vasub():
         )
     ))
     vaFIG.add_trace(
-        go.Densitymapbox(lat=cleanVA.Latitude, lon=cleanVA.Longitude,
-                         z=cleanVA['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=virg.Latitude, lon=virg.Longitude,
+                         z=virg['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -4871,14 +4935,14 @@ def vasub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Hospitalizations"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanVA[k].tolist() for k in cleanVA.columns[:]],
+                values=[virg[k].tolist() for k in virg.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4903,27 +4967,28 @@ def vasub():
 
 
 # -----------------------VERMONT CHOROPLETH MAP----------------------------#
-vtDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_vtWiki.csv',
-    dtype={'fips': str})
-cleanVT = vtDF.fillna(0)
+# vtDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_vtWiki.csv',
+#     dtype={'fips': str})
+# cleanVT = vtDF.fillna(0)
+#
+#
+# def vtmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxVT = (math.ceil(cleanVT['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     vtFig = px.choropleth_mapbox(cleanVT, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='purp', range_color=(0, maxVT),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=6, center={"lat": 44.07, "lon": -72.73},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     vtFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     vtFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return vtFig
 
-
-def vtmap():
-    # Used to round up to a proper max for the range_color function
-    maxVT = (math.ceil(cleanVT['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    vtFig = px.choropleth_mapbox(cleanVT, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='purp', range_color=(0, maxVT),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=6, center={"lat": 44.075207, "lon": -72.735624},
-                                 opacity=0.6, labels={"County": "County"})
-
-    vtFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    vtFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return vtFig
-
+vermont = usDF.loc[usDF.State == 'VERMONT']
 
 # --SUBPLOT--#
 def vtsub():
@@ -4937,8 +5002,8 @@ def vtsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     vtFIG.add_trace(go.Bar(
-        y=cleanVT['County'],
-        x=cleanVT['Confirmed Cases'],
+        y=vermont['County'],
+        x=vermont['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4949,8 +5014,8 @@ def vtsub():
         row=2, col=1
     )
     vtFIG.add_trace(go.Bar(
-        y=cleanVT['County'],
-        x=cleanVT['Deaths'],
+        y=vermont['County'],
+        x=vermont['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -4959,8 +5024,8 @@ def vtsub():
         )
     ))
     vtFIG.add_trace(go.Bar(
-        y=cleanVT['County'],
-        x=cleanVT['Recoveries'],
+        y=vermont['County'],
+        x=vermont['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -4969,8 +5034,8 @@ def vtsub():
         )
     ))
     vtFIG.add_trace(
-        go.Densitymapbox(lat=cleanVT.Latitude, lon=cleanVT.Longitude,
-                         z=cleanVT['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=vermont.Latitude, lon=vermont.Longitude,
+                         z=vermont['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -4979,14 +5044,14 @@ def vtsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths", "Recoveries", "Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanVT[k].tolist() for k in cleanVT.columns[:]],
+                values=[vermont[k].tolist() for k in vermont.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -5011,27 +5076,28 @@ def vtsub():
 
 
 # -----------------------WASHINGTON CHOROPLETH MAP----------------------------#
-waDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_waWiki.csv',
-    dtype={'fips': str})
-cleanWA = waDF.fillna(0)
+# waDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_waWiki.csv',
+#     dtype={'fips': str})
+# cleanWA = waDF.fillna(0)
+#
+#
+# def wamap():
+#     # Used to round up to a proper max for the range_color function
+#     maxWA = (math.ceil(cleanWA['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     waFig = px.choropleth_mapbox(cleanWA, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='temps', range_color=(0, maxWA),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5.3, center={"lat": 47.57, "lon": -120.32},
+#                                  opacity=0.65, labels={"County": "County"})
+#
+#     waFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     waFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return waFig
 
-
-def wamap():
-    # Used to round up to a proper max for the range_color function
-    maxWA = (math.ceil(cleanWA['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    waFig = px.choropleth_mapbox(cleanWA, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='temps', range_color=(0, maxWA),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.3, center={"lat": 47.572970, "lon": -120.320940},
-                                 opacity=0.65, labels={"County": "County"})
-
-    waFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    waFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return waFig
-
+wash = usDF.loc[usDF.State == 'WASHINGTON']
 
 # --SUBPLOT--#
 def wasub():
@@ -5045,8 +5111,8 @@ def wasub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     waFIG.add_trace(go.Bar(
-        y=cleanWA['County'],
-        x=cleanWA['Confirmed Cases'],
+        y=wash['County'],
+        x=wash['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -5057,8 +5123,8 @@ def wasub():
         row=2, col=1
     )
     waFIG.add_trace(go.Bar(
-        y=cleanWA['County'],
-        x=cleanWA['Deaths'],
+        y=wash['County'],
+        x=wash['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -5067,8 +5133,8 @@ def wasub():
         )
     ))
     waFIG.add_trace(
-        go.Densitymapbox(lat=cleanWA.Latitude, lon=cleanWA.Longitude,
-                         z=cleanWA['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=wash.Latitude, lon=wash.Longitude,
+                         z=wash['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -5077,14 +5143,14 @@ def wasub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanWA[k].tolist() for k in cleanWA.columns[:]],
+                values=[wash[k].tolist() for k in wash.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -5109,27 +5175,28 @@ def wasub():
 
 
 # -----------------------WISCONSIN CHOROPLETH MAP----------------------------#
-wiDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_widoh.csv',
-    dtype={'fips': str})
-cleanWI = wiDF.fillna(0)
+# wiDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_widoh.csv',
+#     dtype={'fips': str})
+# cleanWI = wiDF.fillna(0)
+#
+#
+# def wimap():
+#     # Used to round up to a proper max for the range_color function
+#     maxWI = (math.ceil(cleanWI['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     wiFig = px.choropleth_mapbox(cleanWI, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='tropic', range_color=(0, maxWI),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5.3, center={"lat": 44.67, "lon": -89.88},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     wiFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     wiFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return wiFig
 
-
-def wimap():
-    # Used to round up to a proper max for the range_color function
-    maxWI = (math.ceil(cleanWI['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    wiFig = px.choropleth_mapbox(cleanWI, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='tropic', range_color=(0, maxWI),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.3, center={"lat": 44.672245, "lon": -89.878727},
-                                 opacity=0.6, labels={"County": "County"})
-
-    wiFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    wiFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return wiFig
-
+wiscon = usDF.loc[usDF.State == 'WISCONSIN']
 
 # --SUBPLOT--#
 def wisub():
@@ -5143,8 +5210,8 @@ def wisub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     wiFIG.add_trace(go.Bar(
-        y=cleanWI['County'],
-        x=cleanWI['Confirmed Cases'],
+        y=wiscon['County'],
+        x=wiscon['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -5155,8 +5222,8 @@ def wisub():
         row=2, col=1
     )
     wiFIG.add_trace(go.Bar(
-        y=cleanWI['County'],
-        x=cleanWI['Deaths'],
+        y=wiscon['County'],
+        x=wiscon['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -5165,8 +5232,8 @@ def wisub():
         )
     ))
     wiFIG.add_trace(
-        go.Densitymapbox(lat=cleanWI.Latitude, lon=cleanWI.Longitude,
-                         z=cleanWI['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=wiscon.Latitude, lon=wiscon.Longitude,
+                         z=wiscon['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -5175,14 +5242,14 @@ def wisub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanWI[k].tolist() for k in cleanWI.columns[:]],
+                values=[wiscon[k].tolist() for k in wiscon.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -5207,27 +5274,28 @@ def wisub():
 
 
 # -----------------------WEST VIRGINIA CHOROPLETH MAP----------------------------#
-wvDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_wvWiki.csv',
-    dtype={'fips': str})
-cleanWV = wvDF.fillna(0)
+# wvDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_wvWiki.csv',
+#     dtype={'fips': str})
+# cleanWV = wvDF.fillna(0)
+#
+#
+# def wvmap():
+#     # Used to round up to a proper max for the range_color function
+#     maxWV = (math.ceil(cleanWV['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     wvFig = px.choropleth_mapbox(cleanWV, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='thermal_r', range_color=(0, maxWV),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths'],
+#                                  zoom=5.5, center={"lat": 38.72, "lon": -80.73},
+#                                  opacity=0.7, labels={"County": "County"})
+#
+#     wvFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     wvFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return wvFig
 
-
-def wvmap():
-    # Used to round up to a proper max for the range_color function
-    maxWV = (math.ceil(cleanWV['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    wvFig = px.choropleth_mapbox(cleanWV, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='thermal_r', range_color=(0, maxWV),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths'],
-                                 zoom=5.5, center={"lat": 38.718442, "lon": -80.735224},
-                                 opacity=0.7, labels={"County": "County"})
-
-    wvFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    wvFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return wvFig
-
+west = usDF.loc[usDF.State == 'WEST VIRGINIA']
 
 # --SUBPLOT--#
 def wvsub():
@@ -5241,8 +5309,8 @@ def wvsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     wvFIG.add_trace(go.Bar(
-        y=cleanWV['County'],
-        x=cleanWV['Confirmed Cases'],
+        y=west['County'],
+        x=west['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -5253,8 +5321,8 @@ def wvsub():
         row=2, col=1
     )
     wvFIG.add_trace(go.Bar(
-        y=cleanWV['County'],
-        x=cleanWV['Deaths'],
+        y=west['County'],
+        x=west['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -5263,8 +5331,8 @@ def wvsub():
         )
     ))
     wvFIG.add_trace(
-        go.Densitymapbox(lat=cleanWV.Latitude, lon=cleanWV.Longitude,
-                         z=cleanWV['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=west.Latitude, lon=west.Longitude,
+                         z=west['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -5273,14 +5341,14 @@ def wvsub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths"],
+                        "Deaths","Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanWV[k].tolist() for k in cleanWV.columns[:]],
+                values=[west[k].tolist() for k in west.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -5305,27 +5373,28 @@ def wvsub():
 
 
 # -----------------------WYOMING CHOROPLETH MAP----------------------------#
-wyDF = pd.read_csv(
-    'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_wyWiki.csv',
-    dtype={'fips': str})
-cleanWY = wyDF.fillna(0)
+# wyDF = pd.read_csv(
+#     'https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/COVID-19_cases_wyWiki.csv',
+#     dtype={'fips': str})
+# cleanWY = wyDF.fillna(0)
+#
+#
+# def wymap():
+#     # Used to round up to a proper max for the range_color function
+#     maxWY = (math.ceil(cleanWY['Confirmed Cases'].max() / 50.0) * 50.0) + 150
+#
+#     wyFig = px.choropleth_mapbox(cleanWY, geojson=counties, locations='fips', color='Confirmed Cases',
+#                                  color_continuous_scale='mygbm', range_color=(0, maxWY),
+#                                  hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
+#                                  zoom=5.2, center={"lat": 42.999, "lon": -107.55},
+#                                  opacity=0.6, labels={"County": "County"})
+#
+#     wyFig.update_layout(mapbox_style="satellite-streets",
+#                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
+#     wyFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+#     return wyFig
 
-
-def wymap():
-    # Used to round up to a proper max for the range_color function
-    maxWY = (math.ceil(cleanWY['Confirmed Cases'].max() / 50.0) * 50.0) + 150
-
-    wyFig = px.choropleth_mapbox(cleanWY, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='mygbm', range_color=(0, maxWY),
-                                 hover_data=['County', 'Confirmed Cases', 'Deaths', 'Recoveries'],
-                                 zoom=5.2, center={"lat": 42.999627, "lon": -107.551451},
-                                 opacity=0.6, labels={"County": "County"})
-
-    wyFig.update_layout(mapbox_style="satellite-streets",
-                        mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    wyFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return wyFig
-
+wyoming = usDF.loc[usDF.State == 'WYOMING']
 
 # --SUBPLOT--#
 def wysub():
@@ -5339,8 +5408,8 @@ def wysub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     wyFIG.add_trace(go.Bar(
-        y=cleanWY['County'],
-        x=cleanWY['Confirmed Cases'],
+        y=wyoming['County'],
+        x=wyoming['Confirmed Cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -5351,8 +5420,8 @@ def wysub():
         row=2, col=1
     )
     wyFIG.add_trace(go.Bar(
-        y=cleanWY['County'],
-        x=cleanWY['Deaths'],
+        y=wyoming['County'],
+        x=wyoming['Deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -5361,8 +5430,8 @@ def wysub():
         )
     ))
     wyFIG.add_trace(go.Bar(
-        y=cleanWY['County'],
-        x=cleanWY['Recoveries'],
+        y=wyoming['County'],
+        x=wyoming['Recoveries'],
         name='Recoveries',
         orientation='h',
         marker=dict(
@@ -5371,8 +5440,8 @@ def wysub():
         )
     ))
     wyFIG.add_trace(
-        go.Densitymapbox(lat=cleanWY.Latitude, lon=cleanWY.Longitude,
-                         z=cleanWY['Confirmed Cases'], radius=25,
+        go.Densitymapbox(lat=wyoming.Latitude, lon=wyoming.Longitude,
+                         z=wyoming['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
@@ -5381,14 +5450,14 @@ def wysub():
             header=dict(
                 values=["County", "State", "fips",
                         "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries"],
+                        "Deaths", "Recoveries","Hospitalized"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cleanWY[k].tolist() for k in cleanWY.columns[:]],
+                values=[wyoming[k].tolist() for k in wyoming.columns[:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -5602,7 +5671,7 @@ dropdown = dbc.Row([
         dbc.DropdownMenu(
             children=[
                 dbc.DropdownMenuItem("Home", href="/page-1", id="page-1-link"),
-                dbc.DropdownMenuItem("US Maps", href="/page-2", id="page-2-link"),
+                dbc.DropdownMenuItem("US Map", href="/page-2", id="page-2-link"),
                 dbc.DropdownMenuItem("World View", href="/page-3", id="page-3-link"),
                 dbc.DropdownMenu(
                     children=[
@@ -5939,7 +6008,8 @@ slow = html.Div(
             className="mb-3",
         ),
         dbc.Toast(
-            [html.P("The maps may be a little slow in rendering", className="mb-0")],
+            [html.P("The map may be a little slow in rendering- "
+                    "Pressing the (Home) button on the map may help", className="mb-0")],
             id="auto-toast",
             header="We apologize and thank you for your patience",
             icon="primary",
@@ -5964,10 +6034,12 @@ us_map = html.Div(
                                 #                               html.Br(),
                                 html.P(
                                     """\
-                                        The maps to the right are broken down into a state by state basis, wherein one can see
-                                        the overall reach COVID-19 has had within our communities here in the US. Some maps will 
+                                        The map to the right shows
+                                        the overall reach COVID-19 has had within our communities here in the US. Some states will 
                                         have a few counties missing due to either those counties not having cases or because their
-                                        numbers have yet to be reported. All data scraped in order to build these sites come from a 
+                                        numbers have yet to be reported. The dropdown menu gives a state by state breakdown
+                                        of the confirmed cases, deaths, etc. due to this pandemic.
+                                        All data scraped in order to build these sites come from a 
                                         range of sources that had the most reliable and most current of information.""",
                                     style={'border': '4mm ridge rgba(28, 106, 128,.6)',
                                            'outline': '0.5rem rgba(222, 109, 89,.7)',
@@ -5983,7 +6055,7 @@ us_map = html.Div(
                         ),
                         dbc.Col(
                             [
-                                html.H3("US Maps on a State by State Basis"),
+                                html.H3("US Map Showcasing COVID-19 Cases"),
                                 slow,
                                 dcc.Dropdown(
                                     id="map_menu",
@@ -5991,7 +6063,7 @@ us_map = html.Div(
                                     value="AK"
                                 ),
                                 dcc.Graph(
-                                    id='map',
+                                    figure=usMap(),
                                     style={
                                         'width': 'auto',
                                         'height': 'auto',
@@ -6304,113 +6376,113 @@ def open_toast(n):
     return True
 
 
-@app.callback(
-    Output("map", "figure"),
-    [Input("map_menu", "value")]
-)
-def build_map(value):
-    if value == 'AK':
-        return akmap()
-    elif value == 'AL':
-        return almap()
-    elif value == 'AR':
-        return armap()
-    elif value == 'AZ':
-        return azmap()
-    elif value == 'CA':
-        return camap()
-    elif value == 'CO':
-        return comap()
-    elif value == 'CT':
-        return ctmap()
-    elif value == 'DE':
-        return demap()
-    elif value == 'FL':
-        return flmap()
-    elif value == 'GA':
-        return gamap()
-    elif value == 'HI':
-        return himap()
-    elif value == 'ID':
-        return idmap()
-    elif value == 'IL':
-        return ilmap()
-    elif value == 'IN':
-        return inmap()
-    elif value == 'IA':
-        return iomap()
-    elif value == 'KS':
-        return kamap()
-    elif value == 'KY':
-        return kymap()
-    elif value == 'LA':
-        return lamap()
-    elif value == 'MA':
-        return mamap()
-    elif value == 'MD':
-        return mdmap()
-    elif value == 'ME':
-        return memap()
-    elif value == 'MI':
-        return mimap()
-    elif value == 'MN':
-        return mnmap()
-    elif value == 'MO':
-        return momap()
-    elif value == 'MS':
-        return msmap()
-    elif value == 'MT':
-        return mtmap()
-    elif value == 'NC':
-        return ncmap()
-    elif value == 'ND':
-        return ndmap()
-    elif value == 'NE':
-        return nemap()
-    elif value == 'NH':
-        return nhmap()
-    elif value == 'NJ':
-        return njmap()
-    elif value == 'NM':
-        return nmmap()
-    elif value == 'NV':
-        return nvmap()
-    elif value == 'NY':
-        return nymap()
-    elif value == 'OH':
-        return ohmap()
-    elif value == 'OK':
-        return okmap()
-    elif value == 'OR':
-        return ormap()
-    elif value == 'PA':
-        return pamap()
-    elif value == 'PR':
-        return prmap()
-    elif value == 'RI':
-        return rimap()
-    elif value == 'SC':
-        return scmap()
-    elif value == 'SD':
-        return sdmap()
-    elif value == 'TN':
-        return tnmap()
-    elif value == 'TX':
-        return txmap()
-    elif value == 'UT':
-        return utmap()
-    elif value == 'VA':
-        return vamap()
-    elif value == 'VT':
-        return vtmap()
-    elif value == 'WA':
-        return wamap()
-    elif value == 'WI':
-        return wimap()
-    elif value == 'WV':
-        return wvmap()
-    elif value == 'WY':
-        return wymap()
+# @app.callback(
+#     Output("map", "figure"),
+#     [Input("map_menu", "value")]
+# )
+# def build_map(value):
+#     if value == 'AK':
+#         return akmap()
+#     elif value == 'AL':
+#         return almap()
+#     elif value == 'AR':
+#         return armap()
+#     elif value == 'AZ':
+#         return azmap()
+#     elif value == 'CA':
+#         return camap()
+#     elif value == 'CO':
+#         return comap()
+#     elif value == 'CT':
+#         return ctmap()
+#     elif value == 'DE':
+#         return demap()
+#     elif value == 'FL':
+#         return flmap()
+#     elif value == 'GA':
+#         return gamap()
+#     elif value == 'HI':
+#         return himap()
+#     elif value == 'ID':
+#         return idmap()
+#     elif value == 'IL':
+#         return ilmap()
+#     elif value == 'IN':
+#         return inmap()
+#     elif value == 'IA':
+#         return iomap()
+#     elif value == 'KS':
+#         return kamap()
+#     elif value == 'KY':
+#         return kymap()
+#     elif value == 'LA':
+#         return lamap()
+#     elif value == 'MA':
+#         return mamap()
+#     elif value == 'MD':
+#         return mdmap()
+#     elif value == 'ME':
+#         return memap()
+#     elif value == 'MI':
+#         return mimap()
+#     elif value == 'MN':
+#         return mnmap()
+#     elif value == 'MO':
+#         return momap()
+#     elif value == 'MS':
+#         return msmap()
+#     elif value == 'MT':
+#         return mtmap()
+#     elif value == 'NC':
+#         return ncmap()
+#     elif value == 'ND':
+#         return ndmap()
+#     elif value == 'NE':
+#         return nemap()
+#     elif value == 'NH':
+#         return nhmap()
+#     elif value == 'NJ':
+#         return njmap()
+#     elif value == 'NM':
+#         return nmmap()
+#     elif value == 'NV':
+#         return nvmap()
+#     elif value == 'NY':
+#         return nymap()
+#     elif value == 'OH':
+#         return ohmap()
+#     elif value == 'OK':
+#         return okmap()
+#     elif value == 'OR':
+#         return ormap()
+#     elif value == 'PA':
+#         return pamap()
+#     elif value == 'PR':
+#         return prmap()
+#     elif value == 'RI':
+#         return rimap()
+#     elif value == 'SC':
+#         return scmap()
+#     elif value == 'SD':
+#         return sdmap()
+#     elif value == 'TN':
+#         return tnmap()
+#     elif value == 'TX':
+#         return txmap()
+#     elif value == 'UT':
+#         return utmap()
+#     elif value == 'VA':
+#         return vamap()
+#     elif value == 'VT':
+#         return vtmap()
+#     elif value == 'WA':
+#         return wamap()
+#     elif value == 'WI':
+#         return wimap()
+#     elif value == 'WV':
+#         return wvmap()
+#     elif value == 'WY':
+#         return wymap()
 
 
 @app.callback(
