@@ -84,11 +84,24 @@ oracle_country = [
 with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
     counties = json.load(response)
 
-#Dataframe of a combined csv of all COVID-19 case files
-usDF = pd.read_csv("https://raw.githubusercontent.com/ThanatoSohne/COVID-19-Visual-Tool/master/Web%20Scraped%20Docs/US%20States/combined.csv",
-               dtype={"fips": str})
+#Grab info from csv and place into dataframe
+nytimes = 'https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv'
+df19 = pd.read_csv(nytimes, dtype={'fips':str})
 
-usDF = usDF.fillna(0)
+#Sort by fips values
+fipsDF = df19.sort_values("fips")
+
+#Get the date from day before to coincide with most current data
+ahora = date.today()
+yesterday = ahora.strftime("%Y")+"-"+ahora.strftime("%m")+"-"+(str(int(ahora.strftime("%d"))-1))
+
+#Drop unknown values
+currentDF = fipsDF[fipsDF.date == yesterday].dropna()
+currentDF = currentDF.astype({"fips":int})
+
+#Add in the leading zero to the fips codes that require them
+#Borrowed from https://www.datasciencemadesimple.com/add-leading-preceding-zeros-python/
+currentDF['fips']=currentDF['fips'].apply(lambda x: '{:05d}'.format(x))
 
 # ---------------------------WORLD SCATTER GEO MAP----------------------------#
 def mundiScatter():
@@ -111,7 +124,7 @@ def mundiScatter():
 def aniGlobe():
     ahora = date.today()
 
-    if int(ahora.strftime("%d")) < 10:
+    if int(ahora.strftime("%d")) <= 10:
         yest = ('0' + str(int(ahora.strftime("%d")) - 1))
     else:
         yest = str(int(ahora.strftime('%d')) - 1)
@@ -141,16 +154,15 @@ def aniGlobe():
 #--------------------------US CHOROPLETH MAP----------------------------------------------#
 def usMap():
 
-    usFig = px.choropleth_mapbox(usDF, geojson=counties, locations='fips', color='Confirmed Cases',
-                                 color_continuous_scale='rainbow',
-                                 range_color=(0, 10000),
-                                 hover_data=['County', 'State', 'Confirmed Cases', 'Deaths', 'Recoveries', 'Hospitalized'],
-                                 zoom=1.8, center = {"lat": 46.84, "lon": -122.147},
-                                 opacity=0.8)
+    usFig = px.choropleth_mapbox(currentDF, geojson=counties, locations='fips', color='cases',
+                                 color_continuous_scale='plasma_r',
+                                 range_color=(0, 100000),
+                                 hover_data=['county', 'state', 'cases', 'deaths'],
+                                 zoom=1.7, center={"lat": 44.97, "lon": -103.77})
 
     usFig.update_layout(mapbox_style="satellite-streets",
                         mapbox_accesstoken='pk.eyJ1IjoibGFlc3RyeWdvbmVzIiwiYSI6ImNrOHlpdHo5bjA1dzYzZm5yZGduMTBvZTcifQ.ztpWyjPI2kHzwSbcdYrj7w')
-    usFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    usFig.update_layout(margin={"r": 20, "t": 20, "l": 70, "b": 20})
 
     return usFig
 
@@ -182,7 +194,8 @@ def usMap():
 
 # --SUBPLOT--#
 def aksub():
-    alaska = usDF.loc[usDF.State == 'ALASKA']
+
+    alaska = currentDF.loc[currentDF.state == 'Alaska']
 
     akFIG = make_subplots(
         rows=2, cols=2,
@@ -194,8 +207,8 @@ def aksub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     akFIG.add_trace(go.Bar(
-        y=alaska['County'],
-        x=alaska['Confirmed Cases'],
+        y=alaska['county'],
+        x=alaska['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -206,8 +219,8 @@ def aksub():
         row=2, col=1
     )
     akFIG.add_trace(go.Bar(
-        y=alaska['County'],
-        x=alaska['Deaths'],
+        y=alaska['county'],
+        x=alaska['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -215,38 +228,18 @@ def aksub():
             line=dict(color='rgba(58, 71, 80, 1.0)', width=3)
         )
     ))
-
-    akFIG.add_trace(go.Bar(
-        y=alaska['County'],
-        x=alaska['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(96, 148, 110, 0.6)',
-            line=dict(color='rgba(96, 148, 110, 1.0)', width=3)
-        )
-    ))
-
-    akFIG.add_trace(
-        go.Densitymapbox(lat=alaska.Latitude, lon=alaska.Longitude,
-                         z=alaska['Confirmed Cases'], radius=30,
-                         showscale=False,
-                         visible=True),
-        row=2, col=2)
-
     akFIG.add_trace(
         go.Table(
             header=dict(
                 values=["Borough", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries", "Hospitalized"],
+                        "Confirmed Cases", "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='Overpass'),
                 align='left'
             ),
             cells=dict(
-                values=[alaska[k].tolist() for k in alaska.columns[:]],
+                values=[alaska[k].tolist() for k in alaska.columns[1:]],
                 fill_color='black',
                 font=dict(color='white', size=12, family='Gravitas One'),
                 align="left")
@@ -299,10 +292,11 @@ def aksub():
 #     alFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return alFig
 
-alabama = usDF.loc[usDF.State == 'ALABAMA']
+alabama = currentDF.loc[currentDF.state == 'Alabama']
 
 # --SUBPLOT--#
 def alsub():
+
     alFIG = make_subplots(
         rows=2, cols=2,
         column_widths=[0.6, 0.6],
@@ -313,8 +307,8 @@ def alsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     alFIG.add_trace(go.Bar(
-        y=alabama['County'],
-        x=alabama['Confirmed Cases'],
+        y=alabama['county'],
+        x=alabama['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -325,8 +319,8 @@ def alsub():
         row=2, col=1
     )
     alFIG.add_trace(go.Bar(
-        y=alabama['County'],
-        x=alabama['Deaths'],
+        y=alabama['county'],
+        x=alabama['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -334,27 +328,19 @@ def alsub():
             line=dict(color='rgba(58, 71, 80, 1.0)', width=3)
         )
     ))
-
-    alFIG.add_trace(
-        go.Densitymapbox(lat=alabama.Latitude, lon=alabama.Longitude,
-                         z=alabama['Confirmed Cases'], radius=25,
-                         showscale=False,
-                         visible=True),
-        row=2, col=2)
-
     alFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[alabama[k].tolist() for k in alabama.columns[:]],
+                values=[alabama[k].tolist() for k in alabama.columns[1:]],
                 fill_color='black',
                 font=dict(color='white', size=12, family='Gravitas One'),
                 align="left")
@@ -398,7 +384,7 @@ def alsub():
 #     arFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return arFig
 
-arkansas = usDF.loc[usDF.State == 'Arkansas']
+arkansas = currentDF.loc[currentDF.state == 'arkansas']
 
 # --SUBPLOT--#
 def arsub():
@@ -412,8 +398,8 @@ def arsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     arFIG.add_trace(go.Bar(
-        y=arkansas['County'],
-        x=arkansas['Confirmed Cases'],
+        y=arkansas['county'],
+        x=arkansas['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -424,8 +410,8 @@ def arsub():
         row=2, col=1
     )
     arFIG.add_trace(go.Bar(
-        y=arkansas['County'],
-        x=arkansas['Deaths'],
+        y=arkansas['county'],
+        x=arkansas['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -433,37 +419,19 @@ def arsub():
             line=dict(color='rgba(58, 71, 80, 1.0)', width=3)
         )
     ))
-    arFIG.add_trace(go.Bar(
-        y=arkansas['County'],
-        x=arkansas['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(96, 148, 110, 0.6)',
-            line=dict(color='rgba(96, 148, 110, 1.0)', width=3)
-        )
-    ))
-
-    arFIG.add_trace(
-        go.Densitymapbox(lat=arkansas.Latitude, lon=arkansas.Longitude,
-                         z=arkansas['Confirmed Cases'], radius=20,
-                         showscale=False,
-                         visible=True),
-        row=2, col=2)
-
     arFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed<br>Cases",
-                        "Deaths", "Recoveries", "Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='Overpass'),
                 align="left"
             ),
             cells=dict(
-                values=[arkansas[k].tolist() for k in arkansas.columns[:]],
+                values=[arkansas[k].tolist() for k in arkansas.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -508,7 +476,7 @@ def arsub():
 #     azFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return azFig
 
-arizona = usDF.loc[usDF.State == 'ARIZONA']
+arizona = currentDF.loc[currentDF.state == 'Arizona']
 
 # --SUBPLOT--#
 def azsub():
@@ -522,8 +490,8 @@ def azsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     azFIG.add_trace(go.Bar(
-        y=arizona['County'],
-        x=arizona['Confirmed Cases'],
+        y=arizona['county'],
+        x=arizona['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -534,8 +502,8 @@ def azsub():
         row=2, col=1
     )
     azFIG.add_trace(go.Bar(
-        y=arizona['County'],
-        x=arizona['Deaths'],
+        y=arizona['county'],
+        x=arizona['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -544,25 +512,17 @@ def azsub():
         )
     ))
     azFIG.add_trace(
-        go.Densitymapbox(lat=arizona.Latitude, lon=arizona.Longitude,
-                         z=arizona['Confirmed Cases'], radius=30,
-                         showscale=False,
-                         visible=True),
-        row=2, col=2)
-
-    azFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed<br>Cases",
-                        "Deaths", "Recoveries", "Hospitalized"],
+                values=["County", "State", "fips", "Confirmed<br>Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='Overpass'),
                 align="left"
             ),
             cells=dict(
-                values=[arizona[k].tolist() for k in arizona.columns[:]],
+                values=[arizona[k].tolist() for k in arizona.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -609,7 +569,7 @@ def azsub():
 #     caFig.update_geos(fitbounds="locations")
 #     return caFig
 
-cali = usDF.loc[usDF.State == 'CALIFORNIA']
+cali = currentDF.loc[currentDF.state == 'California']
 
 # --SUBPLOT--#
 def casub():
@@ -623,8 +583,8 @@ def casub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     caFIG.add_trace(go.Bar(
-        y=cali['County'],
-        x=cali['Confirmed Cases'],
+        y=cali['county'],
+        x=cali['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -635,8 +595,8 @@ def casub():
         row=2, col=1
     )
     caFIG.add_trace(go.Bar(
-        y=cali['County'],
-        x=cali['Deaths'],
+        y=cali['county'],
+        x=cali['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -645,25 +605,18 @@ def casub():
         )
     ))
     caFIG.add_trace(
-        go.Densitymapbox(lat=cali.Latitude, lon=cali.Longitude,
-                         z=cali['Confirmed Cases'], radius=20,
-                         showscale=False, colorscale='rainbow',
-                         visible=True),
-        row=2, col=2)
-
-    caFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed<br>Cases",
-                        "Deaths", "Recoveries", "Hospitalized"],
+                        "Confirmed<br>Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[cali[k].tolist() for k in cali.columns[:]],
+                values=[cali[k].tolist() for k in cali.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -708,7 +661,7 @@ def casub():
 #     coFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return coFig
 
-colorado = usDF.loc[usDF.State == 'COLORADO']
+colorado = currentDF.loc[currentDF.state == 'Colorado']
 
 # --SUBPLOT--#
 def cosub():
@@ -722,8 +675,8 @@ def cosub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     coFIG.add_trace(go.Bar(
-        y=colorado['County'],
-        x=colorado['Confirmed Cases'],
+        y=colorado['county'],
+        x=colorado['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -734,8 +687,8 @@ def cosub():
         row=2, col=1
     )
     coFIG.add_trace(go.Bar(
-        y=colorado['County'],
-        x=colorado['Deaths'],
+        y=colorado['county'],
+        x=colorado['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -743,25 +696,27 @@ def cosub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     coFIG.add_trace(
         go.Densitymapbox(lat=colorado.Latitude, lon=colorado.Longitude,
                          z=colorado['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+    """
     coFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[colorado[k].tolist() for k in colorado.columns[:]],
+                values=[colorado[k].tolist() for k in colorado.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -806,7 +761,7 @@ def cosub():
 #     ctFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return ctFig
 
-connt = usDF.loc[usDF.State == 'CONNECTICUT']
+connt = currentDF.loc[currentDF.state == 'Connecticut']
 
 # --SUBPLOT--#
 def ctsub():
@@ -820,8 +775,8 @@ def ctsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     ctFIG.add_trace(go.Bar(
-        y=connt['County'],
-        x=connt['Confirmed Cases'],
+        y=connt['county'],
+        x=connt['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -832,8 +787,8 @@ def ctsub():
         row=2, col=1
     )
     ctFIG.add_trace(go.Bar(
-        y=connt['County'],
-        x=connt['Deaths'],
+        y=connt['county'],
+        x=connt['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -842,37 +797,27 @@ def ctsub():
         )
     )
     )
-    ctFIG.add_trace(go.Bar(
-        y=connt['County'],
-        x=connt['Hospitalized'],
-        name='Hospitalized',
-        orientation='h',
-        marker=dict(
-            color='rgba(28, 3, 252, 0.6)',
-            line=dict(color='rgba(28, 3, 252, 1.0)', width=3)
-        )
-    )
 
-    )
+    """
     ctFIG.add_trace(
         go.Densitymapbox(lat=connt.Latitude, lon=connt.Longitude,
                          z=connt['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     ctFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases", "Deaths",
-                        "Recoveries", "Hospitalized"],
+                        "Confirmed Cases", "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[connt[k].tolist() for k in connt.columns[:]],
+                values=[connt[k].tolist() for k in connt.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -917,7 +862,7 @@ def ctsub():
 #     deFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return deFig
 
-dela = usDF.loc[usDF.State == 'DELAWARE']
+dela = currentDF.loc[currentDF.state == 'Delaware']
 
 # --SUBPLOT--#
 def desub():
@@ -931,8 +876,8 @@ def desub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     deFIG.add_trace(go.Bar(
-        y=dela['County'],
-        x=dela['Confirmed Cases'],
+        y=dela['county'],
+        x=dela['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -943,8 +888,8 @@ def desub():
         row=2, col=1
     )
     deFIG.add_trace(go.Bar(
-        y=dela['County'],
-        x=dela['Deaths'],
+        y=dela['county'],
+        x=dela['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -952,35 +897,26 @@ def desub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    deFIG.add_trace(go.Bar(
-        y=dela['County'],
-        x=dela['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(95, 107, 106, 0.6)',
-            line=dict(color='rgba(95, 107, 106, 1.0)', width=3)
-        )
-    ))
+    """
     deFIG.add_trace(
         go.Densitymapbox(lat=dela.Latitude, lon=dela.Longitude,
                          z=dela['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='rainbow',
                          visible=True),
         row=2, col=2)
+        """
     deFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                        "Confirmed Cases","Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[dela[k].tolist() for k in dela.columns[:]],
+                values=[dela[k].tolist() for k in dela.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1025,7 +961,7 @@ def desub():
 #     flFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return flFig
 
-florida = usDF.loc[usDF.State == 'FLORIDA']
+florida = currentDF.loc[currentDF.state == 'Florida']
 
 # --SUBPLOT--#
 def flsub():
@@ -1039,8 +975,8 @@ def flsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     flFIG.add_trace(go.Bar(
-        y=florida['County'],
-        x=florida['Confirmed Cases'],
+        y=florida['county'],
+        x=florida['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1051,8 +987,8 @@ def flsub():
         row=2, col=1
     )
     flFIG.add_trace(go.Bar(
-        y=florida['County'],
-        x=florida['Deaths'],
+        y=florida['county'],
+        x=florida['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1060,35 +996,19 @@ def flsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    flFIG.add_trace(go.Bar(
-        y=florida['County'],
-        x=florida['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(95, 107, 106, 0.6)',
-            line=dict(color='rgba(95, 107, 106, 1.0)', width=3)
-        )
-    ))
-    flFIG.add_trace(
-        go.Densitymapbox(lat=florida.Latitude, lon=florida.Longitude,
-                         z=florida['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='rainbow',
-                         visible=True),
-        row=2, col=2)
     flFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries", "Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[florida[k].tolist() for k in florida.columns[:]],
+                values=[florida[k].tolist() for k in florida.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1134,7 +1054,7 @@ def flsub():
 #     gaFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return gaFig
 
-georgia = usDF.loc[usDF.State == 'GEORGIA']
+georgia = currentDF.loc[currentDF.state == 'Georgia']
 
 # --SUBPLOT--#
 def gasub():
@@ -1148,8 +1068,8 @@ def gasub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     gaFIG.add_trace(go.Bar(
-        y=georgia['County'],
-        x=georgia['Confirmed Cases'],
+        y=georgia['county'],
+        x=georgia['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1160,8 +1080,8 @@ def gasub():
         row=2, col=1
     )
     gaFIG.add_trace(go.Bar(
-        y=georgia['County'],
-        x=georgia['Deaths'],
+        y=georgia['county'],
+        x=georgia['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1169,25 +1089,27 @@ def gasub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     gaFIG.add_trace(
         go.Densitymapbox(lat=georgia.Latitude, lon=georgia.Longitude,
                          z=georgia['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='rainbow',
                          visible=True),
         row=2, col=2)
+        """
     gaFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[georgia[k].tolist() for k in georgia.columns[:]],
+                values=[georgia[k].tolist() for k in georgia.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1250,7 +1172,7 @@ def gasub():
 #     hiFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return hiFig
 
-hawaii = usDF.loc[usDF.State == 'HAWAII']
+hawaii = currentDF.loc[currentDF.state == 'Hawaii']
 
 # --SUBPLOT--#
 def hisub():
@@ -1264,8 +1186,8 @@ def hisub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     hiFIG.add_trace(go.Bar(
-        y=hawaii['County'],
-        x=hawaii['Confirmed Cases'],
+        y=hawaii['county'],
+        x=hawaii['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1276,8 +1198,8 @@ def hisub():
         row=2, col=1
     )
     hiFIG.add_trace(go.Bar(
-        y=hawaii['County'],
-        x=hawaii['Deaths'],
+        y=hawaii['county'],
+        x=hawaii['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1285,46 +1207,19 @@ def hisub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    hiFIG.add_trace(go.Bar(
-        y=hawaii['County'],
-        x=hawaii['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(95, 107, 106, 0.6)',
-            line=dict(color='rgba(95, 107, 106, 1.0)', width=3)
-        )
-    ))
-    hiFIG.add_trace(go.Bar(
-        y=hawaii['County'],
-        x=hawaii['Hospitalized'],
-        name='Hospitalized',
-        orientation='h',
-        marker=dict(
-            color='rgba(208, 217, 50, 0.6)',
-            line=dict(color='rgba(208, 217, 50, 1.0)', width=3)
-        )
-    ))
-    hiFIG.add_trace(
-        go.Densitymapbox(lat=hawaii.Latitude, lon=hawaii.Longitude,
-                         z=hawaii['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='rainbow',
-                         visible=True),
-        row=2, col=2)
     hiFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries",
-                        "Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[hawaii[k].tolist() for k in hawaii.columns[:]],
+                values=[hawaii[k].tolist() for k in hawaii.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1370,7 +1265,7 @@ def hisub():
 #     idFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return idFig
 
-idaho = usDF.loc[usDF.State == 'IDAHO']
+idaho = currentDF.loc[currentDF.state == 'Idaho']
 
 # --SUBPLOT--#
 def idsub():
@@ -1384,8 +1279,8 @@ def idsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     idFIG.add_trace(go.Bar(
-        y=idaho['County'],
-        x=idaho['Confirmed Cases'],
+        y=idaho['county'],
+        x=idaho['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1396,8 +1291,8 @@ def idsub():
         row=2, col=1
     )
     idFIG.add_trace(go.Bar(
-        y=idaho['County'],
-        x=idaho['Deaths'],
+        y=idaho['county'],
+        x=idaho['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1405,25 +1300,27 @@ def idsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     idFIG.add_trace(
         go.Densitymapbox(lat=idaho.Latitude, lon=idaho.Longitude,
                          z=idaho['Confirmed Cases'], radius=30,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     idFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[idaho[k].tolist() for k in idaho.columns[:]],
+                values=[idaho[k].tolist() for k in idaho.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1469,7 +1366,7 @@ def idsub():
 #     ilFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return ilFig
 
-illinois = usDF.loc[usDF.State == 'ILLINOIS']
+illinois = currentDF.loc[currentDF.state == 'Illinois']
 
 # --SUBPLOT--#
 def ilsub():
@@ -1483,8 +1380,8 @@ def ilsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     ilFIG.add_trace(go.Bar(
-        y=illinois['County'],
-        x=illinois['Confirmed Cases'],
+        y=illinois['county'],
+        x=illinois['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1495,8 +1392,8 @@ def ilsub():
         row=2, col=1
     )
     ilFIG.add_trace(go.Bar(
-        y=illinois['County'],
-        x=illinois['Deaths'],
+        y=illinois['county'],
+        x=illinois['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1504,35 +1401,19 @@ def ilsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    ilFIG.add_trace(go.Bar(
-        y=illinois['County'],
-        x=illinois['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(95, 107, 106, 0.6)',
-            line=dict(color='rgba(95, 107, 106, 1.0)', width=3)
-        )
-    ))
-    ilFIG.add_trace(
-        go.Densitymapbox(lat=illinois.Latitude, lon=illinois.Longitude,
-                         z=illinois['Confirmed Cases'], radius=35,
-                         showscale=False, colorscale='rainbow',
-                         visible=True),
-        row=2, col=2)
     ilFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries", "Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[illinois[k].tolist() for k in illinois.columns[:]],
+                values=[illinois[k].tolist() for k in illinois.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1578,7 +1459,7 @@ def ilsub():
 #     inFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
 #     return inFig
 
-indiana = usDF.loc[usDF.State == 'INDIANA']
+indiana = currentDF.loc[currentDF.state == 'Indiana']
 
 # --SUBPLOT--#
 def insub():
@@ -1592,8 +1473,8 @@ def insub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     inFIG.add_trace(go.Bar(
-        y=indiana['County'],
-        x=indiana['Confirmed Cases'],
+        y=indiana['county'],
+        x=indiana['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1604,8 +1485,8 @@ def insub():
         row=2, col=1
     )
     inFIG.add_trace(go.Bar(
-        y=indiana['County'],
-        x=indiana['Deaths'],
+        y=indiana['county'],
+        x=indiana['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1613,25 +1494,27 @@ def insub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     inFIG.add_trace(
         go.Densitymapbox(lat=indiana.Latitude, lon=indiana.Longitude,
                          z=indiana['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='rainbow',
                          visible=True),
         row=2, col=2)
+        """
     inFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[indiana[k].tolist() for k in indiana.columns[:]],
+                values=[indiana[k].tolist() for k in indiana.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1677,7 +1560,7 @@ def insub():
 #     ioFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
 #     return ioFig
 
-iowa = usDF.loc[usDF.State == 'IOWA']
+iowa = currentDF.loc[currentDF.state == 'Iowa']
 
 # --SUBPLOT--#
 def iosub():
@@ -1691,8 +1574,8 @@ def iosub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     ioFIG.add_trace(go.Bar(
-        y=iowa['County'],
-        x=iowa['Confirmed Cases'],
+        y=iowa['county'],
+        x=iowa['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1703,8 +1586,8 @@ def iosub():
         row=2, col=1
     )
     ioFIG.add_trace(go.Bar(
-        y=iowa['County'],
-        x=iowa['Deaths'],
+        y=iowa['county'],
+        x=iowa['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1712,35 +1595,19 @@ def iosub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    ioFIG.add_trace(go.Bar(
-        y=iowa['County'],
-        x=iowa['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(102, 25, 105, 0.6)',
-            line=dict(color='rgba(102, 25, 105, 1.0)', width=3)
-        )
-    ))
-    ioFIG.add_trace(
-        go.Densitymapbox(lat=iowa.Latitude, lon=iowa.Longitude,
-                         z=iowa['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='picnic',
-                         visible=True),
-        row=2, col=2)
     ioFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries", "Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[iowa[k].tolist() for k in iowa.columns[:]],
+                values=[iowa[k].tolist() for k in iowa.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1786,7 +1653,7 @@ def iosub():
 #     kaFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
 #     return kaFig
 
-kansas = usDF.loc[usDF.State == 'KANSAS']
+kansas = currentDF.loc[currentDF.state == 'Kansas']
 
 # --SUBPLOT--#
 def kasub():
@@ -1800,8 +1667,8 @@ def kasub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     kaFIG.add_trace(go.Bar(
-        y=kansas['County'],
-        x=kansas['Confirmed Cases'],
+        y=kansas['county'],
+        x=kansas['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1812,8 +1679,8 @@ def kasub():
         row=2, col=1
     )
     kaFIG.add_trace(go.Bar(
-        y=kansas['County'],
-        x=kansas['Deaths'],
+        y=kansas['county'],
+        x=kansas['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1821,35 +1688,19 @@ def kasub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    kaFIG.add_trace(go.Bar(
-        y=kansas['County'],
-        x=kansas['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(102, 25, 105, 0.6)',
-            line=dict(color='rgba(102, 25, 105, 1.0)', width=3)
-        )
-    ))
-    kaFIG.add_trace(
-        go.Densitymapbox(lat=kansas.Latitude, lon=kansas.Longitude,
-                         z=kansas['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='picnic',
-                         visible=True),
-        row=2, col=2)
     kaFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries", "Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[kansas[k].tolist() for k in kansas.columns[:]],
+                values=[kansas[k].tolist() for k in kansas.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1896,7 +1747,7 @@ def kasub():
 #     kyFig.update_layout(margin={"r": 90, "t": 0, "l": 90, "b": 0})
 #     return kyFig
 
-kentucky = usDF.loc[usDF.State == 'KENTUCKY']
+kentucky = currentDF.loc[currentDF.state == 'Kentucky']
 
 # --SUBPLOT--#
 def kysub():
@@ -1910,8 +1761,8 @@ def kysub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     kyFIG.add_trace(go.Bar(
-        y=kentucky['County'],
-        x=kentucky['Confirmed Cases'],
+        y=kentucky['county'],
+        x=kentucky['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -1922,8 +1773,8 @@ def kysub():
         row=2, col=1
     )
     kyFIG.add_trace(go.Bar(
-        y=kentucky['County'],
-        x=kentucky['Deaths'],
+        y=kentucky['county'],
+        x=kentucky['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -1931,25 +1782,27 @@ def kysub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     kyFIG.add_trace(
         go.Densitymapbox(lat=kentucky.Latitude, lon=kentucky.Longitude,
                          z=kentucky['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='rainbow',
                          visible=True),
         row=2, col=2)
+        """
     kyFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[kentucky[k].tolist() for k in kentucky.columns[:]],
+                values=[kentucky[k].tolist() for k in kentucky.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -1995,7 +1848,7 @@ def kysub():
 #     laFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
 #     return laFig
 
-louis = usDF.loc[usDF.State == 'LOUISIANA']
+louis = currentDF.loc[currentDF.state == 'Louisiana']
 
 # --SUBPLOT--#
 def lasub():
@@ -2009,8 +1862,8 @@ def lasub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     laFIG.add_trace(go.Bar(
-        y=louis['County'],
-        x=louis['Confirmed Cases'],
+        y=louis['county'],
+        x=louis['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2021,8 +1874,8 @@ def lasub():
         row=2, col=1
     )
     laFIG.add_trace(go.Bar(
-        y=louis['County'],
-        x=louis['Deaths'],
+        y=louis['county'],
+        x=louis['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2030,35 +1883,19 @@ def lasub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    laFIG.add_trace(go.Bar(
-        y=louis['County'],
-        x=louis['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(206,42,55, 0.6)',
-            line=dict(color='rgba(206,42,55, 1.0)', width=3)
-        )
-    ))
-    laFIG.add_trace(
-        go.Densitymapbox(lat=louis.Latitude, lon=louis.Longitude,
-                         z=louis['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='picnic',
-                         visible=True),
-        row=2, col=2)
     laFIG.add_trace(
         go.Table(
             header=dict(
                 values=["Parish", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[louis[k].tolist() for k in louis.columns[:]],
+                values=[louis[k].tolist() for k in louis.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2104,7 +1941,7 @@ def lasub():
 #     maFig.update_layout(margin={"r": 0, "t": 90, "l": 90, "b": 0})
 #     return maFig
 
-mass = usDF.loc[usDF.State == 'MASSACHUSETTS']
+mass = currentDF.loc[currentDF.state == 'Massachusetts']
 
 # --SUBPLOT--#
 def masub():
@@ -2118,8 +1955,8 @@ def masub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     maFIG.add_trace(go.Bar(
-        y=mass['County'],
-        x=mass['Confirmed Cases'],
+        y=mass['county'],
+        x=mass['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2130,8 +1967,8 @@ def masub():
         row=2, col=1
     )
     maFIG.add_trace(go.Bar(
-        y=mass['County'],
-        x=mass['Deaths'],
+        y=mass['county'],
+        x=mass['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2139,25 +1976,26 @@ def masub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     maFIG.add_trace(
         go.Densitymapbox(lat=mass.Latitude, lon=mass.Longitude,
                          z=mass['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     maFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases","Deaths",
-                        "Recoveries","Hospitalized"],
+                        "Confirmed Cases","Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[mass[k].tolist() for k in mass.columns[:]],
+                values=[mass[k].tolist() for k in mass.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2203,7 +2041,10 @@ def masub():
 #     mdFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return mdFig
 
-mary = usDF.loc[usDF.State == 'MARYLAND']
+mary = currentDF.loc[currentDF.state == 'Maryland']
+dc = currentDF.loc[currentDF.fips == '11001']
+mdlnd = pd.concat([mary, dc])
+
 
 # --SUBPLOT--#
 def mdsub():
@@ -2217,20 +2058,20 @@ def mdsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     mdFIG.add_trace(go.Bar(
-        y=mary['County'],
-        x=mary['Confirmed Cases'],
+        y=mdlnd['county'],
+        x=mdlnd['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
             color='rgba(59, 82, 105, 0.6)',
-            line=dict(color='rgba(59, 82, 105, 1.0)', width=3)
+            line=dict(color='rgba(58, 82, 105, 1.0)', width=3)
         )
     ),
         row=2, col=1
     )
     mdFIG.add_trace(go.Bar(
-        y=mary['County'],
-        x=mary['Deaths'],
+        y=mdlnd['county'],
+        x=mdlnd['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2238,25 +2079,26 @@ def mdsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     mdFIG.add_trace(
         go.Densitymapbox(lat=mary.Latitude, lon=mary.Longitude,
                          z=mary['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     mdFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                values=["County", "State", "fips", "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
-                font=dict(color='white', size=14, family='PT Sans Narrow'),
+                font=dict(color='white', size=12, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[mary[k].tolist() for k in mary.columns[:]],
+                values=[mdlnd[k].tolist() for k in mdlnd.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2278,7 +2120,6 @@ def mdsub():
         title_text="COVID-19's Impact in Maryland and in Our Nation's Capital"
     )
     return mdFIG
-
 
 # ---------------------------MAINE CHOROPLETH MAP------------------------------#
 # meDF = pd.read_csv(
@@ -2304,7 +2145,7 @@ def mdsub():
 #     meFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return meFig
 
-maine = usDF.loc[usDF.State == 'MAINE']
+maine = currentDF.loc[currentDF.state == 'Maine']
 
 # --SUBPLOT--#
 def mesub():
@@ -2318,8 +2159,8 @@ def mesub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     meFIG.add_trace(go.Bar(
-        y=maine['County'],
-        x=maine['Confirmed Cases'],
+        y=maine['county'],
+        x=maine['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2330,8 +2171,8 @@ def mesub():
         row=2, col=1
     )
     meFIG.add_trace(go.Bar(
-        y=maine['County'],
-        x=maine['Deaths'],
+        y=maine['county'],
+        x=maine['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2339,45 +2180,19 @@ def mesub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    meFIG.add_trace(go.Bar(
-        y=maine['County'],
-        x=maine['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(102, 25, 105, 0.6)',
-            line=dict(color='rgba(102, 25, 105, 1.0)', width=3)
-        )
-    ))
-    meFIG.add_trace(go.Bar(
-        y=maine['County'],
-        x=maine['Hospitalized'],
-        name='Hospitalized',
-        orientation='h',
-        marker=dict(
-            color='rgba(201, 76, 34, 0.6)',
-            line=dict(color='rgba(201, 76, 34, 1.0)', width=3)
-        )
-    ))
-    meFIG.add_trace(
-        go.Densitymapbox(lat=maine.Latitude, lon=maine.Longitude,
-                         z=maine['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='picnic',
-                         visible=True),
-        row=2, col=2)
     meFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries", "Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[maine[k].tolist() for k in maine.columns[:]],
+                values=[maine[k].tolist() for k in maine.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2423,7 +2238,7 @@ def mesub():
 #     miFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return miFig
 
-mich = usDF.loc[usDF.State == 'MICHIGAN']
+mich = currentDF.loc[currentDF.state == 'Michigan']
 
 # --SUBPLOT--#
 def misub():
@@ -2437,8 +2252,8 @@ def misub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     miFIG.add_trace(go.Bar(
-        y=mich['County'],
-        x=mich['Confirmed Cases'],
+        y=mich['county'],
+        x=mich['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2449,8 +2264,8 @@ def misub():
         row=2, col=1
     )
     miFIG.add_trace(go.Bar(
-        y=mich['County'],
-        x=mich['Deaths'],
+        y=mich['county'],
+        x=mich['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2458,25 +2273,26 @@ def misub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     miFIG.add_trace(
         go.Densitymapbox(lat=mich.Latitude, lon=mich.Longitude,
                          z=mich['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='rainbow',
                          visible=True),
         row=2, col=2)
+        """
     miFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                values=["County", "State", "fips","Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[mich[k].tolist() for k in mich.columns[:]],
+                values=[mich[k].tolist() for k in mich.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2522,7 +2338,7 @@ def misub():
 #     mnFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return mnFig
 
-minnie = usDF.loc[usDF.State == 'MINNESOTA']
+minnie = currentDF.loc[currentDF.state == 'Minnesota']
 
 # --SUBPLOT--#
 def mnsub():
@@ -2536,8 +2352,8 @@ def mnsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     mnFIG.add_trace(go.Bar(
-        y=minnie['County'],
-        x=minnie['Confirmed Cases'],
+        y=minnie['county'],
+        x=minnie['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2548,8 +2364,8 @@ def mnsub():
         row=2, col=1
     )
     mnFIG.add_trace(go.Bar(
-        y=minnie['County'],
-        x=minnie['Deaths'],
+        y=minnie['county'],
+        x=minnie['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2557,25 +2373,27 @@ def mnsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     mnFIG.add_trace(
         go.Densitymapbox(lat=minnie.Latitude, lon=minnie.Longitude,
                          z=minnie['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     mnFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[minnie[k].tolist() for k in minnie.columns[:]],
+                values=[minnie[k].tolist() for k in minnie.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2621,7 +2439,7 @@ def mnsub():
 #     moFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return moFig
 
-miss = usDF.loc[usDF.State == 'MISSOURI']
+miss = currentDF.loc[currentDF.state == 'Missouri']
 
 # --SUBPLOT--#
 def mosub():
@@ -2635,8 +2453,8 @@ def mosub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     moFIG.add_trace(go.Bar(
-        y=miss['County'],
-        x=miss['Confirmed Cases'],
+        y=miss['county'],
+        x=miss['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2647,8 +2465,8 @@ def mosub():
         row=2, col=1
     )
     moFIG.add_trace(go.Bar(
-        y=miss['County'],
-        x=miss['Deaths'],
+        y=miss['county'],
+        x=miss['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2656,25 +2474,27 @@ def mosub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     moFIG.add_trace(
         go.Densitymapbox(lat=miss.Latitude, lon=miss.Longitude,
                          z=miss['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     moFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[miss[k].tolist() for k in miss.columns[:]],
+                values=[miss[k].tolist() for k in miss.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2720,7 +2540,7 @@ def mosub():
 #     msFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return msFig
 
-missRiver = usDF.loc[usDF.State == 'MISSISSIPPI']
+missRiver = currentDF.loc[currentDF.state == 'Mississippi']
 
 # --SUBPLOT--#
 def mssub():
@@ -2734,8 +2554,8 @@ def mssub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     msFIG.add_trace(go.Bar(
-        y=missRiver['County'],
-        x=missRiver['Confirmed Cases'],
+        y=missRiver['county'],
+        x=missRiver['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2746,8 +2566,8 @@ def mssub():
         row=2, col=1
     )
     msFIG.add_trace(go.Bar(
-        y=missRiver['County'],
-        x=missRiver['Deaths'],
+        y=missRiver['county'],
+        x=missRiver['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2755,17 +2575,19 @@ def mssub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     msFIG.add_trace(
         go.Densitymapbox(lat=missRiver.Latitude, lon=missRiver.Longitude,
                          z=missRiver['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     msFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
+                        "Confirmed Cases",
                         "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
@@ -2773,7 +2595,7 @@ def mssub():
                 align="left"
             ),
             cells=dict(
-                values=[missRiver[k].tolist() for k in missRiver.columns[:]],
+                values=[missRiver[k].tolist() for k in missRiver.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2819,7 +2641,7 @@ def mssub():
 #     mtFig.update_layout(margin={"r": 0, "t": 100, "l": 0, "b": 0})
 #     return mtFig
 
-montana = usDF.loc[usDF.State == 'MONTANA']
+montana = currentDF.loc[currentDF.state == 'Montana']
 
 # --SUBPLOT--#
 def mtsub():
@@ -2833,8 +2655,8 @@ def mtsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     mtFIG.add_trace(go.Bar(
-        y=montana['County'],
-        x=montana['Confirmed Cases'],
+        y=montana['county'],
+        x=montana['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2845,8 +2667,8 @@ def mtsub():
         row=2, col=1
     )
     mtFIG.add_trace(go.Bar(
-        y=montana['County'],
-        x=montana['Deaths'],
+        y=montana['county'],
+        x=montana['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2854,25 +2676,27 @@ def mtsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     mtFIG.add_trace(
         go.Densitymapbox(lat=montana.Latitude, lon=montana.Longitude,
                          z=montana['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     mtFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[montana[k].tolist() for k in montana.columns[:]],
+                values=[montana[k].tolist() for k in montana.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -2918,7 +2742,7 @@ def mtsub():
 #     ncFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return ncFig
 
-norCar = usDF.loc[usDF.State == 'NORTH CAROLINA']
+norCar = currentDF.loc[currentDF.state == 'North Carolina']
 
 # --SUBPLOT--#
 def ncsub():
@@ -2932,8 +2756,8 @@ def ncsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     ncFIG.add_trace(go.Bar(
-        y=norCar['County'],
-        x=norCar['Confirmed Cases'],
+        y=norCar['county'],
+        x=norCar['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -2944,8 +2768,8 @@ def ncsub():
         row=2, col=1
     )
     ncFIG.add_trace(go.Bar(
-        y=norCar['County'],
-        x=norCar['Deaths'],
+        y=norCar['county'],
+        x=norCar['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -2953,25 +2777,27 @@ def ncsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     ncFIG.add_trace(
         go.Densitymapbox(lat=norCar.Latitude, lon=norCar.Longitude,
                          z=norCar['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     ncFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[norCar[k].tolist() for k in norCar.columns[:]],
+                values=[norCar[k].tolist() for k in norCar.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3017,7 +2843,7 @@ def ncsub():
 #     ndFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return ndFig
 
-norDar = usDF.loc[usDF.State == 'NORTH DAKOTA']
+norDar = currentDF.loc[currentDF.state == 'North Dakota']
 
 # --SUBPLOT--#
 def ndsub():
@@ -3031,8 +2857,8 @@ def ndsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     ndFIG.add_trace(go.Bar(
-        y=norDar['County'],
-        x=norDar['Confirmed Cases'],
+        y=norDar['county'],
+        x=norDar['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3043,8 +2869,8 @@ def ndsub():
         row=2, col=1
     )
     ndFIG.add_trace(go.Bar(
-        y=norDar['County'],
-        x=norDar['Deaths'],
+        y=norDar['county'],
+        x=norDar['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3052,28 +2878,12 @@ def ndsub():
             line=dict(color='rgba(194, 255, 210, 1.0)', width=3)
         )
     ))
-    ndFIG.add_trace(go.Bar(
-        y=norDar['County'],
-        x=norDar['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(224, 13, 13, 0.6)',
-            line=dict(color='rgba(224, 13, 13, 1.0)', width=3)
-        )
-    ))
-    ndFIG.add_trace(
-        go.Densitymapbox(lat=norDar.Latitude, lon=norDar.Longitude,
-                         z=norDar['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='rainbow',
-                         visible=True),
-        row=2, col=2)
     ndFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"
+                        "Confirmed Cases",
+                        "Deaths"
                         ],
                 line_color='darkslategray',
                 fill_color='grey',
@@ -3081,7 +2891,7 @@ def ndsub():
                 align="left"
             ),
             cells=dict(
-                values=[norDar[k].tolist() for k in norDar.columns[:]],
+                values=[norDar[k].tolist() for k in norDar.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3127,7 +2937,7 @@ def ndsub():
 #     neFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return neFig
 
-neb = usDF.loc[usDF.State == 'NEBRASKA']
+neb = currentDF.loc[currentDF.state == 'Nebraska']
 
 # --SUBPLOT--#
 def nesub():
@@ -3141,8 +2951,8 @@ def nesub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     neFIG.add_trace(go.Bar(
-        y=neb['County'],
-        x=neb['Confirmed Cases'],
+        y=neb['county'],
+        x=neb['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3153,8 +2963,8 @@ def nesub():
         row=2, col=1
     )
     neFIG.add_trace(go.Bar(
-        y=neb['County'],
-        x=neb['Deaths'],
+        y=neb['county'],
+        x=neb['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3162,25 +2972,26 @@ def nesub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     neFIG.add_trace(
         go.Densitymapbox(lat=neb.Latitude, lon=neb.Longitude,
                          z=neb['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     neFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                values=["County", "State", "fips","Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[neb[k].tolist() for k in neb.columns[:]],
+                values=[neb[k].tolist() for k in neb.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3226,7 +3037,7 @@ def nesub():
 #     nhFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return nhFig
 
-newHam = usDF.loc[usDF.State == 'NEW HAMPSHIRE']
+newHam = currentDF.loc[currentDF.state == 'New Hampshire']
 
 # --SUBPLOT--#
 def nhsub():
@@ -3240,8 +3051,8 @@ def nhsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     nhFIG.add_trace(go.Bar(
-        y=newHam['County'],
-        x=newHam['Confirmed Cases'],
+        y=newHam['county'],
+        x=newHam['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3252,8 +3063,8 @@ def nhsub():
         row=2, col=1
     )
     nhFIG.add_trace(go.Bar(
-        y=newHam['County'],
-        x=newHam['Deaths'],
+        y=newHam['county'],
+        x=newHam['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3261,18 +3072,19 @@ def nhsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     nhFIG.add_trace(
         go.Densitymapbox(lat=newHam.Latitude, lon=newHam.Longitude,
                          z=newHam['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     nhFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"
+                values=["County", "State", "fips", "Confirmed Cases",
+                        "Deaths"
                         ],
                 line_color='darkslategray',
                 fill_color='grey',
@@ -3280,7 +3092,7 @@ def nhsub():
                 align="left"
             ),
             cells=dict(
-                values=[newHam[k].tolist() for k in newHam.columns[:]],
+                values=[newHam[k].tolist() for k in newHam.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3326,7 +3138,7 @@ def nhsub():
 #     njFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
 #     return njFig
 
-jersey = usDF.loc[usDF.State == 'NEW JERSEY']
+jersey = currentDF.loc[currentDF.state == 'New Jersey']
 
 # --SUBPLOT--#
 def njsub():
@@ -3340,8 +3152,8 @@ def njsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     njFIG.add_trace(go.Bar(
-        y=jersey['County'],
-        x=jersey['Confirmed Cases'],
+        y=jersey['county'],
+        x=jersey['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3352,8 +3164,8 @@ def njsub():
         row=2, col=1
     )
     njFIG.add_trace(go.Bar(
-        y=jersey['County'],
-        x=jersey['Deaths'],
+        y=jersey['county'],
+        x=jersey['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3361,35 +3173,18 @@ def njsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    njFIG.add_trace(go.Bar(
-        y=jersey['County'],
-        x=jersey['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(147, 5, 230, 0.6)',
-            line=dict(color='rgba(147, 5, 230, 1.0)', width=3)
-        )
-    ))
-    njFIG.add_trace(
-        go.Densitymapbox(lat=jersey.Latitude, lon=jersey.Longitude,
-                         z=jersey['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='picnic',
-                         visible=True),
-        row=2, col=2)
     njFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries", "Hospitalized"],
+                values=["County", "State", "fips","Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[jersey[k].tolist() for k in jersey.columns[:]],
+                values=[jersey[k].tolist() for k in jersey.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3435,7 +3230,7 @@ def njsub():
 #     nmFig.update_layout(margin={"r": 100, "t": 0, "l": 100, "b": 0})
 #     return nmFig
 
-newMex = usDF.loc[usDF.State == 'NEW MEXICO']
+newMex = currentDF.loc[currentDF.state == 'New Mexico']
 
 # --SUBPLOT--#
 def nmsub():
@@ -3449,8 +3244,8 @@ def nmsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     nmFIG.add_trace(go.Bar(
-        y=newMex['County'],
-        x=newMex['Confirmed Cases'],
+        y=newMex['county'],
+        x=newMex['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3461,8 +3256,8 @@ def nmsub():
         row=2, col=1
     )
     nmFIG.add_trace(go.Bar(
-        y=newMex['County'],
-        x=newMex['Deaths'],
+        y=newMex['county'],
+        x=newMex['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3470,26 +3265,27 @@ def nmsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     nmFIG.add_trace(
         go.Densitymapbox(lat=newMex.Latitude, lon=newMex.Longitude,
                          z=newMex['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
-
+"""
     nmFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[newMex[k].tolist() for k in newMex.columns[:]],
+                values=[newMex[k].tolist() for k in newMex.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3535,7 +3331,7 @@ def nmsub():
 #     nvFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return nvFig
 
-nevada = usDF.loc[usDF.State == 'NEVADA']
+nevada = currentDF.loc[currentDF.state == 'Nevada']
 
 # --SUBPLOT--#
 def nvsub():
@@ -3549,8 +3345,8 @@ def nvsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     nvFIG.add_trace(go.Bar(
-        y=nevada['County'],
-        x=nevada['Confirmed Cases'],
+        y=nevada['county'],
+        x=nevada['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3561,8 +3357,8 @@ def nvsub():
         row=2, col=1
     )
     nvFIG.add_trace(go.Bar(
-        y=nevada['County'],
-        x=nevada['Deaths'],
+        y=nevada['county'],
+        x=nevada['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3570,26 +3366,27 @@ def nvsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     nvFIG.add_trace(
         go.Densitymapbox(lat=nevada.Latitude, lon=nevada.Longitude,
                          z=nevada['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     nvFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"
-                        ],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[nevada[k].tolist() for k in nevada.columns[:]],
+                values=[nevada[k].tolist() for k in nevada.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3635,7 +3432,7 @@ def nvsub():
 #     nyFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return nyFig
 
-newYork = usDF.loc[usDF.State == 'NEW YORK']
+newYork = currentDF.loc[currentDF.state == 'New York']
 
 # --SUBPLOT--#
 def nysub():
@@ -3649,8 +3446,8 @@ def nysub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     nyFIG.add_trace(go.Bar(
-        y=newYork['County'],
-        x=newYork['Confirmed Cases'],
+        y=newYork['county'],
+        x=newYork['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3661,8 +3458,8 @@ def nysub():
         row=2, col=1
     )
     nyFIG.add_trace(go.Bar(
-        y=newYork['County'],
-        x=newYork['Deaths'],
+        y=newYork['county'],
+        x=newYork['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3670,35 +3467,19 @@ def nysub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    nyFIG.add_trace(go.Bar(
-        y=newYork['County'],
-        x=newYork['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(147, 5, 230, 0.6)',
-            line=dict(color='rgba(147, 5, 230, 1.0)', width=3)
-        )
-    ))
-    nyFIG.add_trace(
-        go.Densitymapbox(lat=newYork.Latitude, lon=newYork.Longitude,
-                         z=newYork['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='picnic',
-                         visible=True),
-        row=2, col=2)
     nyFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries","Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[newYork[k].tolist() for k in newYork.columns[:]],
+                values=[newYork[k].tolist() for k in newYork.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3744,7 +3525,7 @@ def nysub():
 #     ohFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return ohFig
 
-ohio = usDF.loc[usDF.State == 'OHIO']
+ohio = currentDF.loc[currentDF.state == 'Ohio']
 
 # --SUBPLOT--#
 def ohsub():
@@ -3758,8 +3539,8 @@ def ohsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     ohFIG.add_trace(go.Bar(
-        y=ohio['County'],
-        x=ohio['Confirmed Cases'],
+        y=ohio['county'],
+        x=ohio['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3770,8 +3551,8 @@ def ohsub():
         row=2, col=1
     )
     ohFIG.add_trace(go.Bar(
-        y=ohio['County'],
-        x=ohio['Deaths'],
+        y=ohio['county'],
+        x=ohio['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3779,25 +3560,27 @@ def ohsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     ohFIG.add_trace(
         go.Densitymapbox(lat=ohio.Latitude, lon=ohio.Longitude,
                          z=ohio['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     ohFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[ohio[k].tolist() for k in ohio.columns[:]],
+                values=[ohio[k].tolist() for k in ohio.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3843,7 +3626,7 @@ def ohsub():
 #     okFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return okFig
 
-okie = usDF.loc[usDF.State == 'Oklahoma']
+okie = currentDF.loc[currentDF.state == 'Oklahoma']
 
 # --SUBPLOT--#
 def oksub():
@@ -3857,8 +3640,8 @@ def oksub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     okFIG.add_trace(go.Bar(
-        y=okie['County'],
-        x=okie['Confirmed Cases'],
+        y=okie['county'],
+        x=okie['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3869,8 +3652,8 @@ def oksub():
         row=2, col=1
     )
     okFIG.add_trace(go.Bar(
-        y=okie['County'],
-        x=okie['Deaths'],
+        y=okie['county'],
+        x=okie['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3878,35 +3661,19 @@ def oksub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    okFIG.add_trace(go.Bar(
-        y=okie['County'],
-        x=okie['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(147, 5, 230, 0.6)',
-            line=dict(color='rgba(147, 5, 230, 1.0)', width=3)
-        )
-    ))
-    okFIG.add_trace(
-        go.Densitymapbox(lat=okie.Latitude, lon=okie.Longitude,
-                         z=okie['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='picnic',
-                         visible=True),
-        row=2, col=2)
     okFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries", "Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[okie[k].tolist() for k in okie.columns[:]],
+                values=[okie[k].tolist() for k in okie.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -3952,7 +3719,7 @@ def oksub():
 #     orFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return orFig
 
-grimm = usDF.loc[usDF.State == 'OREGON']
+grimm = currentDF.loc[currentDF.state == 'Oregon']
 
 # --SUBPLOT--#
 def orsub():
@@ -3966,8 +3733,8 @@ def orsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     orFIG.add_trace(go.Bar(
-        y=grimm['County'],
-        x=grimm['Confirmed Cases'],
+        y=grimm['county'],
+        x=grimm['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -3978,8 +3745,8 @@ def orsub():
         row=2, col=1
     )
     orFIG.add_trace(go.Bar(
-        y=grimm['County'],
-        x=grimm['Deaths'],
+        y=grimm['county'],
+        x=grimm['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -3987,25 +3754,27 @@ def orsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     orFIG.add_trace(
         go.Densitymapbox(lat=grimm.Latitude, lon=grimm.Longitude,
                          z=grimm['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     orFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[grimm[k].tolist() for k in grimm.columns[:]],
+                values=[grimm[k].tolist() for k in grimm.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4051,7 +3820,7 @@ def orsub():
 #     paFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return paFig
 
-penn = usDF.loc[usDF.State == 'PENNSYLVANIA']
+penn = currentDF.loc[currentDF.state == 'Pennsylvania']
 
 # --SUBPLOT--#
 def pasub():
@@ -4065,8 +3834,8 @@ def pasub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     paFIG.add_trace(go.Bar(
-        y=penn['County'],
-        x=penn['Confirmed Cases'],
+        y=penn['county'],
+        x=penn['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4076,19 +3845,22 @@ def pasub():
     ),
         row=2, col=1
     )
-
-    paFIG.add_trace(
-        go.Densitymapbox(lat=penn.Latitude, lon=penn.Longitude,
-                         z=penn['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='picnic',
-                         visible=True),
-        row=2, col=2)
+    paFIG.add_trace(go.Bar(
+        y=penn['county'],
+        x=penn['deaths'],
+        name='Deaths',
+        orientation='h',
+        marker=dict(
+            color='rgba(160, 184, 152, 0.6)',
+            line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
+        )
+    ))
     paFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"
+                        "Confirmed Cases",
+                        "Deaths"
                         ],
                 line_color='darkslategray',
                 fill_color='grey',
@@ -4096,7 +3868,7 @@ def pasub():
                 align="left"
             ),
             cells=dict(
-                values=[penn[k].tolist() for k in penn.columns[:]],
+                values=[penn[k].tolist() for k in penn.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4143,7 +3915,7 @@ def pasub():
 #     prFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return prFig
 
-pRico = usDF.loc[usDF.State == 'PUERTO RICO']
+pRico = currentDF.loc[currentDF.state == 'Puerto Rico']
 
 # --SUBPLOT--#
 def prsub():
@@ -4157,8 +3929,8 @@ def prsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     prFIG.add_trace(go.Bar(
-        y=pRico['County'],
-        x=pRico['Confirmed Cases'],
+        y=pRico['county'],
+        x=pRico['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4168,26 +3940,28 @@ def prsub():
     ),
         row=2, col=1
     )
-
-    prFIG.add_trace(
-        go.Densitymapbox(lat=pRico.Latitude, lon=pRico.Longitude,
-                         z=pRico['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='picnic',
-                         visible=True),
-        row=2, col=2)
+    prFIG.add_trace(go.Bar(
+        y=pRico['county'],
+        x=pRico['deaths'],
+        name='Deaths',
+        orientation='h',
+        marker=dict(
+            color='rgba(160, 184, 152, 0.6)',
+            line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
+        )
+    ))
     prFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                values=["County", "State", "fips","Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[pRico[k].tolist() for k in pRico.columns[:]],
+                values=[pRico[k].tolist() for k in pRico.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4233,7 +4007,7 @@ def prsub():
 #     riFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return riFig
 
-rhode = usDF.loc[usDF.State == 'RHODE ISLAND']
+rhode = currentDF.loc[currentDF.state == 'Rhode Island']
 
 # --SUBPLOT--#
 def risub():
@@ -4247,8 +4021,8 @@ def risub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     riFIG.add_trace(go.Bar(
-        y=rhode['County'],
-        x=rhode['Confirmed Cases'],
+        y=rhode['county'],
+        x=rhode['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4259,8 +4033,8 @@ def risub():
         row=2, col=1
     )
     riFIG.add_trace(go.Bar(
-        y=rhode['County'],
-        x=rhode['Deaths'],
+        y=rhode['county'],
+        x=rhode['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -4268,25 +4042,26 @@ def risub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     riFIG.add_trace(
         go.Densitymapbox(lat=rhode.Latitude, lon=rhode.Longitude,
                          z=rhode['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     riFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                values=["County", "State", "fips","Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[rhode[k].tolist() for k in rhode.columns[:]],
+                values=[rhode[k].tolist() for k in rhode.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4332,7 +4107,7 @@ def risub():
 #     scFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return scFig
 
-southCar = usDF.loc[usDF.State == 'SOUTH CAROLINA']
+southCar = currentDF.loc[currentDF.state == 'South Carolina']
 
 # --SUBPLOT--#
 def scsub():
@@ -4346,8 +4121,8 @@ def scsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     scFIG.add_trace(go.Bar(
-        y=southCar['County'],
-        x=southCar['Confirmed Cases'],
+        y=southCar['county'],
+        x=southCar['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4358,8 +4133,8 @@ def scsub():
         row=2, col=1
     )
     scFIG.add_trace(go.Bar(
-        y=southCar['County'],
-        x=southCar['Deaths'],
+        y=southCar['county'],
+        x=southCar['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -4367,25 +4142,27 @@ def scsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     scFIG.add_trace(
         go.Densitymapbox(lat=southCar.Latitude, lon=southCar.Longitude,
                          z=southCar['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     scFIG.add_trace(
         go.Table(
             header=dict(
                 values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                        "Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[southCar[k].tolist() for k in southCar.columns[:]],
+                values=[southCar[k].tolist() for k in southCar.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4431,7 +4208,7 @@ def scsub():
 #     sdFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return sdFig
 
-southDak = usDF.loc[usDF.State == 'SOUTH DAKOTA']
+southDak = currentDF.loc[currentDF.state == 'South Dakota']
 
 # --SUBPLOT--#
 def sdsub():
@@ -4445,8 +4222,8 @@ def sdsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     sdFIG.add_trace(go.Bar(
-        y=southDak['County'],
-        x=southDak['Confirmed Cases'],
+        y=southDak['county'],
+        x=southDak['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4457,8 +4234,8 @@ def sdsub():
         row=2, col=1
     )
     sdFIG.add_trace(go.Bar(
-        y=southDak['County'],
-        x=southDak['Deaths'],
+        y=southDak['county'],
+        x=southDak['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -4466,35 +4243,18 @@ def sdsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    sdFIG.add_trace(go.Bar(
-        y=southDak['County'],
-        x=southDak['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(147, 5, 230, 0.6)',
-            line=dict(color='rgba(147, 5, 230, 1.0)', width=3)
-        )
-    ))
-    sdFIG.add_trace(
-        go.Densitymapbox(lat=southDak.Latitude, lon=southDak.Longitude,
-                         z=southDak['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='picnic',
-                         visible=True),
-        row=2, col=2)
     sdFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries", "Hospitalized"],
+                values=["County", "State", "fips","Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[southDak[k].tolist() for k in southDak.columns[:]],
+                values=[southDak[k].tolist() for k in southDak.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4540,7 +4300,7 @@ def sdsub():
 #     tnFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return tnFig
 
-tenn = usDF.loc[usDF.State == 'TENNESSEE']
+tenn = currentDF.loc[currentDF.state == 'Tennessee']
 
 # --SUBPLOT--#
 def tnsub():
@@ -4554,8 +4314,8 @@ def tnsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     tnFIG.add_trace(go.Bar(
-        y=tenn['County'],
-        x=tenn['Confirmed Cases'],
+        y=tenn['county'],
+        x=tenn['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4566,8 +4326,8 @@ def tnsub():
         row=2, col=1
     )
     tnFIG.add_trace(go.Bar(
-        y=tenn['County'],
-        x=tenn['Deaths'],
+        y=tenn['county'],
+        x=tenn['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -4575,35 +4335,18 @@ def tnsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    tnFIG.add_trace(go.Bar(
-        y=tenn['County'],
-        x=tenn['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(147, 5, 230, 0.6)',
-            line=dict(color='rgba(147, 5, 230, 1.0)', width=3)
-        )
-    ))
-    tnFIG.add_trace(
-        go.Densitymapbox(lat=tenn.Latitude, lon=tenn.Longitude,
-                         z=tenn['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='picnic',
-                         visible=True),
-        row=2, col=2)
     tnFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries", "Hospitalized"],
+                values=["County", "State", "fips","Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[tenn[k].tolist() for k in tenn.columns[:]],
+                values=[tenn[k].tolist() for k in tenn.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4649,7 +4392,7 @@ def tnsub():
 #     txFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return txFig
 
-texas = usDF.loc[usDF.State == 'Texas']
+texas = currentDF.loc[currentDF.state == 'Texas']
 
 # --SUBPLOT--#
 def txsub():
@@ -4663,8 +4406,8 @@ def txsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     txFIG.add_trace(go.Bar(
-        y=texas['County'],
-        x=texas['Confirmed Cases'],
+        y=texas['county'],
+        x=texas['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4675,8 +4418,8 @@ def txsub():
         row=2, col=1
     )
     txFIG.add_trace(go.Bar(
-        y=texas['County'],
-        x=texas['Deaths'],
+        y=texas['county'],
+        x=texas['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -4684,35 +4427,18 @@ def txsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    txFIG.add_trace(go.Bar(
-        y=texas['County'],
-        x=texas['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(147, 5, 230, 0.6)',
-            line=dict(color='rgba(147, 5, 230, 1.0)', width=3)
-        )
-    ))
-    txFIG.add_trace(
-        go.Densitymapbox(lat=texas.Latitude, lon=texas.Longitude,
-                         z=texas['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='picnic',
-                         visible=True),
-        row=2, col=2)
     txFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries", "Hospitalized"],
+                values=["County", "State", "fips","Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[texas[k].tolist() for k in texas.columns[:]],
+                values=[texas[k].tolist() for k in texas.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4760,7 +4486,7 @@ def txsub():
 #     utFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return utFig
 
-utah = usDF.loc[usDF.State == 'UTAH']
+utah = currentDF.loc[currentDF.state == 'Utah']
 
 # --SUBPLOT--#
 def utsub():
@@ -4774,8 +4500,8 @@ def utsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     utFIG.add_trace(go.Bar(
-        y=utah['County'],
-        x=utah['Confirmed Cases'],
+        y=utah['county'],
+        x=utah['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4786,8 +4512,8 @@ def utsub():
         row=2, col=1
     )
     utFIG.add_trace(go.Bar(
-        y=utah['County'],
-        x=utah['Deaths'],
+        y=utah['county'],
+        x=utah['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -4795,45 +4521,18 @@ def utsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    utFIG.add_trace(go.Bar(
-        y=utah['County'],
-        x=utah['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(147, 5, 230, 0.6)',
-            line=dict(color='rgba(147, 5, 230, 1.0)', width=3)
-        )
-    ))
-    utFIG.add_trace(go.Bar(
-        y=utah['County'],
-        x=utah['Hospitalized'],
-        name='Hospitalizations',
-        orientation='h',
-        marker=dict(
-            color='rgba(245, 71, 83, 0.6)',
-            line=dict(color='rgba(245, 71, 83, 1.0)', width=3)
-        )
-    ))
-    utFIG.add_trace(
-        go.Densitymapbox(lat=utah.Latitude, lon=utah.Longitude,
-                         z=utah['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='picnic',
-                         visible=True),
-        row=2, col=2)
     utFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries", "Hospitalized"],
+                values=["County", "State", "fips","Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[utah[k].tolist() for k in utah.columns[:]],
+                values=[utah[k].tolist() for k in utah.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4879,7 +4578,7 @@ def utsub():
 #     vaFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return vaFig
 
-virg = usDF.loc[usDF.State == 'VIRGINIA']
+virg = currentDF.loc[currentDF.state == 'Virginia']
 
 # --SUBPLOT--#
 def vasub():
@@ -4893,8 +4592,8 @@ def vasub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     vaFIG.add_trace(go.Bar(
-        y=virg['County'],
-        x=virg['Confirmed Cases'],
+        y=virg['county'],
+        x=virg['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -4905,8 +4604,8 @@ def vasub():
         row=2, col=1
     )
     vaFIG.add_trace(go.Bar(
-        y=virg['County'],
-        x=virg['Deaths'],
+        y=virg['county'],
+        x=virg['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -4914,35 +4613,18 @@ def vasub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    vaFIG.add_trace(go.Bar(
-        y=virg['County'],
-        x=virg['Hospitalized'],
-        name='Hospitalizations',
-        orientation='h',
-        marker=dict(
-            color='rgba(245, 71, 83, 0.6)',
-            line=dict(color='rgba(245, 71, 83, 1.0)', width=3)
-        )
-    ))
-    vaFIG.add_trace(
-        go.Densitymapbox(lat=virg.Latitude, lon=virg.Longitude,
-                         z=virg['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='picnic',
-                         visible=True),
-        row=2, col=2)
     vaFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                values=["County", "State", "fips","Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[virg[k].tolist() for k in virg.columns[:]],
+                values=[virg[k].tolist() for k in virg.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -4988,7 +4670,7 @@ def vasub():
 #     vtFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return vtFig
 
-vermont = usDF.loc[usDF.State == 'VERMONT']
+vermont = currentDF.loc[currentDF.state == 'Vermont']
 
 # --SUBPLOT--#
 def vtsub():
@@ -5002,8 +4684,8 @@ def vtsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     vtFIG.add_trace(go.Bar(
-        y=vermont['County'],
-        x=vermont['Confirmed Cases'],
+        y=vermont['county'],
+        x=vermont['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -5014,8 +4696,8 @@ def vtsub():
         row=2, col=1
     )
     vtFIG.add_trace(go.Bar(
-        y=vermont['County'],
-        x=vermont['Deaths'],
+        y=vermont['county'],
+        x=vermont['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -5023,35 +4705,18 @@ def vtsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    vtFIG.add_trace(go.Bar(
-        y=vermont['County'],
-        x=vermont['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(147, 5, 230, 0.6)',
-            line=dict(color='rgba(147, 5, 230, 1.0)', width=3)
-        )
-    ))
-    vtFIG.add_trace(
-        go.Densitymapbox(lat=vermont.Latitude, lon=vermont.Longitude,
-                         z=vermont['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='picnic',
-                         visible=True),
-        row=2, col=2)
     vtFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries", "Hospitalized"],
+                values=["County", "State", "fips","Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[vermont[k].tolist() for k in vermont.columns[:]],
+                values=[vermont[k].tolist() for k in vermont.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -5097,7 +4762,7 @@ def vtsub():
 #     waFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return waFig
 
-wash = usDF.loc[usDF.State == 'WASHINGTON']
+wash = currentDF.loc[currentDF.state == 'Washington']
 
 # --SUBPLOT--#
 def wasub():
@@ -5111,8 +4776,8 @@ def wasub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     waFIG.add_trace(go.Bar(
-        y=wash['County'],
-        x=wash['Confirmed Cases'],
+        y=wash['county'],
+        x=wash['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -5123,8 +4788,8 @@ def wasub():
         row=2, col=1
     )
     waFIG.add_trace(go.Bar(
-        y=wash['County'],
-        x=wash['Deaths'],
+        y=wash['county'],
+        x=wash['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -5132,25 +4797,26 @@ def wasub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     waFIG.add_trace(
         go.Densitymapbox(lat=wash.Latitude, lon=wash.Longitude,
                          z=wash['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     waFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                values=["County", "State", "fips","Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[wash[k].tolist() for k in wash.columns[:]],
+                values=[wash[k].tolist() for k in wash.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -5196,7 +4862,7 @@ def wasub():
 #     wiFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return wiFig
 
-wiscon = usDF.loc[usDF.State == 'WISCONSIN']
+wiscon = currentDF.loc[currentDF.state == 'Wisconsin']
 
 # --SUBPLOT--#
 def wisub():
@@ -5210,8 +4876,8 @@ def wisub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     wiFIG.add_trace(go.Bar(
-        y=wiscon['County'],
-        x=wiscon['Confirmed Cases'],
+        y=wiscon['county'],
+        x=wiscon['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -5222,8 +4888,8 @@ def wisub():
         row=2, col=1
     )
     wiFIG.add_trace(go.Bar(
-        y=wiscon['County'],
-        x=wiscon['Deaths'],
+        y=wiscon['county'],
+        x=wiscon['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -5231,25 +4897,26 @@ def wisub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     wiFIG.add_trace(
         go.Densitymapbox(lat=wiscon.Latitude, lon=wiscon.Longitude,
                          z=wiscon['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     wiFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                values=["County", "State", "fips","Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[wiscon[k].tolist() for k in wiscon.columns[:]],
+                values=[wiscon[k].tolist() for k in wiscon.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -5295,7 +4962,7 @@ def wisub():
 #     wvFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return wvFig
 
-west = usDF.loc[usDF.State == 'WEST VIRGINIA']
+west = currentDF.loc[currentDF.state == 'West Virginia']
 
 # --SUBPLOT--#
 def wvsub():
@@ -5309,8 +4976,8 @@ def wvsub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     wvFIG.add_trace(go.Bar(
-        y=west['County'],
-        x=west['Confirmed Cases'],
+        y=west['county'],
+        x=west['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -5321,8 +4988,8 @@ def wvsub():
         row=2, col=1
     )
     wvFIG.add_trace(go.Bar(
-        y=west['County'],
-        x=west['Deaths'],
+        y=west['county'],
+        x=west['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -5330,25 +4997,26 @@ def wvsub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
+    """
     wvFIG.add_trace(
         go.Densitymapbox(lat=west.Latitude, lon=west.Longitude,
                          z=west['Confirmed Cases'], radius=25,
                          showscale=False, colorscale='picnic',
                          visible=True),
         row=2, col=2)
+        """
     wvFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths","Recoveries","Hospitalized"],
+                values=["County", "State", "fips","Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[west[k].tolist() for k in west.columns[:]],
+                values=[west[k].tolist() for k in west.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
@@ -5394,7 +5062,7 @@ def wvsub():
 #     wyFig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 #     return wyFig
 
-wyoming = usDF.loc[usDF.State == 'WYOMING']
+wyoming = currentDF.loc[currentDF.state == 'Wyoming']
 
 # --SUBPLOT--#
 def wysub():
@@ -5408,8 +5076,8 @@ def wysub():
                [{"type": "bar"}, {"type": "Densitymapbox"}]])
 
     wyFIG.add_trace(go.Bar(
-        y=wyoming['County'],
-        x=wyoming['Confirmed Cases'],
+        y=wyoming['county'],
+        x=wyoming['cases'],
         name='Confirmed Cases',
         orientation='h',
         marker=dict(
@@ -5420,8 +5088,8 @@ def wysub():
         row=2, col=1
     )
     wyFIG.add_trace(go.Bar(
-        y=wyoming['County'],
-        x=wyoming['Deaths'],
+        y=wyoming['county'],
+        x=wyoming['deaths'],
         name='Deaths',
         orientation='h',
         marker=dict(
@@ -5429,35 +5097,18 @@ def wysub():
             line=dict(color='rgba(160, 184, 152, 1.0)', width=3)
         )
     ))
-    wyFIG.add_trace(go.Bar(
-        y=wyoming['County'],
-        x=wyoming['Recoveries'],
-        name='Recoveries',
-        orientation='h',
-        marker=dict(
-            color='rgba(171, 0, 0, 0.6)',
-            line=dict(color='rgba(171, 0, 0, 1.0)', width=3)
-        )
-    ))
-    wyFIG.add_trace(
-        go.Densitymapbox(lat=wyoming.Latitude, lon=wyoming.Longitude,
-                         z=wyoming['Confirmed Cases'], radius=25,
-                         showscale=False, colorscale='picnic',
-                         visible=True),
-        row=2, col=2)
     wyFIG.add_trace(
         go.Table(
             header=dict(
-                values=["County", "State", "fips",
-                        "Latitude", "Longitude", "Confirmed Cases",
-                        "Deaths", "Recoveries","Hospitalized"],
+                values=["County", "State", "fips","Confirmed Cases",
+                        "Deaths"],
                 line_color='darkslategray',
                 fill_color='grey',
                 font=dict(color='white', size=14, family='PT Sans Narrow'),
                 align="left"
             ),
             cells=dict(
-                values=[wyoming[k].tolist() for k in wyoming.columns[:]],
+                values=[wyoming[k].tolist() for k in wyoming.columns[1:]],
                 fill_color='black',
                 line_color='white',
                 font=dict(color='white', size=12, family='Gravitas One'),
