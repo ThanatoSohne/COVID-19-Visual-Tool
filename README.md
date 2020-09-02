@@ -1,4 +1,4 @@
-# [COVID19VisTool](https://covid19-outbreak-vis.herokuapp.com/): 
+# COVID19VisTool: 
 ## A Web App to Better Visualize the Impact of COVID-19 on Our Lives :earth_americas:
 
 The implementation and overall work for this web app is the byproduct of our 2020 Capstone project in the [CEAS Department](https://www.albany.edu/ceas) here 
@@ -27,7 +27,8 @@ Finally, to the makers and maintainers of the Python libraries, outside platform
 
 ###### News/ Update Info
 As of 6/28/20, the web scraping code is obsolete and will be updated as soon as it has been reworked to better collect information from ever changing data and sites. We are also working on a page within the app to hold a table with info for testing sites based on state. 
-
+As of 09/01/2020, the web app is temporarily down. Trying to move everything over into a Jupyter notebook publication. Code, so far, for the choropleth maps and subplots have been reworked and added to files above (covid19VizProject.py). If you wish to download the Jupyter notebook that has thus far been created, here is the link: https://www.dropbox.com/s/kffn29hm2ffudov/covid19VizProject.ipynb?dl=0 
+Will continue to work on this as I get the time. Avi
 ## Abstract
 When it comes to understanding data of any kind, we tend to best conceptualize and understand this data with the 
 utilization of visuals. This is not just contained to the fields of computer science or mathematics seeing as its 
