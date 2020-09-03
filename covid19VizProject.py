@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[24]:
 
 
 import pandas as pd
@@ -14,10 +14,12 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
+from bs4 import BeautifulSoup as soup
 import json
 import math
 import random
+import numpy as np
 
 #Grab info from csv and place into dataframe
 nytimes = 'https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv'
@@ -41,7 +43,9 @@ if ahora.day == 1:
         yesterday = (str(int(ahora.strftime("%Y"))-1))+"-"+"12"+"31"
     elif ahora.month == 3:
         yesterday = ahora.strftime("%Y")+"-02-28"
-else:        
+elif (ahora.day > 1) and (ahora.day < 10):        
+    yesterday = ahora.strftime("%Y")+"-"+ahora.strftime("%m")+"-0"+(str(int(ahora.strftime("%d"))-1))
+else:
     yesterday = ahora.strftime("%Y")+"-"+ahora.strftime("%m")+"-"+(str(int(ahora.strftime("%d"))-1))
 
 
@@ -54,13 +58,13 @@ currentDF = currentDF.astype({"fips":int})
 currentDF['fips']=currentDF['fips'].apply(lambda x: '{:05d}'.format(x))
 
 
-# In[2]:
+# In[13]:
 
 
 currentDF
 
 
-# In[3]:
+# In[14]:
 
 
 #A geoson with county info for the usage of the choropleth maps
@@ -82,7 +86,7 @@ usFig.update_layout(margin={"r": 20, "t": 20, "l": 70, "b": 20})
 usFig.show()
 
 
-# In[5]:
+# In[15]:
 
 
 #List out the states within the dataframe
@@ -245,4 +249,133 @@ for s in states:
         title_text="COVID-19's Impact in " + s
     )
     stateFIG.show()
+
+
+# In[30]:
+
+
+#This function will produce a scatter map showcasing basic info of the COVID-19 spread around the world.
+#It employs another of the Plotly geo-maps which allows for easy user interface.
+def mundiScatter():
+    
+    #First let us get access to the content of the webpage wherein the data can be found
+    gebMeter = 'https://www.worldometers.info/coronavirus/'
+    bypass = {'User-Agent': 'Mozilla/5.0'}
+    gebClient = Request(gebMeter, headers=bypass)
+    gebPage = urlopen(gebClient)
+
+    #Parse this data using BeautifulSoup4
+    site_parse = soup(gebPage, 'lxml')
+    gebPage.close()
+
+    #Grab the specific table we are looking for
+    tables = site_parse.find("div", {"id":"nav-today"}).find('tbody').findAll('tr')
+    
+    #Place found data into a list after grabbing text and splitting by '\n' 
+    dataCont = []
+    for t in tables:
+        take = t.text.split('\n')
+        dataCont.append(take)
+
+    #Now let's place this into a dataframe starting from the first entry in the table
+    worldMapDF = pd.DataFrame(dataCont[8:])
+
+    #The numbers below are the columns I wish to delete from the dataframe (superfluous data) 
+    deleteThese = [0,1,11,12,14,17,18]
+    for i in deleteThese:
+        del worldMapDF[i]
+
+    #Rename the columns 
+    worldMapDF.columns = ['Country','Total Cases', 'New Cases', 'Total Deaths', 
+                          'New Deaths', 'Total Recovered', 'Newly Recovered', 'Active Cases', 
+                          'Serious/Critical', 'Total Tests', 'Population', 'Region']
+
+    #Replace the "+" and "," symbols left over from the move to a dataframe
+    #Also replace empty spaces with N/A or NaN
+    #Fill these in with zeros
+    worldMapDF = worldMapDF.replace("\+", "", regex=True)
+    worldMapDF = worldMapDF.replace("\,", "", regex=True)
+    worldMapDF = worldMapDF.replace('', np.nan) 
+    worldMapDF = worldMapDF.replace(' ', np.nan) 
+    worldMapDF = worldMapDF.fillna(0)
+    worldMapDF = worldMapDF.replace("N/A", "0", regex=True)
+    
+    #Change the types of these particular columns from 'object' to 'int'
+    worldMapDF[["Total Cases", "New Cases", "Total Deaths", "New Deaths", "Total Recovered", 
+                "Newly Recovered", "Active Cases", "Serious/Critical", 
+                "Total Tests", "Population"]] = worldMapDF[["Total Cases", "New Cases", "Total Deaths", 
+                                                            "New Deaths", "Total Recovered", "Newly Recovered", 
+                                                            "Active Cases", "Serious/Critical", "Total Tests", 
+                                                            "Population"]].apply(pd.to_numeric)
+    
+    #Create the map to be presented
+    geofig = px.scatter_geo(worldMapDF, locations="Country", locationmode="country names", color="Total Cases",
+                            hover_data=["Total Cases", "New Cases", "Total Deaths", "New Deaths", "Serious/Critical",
+                                        "Total Recovered", "Newly Recovered", "Active Cases", "Total Tests", 
+                                        "Population", "Region"],
+                            hover_name="Country", color_continuous_scale="balance",
+                            size="Total Cases", projection="orthographic", text="Country",
+                            opacity=0.5, size_max=70)
+    geofig.update_layout(title="Interactive View of the Spread of COVID-19 Around the World")
+    return geofig
+
+
+# In[31]:
+
+
+#Now let's run the function!
+mundiScatter()
+
+
+# In[32]:
+
+
+#This function produces an animated scatter plot of the number of 
+#cases and deaths around the world in regards to COVID-19
+#The size of the bubble is relative to the number of deaths and the 
+#cases are relayed in the text in the bubbles
+def aniGlobe():
+    
+    #First we need to grab the data from the ECDC website. 
+    #We need the date to get the most current data as the date is 
+    #part of the web address
+    ahora = date.today()
+    
+    #We will pull the date of the day before as the site usually does not
+    #update with the date of the day pulled
+    if int(ahora.strftime("%d")) <= 10:
+        yest = ('0' + str(int(ahora.strftime("%d")) - 1))
+    else:
+        yest = str(int(ahora.strftime('%d')) - 1)
+
+    #Now we have the proper date and its proper format (YYYY-MM-DD), let's access and store the content using pandas
+    ecdc = 'https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide-2020-'
+    xls = '.xlsx'
+    newURL = ecdc + str(ahora.strftime('%m')) + '-' + yest + xls
+
+    #Place into a dataframe and sort by date
+    table = pd.read_excel(newURL)
+    table = table.sort_values('dateRep')
+    table = table.fillna(0)
+    holder = table[table['cases'] < 0].index
+    table.drop(holder, inplace=True)
+    table = table.rename(columns={'dateRep': 'Date', 'cases': 'Cases', 'deaths': 'Deaths',
+                                  'countriesAndTerritories': 'Countries/Territories',
+                                  'popData2019': 'Population', 'continentExp': 'Continent'})
+    see = table['Date'].astype(str).str[:]
+
+    #Create the animated scatter plot
+    blanche = px.scatter(table, x='Population', y='Cases', animation_frame=see,
+                         animation_group='Countries/Territories', size=table['Deaths'].clip(lower=0),
+                         color='Continent', hover_name='Countries/Territories',
+                         log_y=True, size_max=500, range_x=[10000000, 2000000000], range_y=[1, 200000])
+    blanche.update_layout(showlegend=False,
+                          title="ECDC's Data Showing the Infected Cases Color Coded by Continent with Daily Deaths as Time Progressed")
+    return blanche
+
+
+# In[33]:
+
+
+aniGlobe()
 
