@@ -87,7 +87,7 @@ a stacked bar graph, a table showing the web scraped information, and a density 
 ###### 3D Molecular Viewer
 Our molecular viewer is Javascript built and allows the user to view two particular types of SARS-CoV-2 proteins whose PDBs were obtained from the [RCSB Protein Data Bank](https://www.rcsb.org/). The two proteins in question are that of [5RE4](https://www.rcsb.org/structure/5RE4) and [6VXX](https://www.rcsb.org/structure/6VXX). The viewer is interactive and allows the user to not only manipulate it but also allows them to render different views after choosing from the options above the viewer.
 ![3D Molecular Viewer](https://i.imgur.com/EKSeMPr.jpg)
-Below are the sites that were linked to the app that was built by Mateo 
+__*Below are the sites that were linked to the app that was built by Mateo.*__
 [Crystal Structure of SARS-CoV-2 main protease in complex with Z1129283193](https://mateov97.github.io/Molecule/)
 [Structure of the SARS-CoV-2 spike glycoprotein](https://mateov97.github.io/Molecule2/)
 
