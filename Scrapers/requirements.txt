@@ -7,5 +7,5 @@ pandas==0.24.2
 request==2019.4.13
 requests==2.23.0
 termcolor==1.1.0
-urllib3==1.25.8
+urllib3==1.26.5
 wikipedia==1.4.0
